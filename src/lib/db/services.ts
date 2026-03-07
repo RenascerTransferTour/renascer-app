@@ -105,7 +105,7 @@ export const crmService = {
             return {
                 ...deal,
                 contact,
-                ownerName: owner?.fullName || 'N/A'
+                ownerName: owner?.fullName || (deal.ownerId === 'IA' ? 'Assistente IA' : 'N/A')
             }
         })
     },
