@@ -26,14 +26,15 @@ import {
   } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { testAiChatPrompt } from "@/ai/flows/test-ai-chat-prompt-flow"
+import { testAiChatPrompt, TestAiChatPromptOutput } from "@/ai/flows/test-ai-chat-prompt-flow"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power } from "lucide-react"
+import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Badge } from "./ui/badge"
 import { Skeleton } from "./ui/skeleton"
 import type { AiSettings, AiPrompt } from "@/lib/db/data-model"
+import { cn } from "@/lib/utils"
 
 const flowPermissionsData = [
     { id: 'welcome', label: 'Boas-Vindas', description: 'Permite que a IA envie a primeira mensagem de boas-vindas.' },
@@ -54,15 +55,15 @@ export function AiSettingsForm() {
     const [providerStatus, setProviderStatus] = useState({ gemini: false, openai: false });
     const [loadingProviders, setLoadingProviders] = useState(true);
 
-    const [draftPrompt, setDraftPrompt] = useState('');
-    const [publishedPrompt, setPublishedPrompt] = useState('');
+    const [draftPrompt, setDraftPrompt] = useState<AiPrompt | null>(null);
+    const [publishedPrompt, setPublishedPrompt] = useState<AiPrompt | null>(null);
 
     const [testUserPrompt, setTestUserPrompt] = useState("Olá, quanto custa um transfer para o aeroporto de guarulhos?");
-    const [testResponse, setTestResponse] = useState("");
+    const [testResult, setTestResult] = useState<Partial<TestAiChatPromptOutput> | null>(null);
     const [isTesting, setIsTesting] = useState(false);
     const { toast } = useToast();
     
-    const [testProvider, setTestProvider] = useState<'openai' | 'gemini'>('gemini');
+    const [testProvider, setTestProvider] = useState<'openai' | 'gemini' | 'automatic'>('automatic');
 
      useEffect(() => {
         const fetchData = async () => {
@@ -83,8 +84,8 @@ export function AiSettingsForm() {
 
                 const draft = promptsData.find((p: AiPrompt) => p.status === 'draft');
                 const published = promptsData.find((p: AiPrompt) => p.status === 'published');
-                setDraftPrompt(draft?.content || '');
-                setPublishedPrompt(published?.content || '');
+                setDraftPrompt(draft || null);
+                setPublishedPrompt(published || null);
 
             } catch (error) {
                 console.error("Failed to fetch settings", error);
@@ -99,19 +100,27 @@ export function AiSettingsForm() {
 
 
     const handleTestPrompt = async () => {
-        if (!testUserPrompt.trim()) return;
+        if (!testUserPrompt.trim() || !draftPrompt?.content) {
+            toast({
+                variant: "destructive",
+                title: "Aviso",
+                description: "O prompt de rascunho e a mensagem do usuário não podem estar vazios.",
+            });
+            return;
+        }
         setIsTesting(true);
-        setTestResponse("");
+        setTestResult(null);
         try {
             const result = await testAiChatPrompt({
-                masterPrompt: draftPrompt,
+                masterPrompt: draftPrompt.content,
                 userPrompt: testUserPrompt,
                 provider: testProvider,
             });
-            setTestResponse(result.response);
+            setTestResult(result);
         } catch (error) {
             console.error(error);
             const errorMessage = error instanceof Error ? error.message : "Não foi possível obter uma resposta da IA.";
+            setTestResult({ wasBlocked: true, blockReason: errorMessage });
             toast({
                 variant: "destructive",
                 title: "Erro no Teste",
@@ -236,7 +245,7 @@ export function AiSettingsForm() {
                                 <CardTitle className="text-lg">OpenAI (ChatGPT)</CardTitle>
                                 <CardDescription>gpt-4-turbo</CardDescription>
                             </div>
-                            <Badge variant={providerStatus.openai ? 'secondary' : 'outline'} className={providerStatus.openai ? 'bg-green-100 text-green-800' : ''}>
+                            <Badge variant={providerStatus.openai ? 'secondary' : 'outline'} className={cn(providerStatus.openai ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
                                 {providerStatus.openai ? 'Configurado' : 'Não Configurado'}
                             </Badge>
                         </CardHeader>
@@ -256,7 +265,7 @@ export function AiSettingsForm() {
                                 <CardTitle className="text-lg">Gemini (Google)</CardTitle>
                                 <CardDescription>gemini-2.5-flash</CardDescription>
                             </div>
-                             <Badge variant={providerStatus.gemini ? 'secondary' : 'outline'} className={providerStatus.gemini ? 'bg-green-100 text-green-800' : ''}>
+                             <Badge variant={providerStatus.gemini ? 'secondary' : 'outline'} className={cn(providerStatus.gemini ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
                                 {providerStatus.gemini ? 'Configurado' : 'Não Configurado'}
                             </Badge>
                         </CardHeader>
@@ -297,8 +306,8 @@ export function AiSettingsForm() {
                         id="master-prompt"
                         placeholder="Defina as instruções principais para a IA..."
                         className="min-h-[250px] font-mono text-xs"
-                        value={draftPrompt}
-                        onChange={(e) => setDraftPrompt(e.target.value)}
+                        value={draftPrompt?.content || ''}
+                        onChange={(e) => setDraftPrompt(p => p ? {...p, content: e.target.value} : null)}
                         />
                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Info className="size-4 shrink-0"/> 
@@ -309,7 +318,7 @@ export function AiSettingsForm() {
                         <Textarea
                         id="master-prompt-published"
                         className="min-h-[250px] font-mono text-xs bg-muted/70"
-                        value={publishedPrompt}
+                        value={publishedPrompt?.content || 'Nenhum prompt publicado encontrado.'}
                         readOnly
                         />
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -326,7 +335,7 @@ export function AiSettingsForm() {
                         <DialogTrigger asChild>
                             <Button variant="outline" className="w-full">Testar Prompt</Button>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
+                        <DialogContent className="sm:max-w-2xl">
                             <DialogHeader>
                             <DialogTitle>Testar Prompt da IA</DialogTitle>
                             <DialogDescription>
@@ -334,17 +343,27 @@ export function AiSettingsForm() {
                             </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">
-                                 <div className="space-y-2">
-                                    <Label htmlFor="test-provider">Provedor para Teste</Label>
-                                    <Select value={testProvider} onValueChange={(v) => setTestProvider(v as any)}>
-                                        <SelectTrigger id="test-provider">
-                                            <SelectValue placeholder="Selecione o provedor" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="gemini" disabled={!providerStatus.gemini}>Gemini (Simulado)</SelectItem>
-                                            <SelectItem value="openai" disabled={!providerStatus.openai}>OpenAI (Simulado)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="test-provider">Provedor para Teste</Label>
+                                        <Select value={testProvider} onValueChange={(v) => setTestProvider(v as any)}>
+                                            <SelectTrigger id="test-provider">
+                                                <SelectValue placeholder="Selecione o provedor" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="automatic">Automático (usa configurações)</SelectItem>
+                                                <SelectItem value="gemini" disabled={!providerStatus.gemini}>Gemini (Simulado)</SelectItem>
+                                                <SelectItem value="openai" disabled={!providerStatus.openai}>OpenAI (Simulado)</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Status do Prompt</Label>
+                                        <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-muted text-sm">
+                                            {publishedPrompt ? <CheckCircle className="size-4 text-green-500" /> : <XCircle className="size-4 text-destructive" />}
+                                            <span>{publishedPrompt ? 'Publicado' : 'Não Publicado'}</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="test-prompt">
@@ -358,15 +377,40 @@ export function AiSettingsForm() {
                                     />
                                 </div>
                                 {isTesting && (
-                                    <div className="flex items-center justify-center p-4">
+                                    <div className="flex flex-col items-center justify-center p-4 gap-2">
                                         <Loader2 className="h-6 w-6 animate-spin" />
+                                        <p className="text-sm text-muted-foreground">Aguardando resposta da IA...</p>
                                     </div>
                                 )}
-                                {testResponse && (
-                                    <div>
-                                        <Label>Resposta da IA (Simulada via {testProvider}):</Label>
-                                        <div className="rounded-md border bg-muted p-4 text-sm mt-2">
-                                            {testResponse}
+                                {testResult && (
+                                    <div className="space-y-4">
+                                        {testResult.wasBlocked ? (
+                                            <Alert variant="destructive">
+                                                <AlertTriangle className="h-4 w-4" />
+                                                <AlertTitle>Ação Bloqueada pela Política de Autonomia</AlertTitle>
+                                                <AlertDescription>
+                                                    {testResult.blockReason || 'A configuração de autonomia atual impediu a IA de responder.'}
+                                                </AlertDescription>
+                                            </Alert>
+                                        ) : (
+                                            <div>
+                                                <Label>Resposta da IA:</Label>
+                                                <div className="rounded-md border bg-muted p-4 text-sm mt-2">
+                                                    {testResult.response}
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground border-t pt-4">
+                                            <div className="flex items-center gap-2">
+                                                <p>Provedor usado:</p>
+                                                <Badge variant="outline" className="capitalize">{testResult.providerUsed || 'N/D'}</Badge>
+                                            </div>
+                                             <div className="flex items-center gap-2">
+                                                <p>Fallback Ativado:</p>
+                                                <Badge variant={testResult.fallbackTriggered ? "default" : "outline"} className={cn(testResult.fallbackTriggered ? 'bg-orange-100 text-orange-800' : '')}>
+                                                    {testResult.fallbackTriggered ? 'Sim' : 'Não'}
+                                                </Badge>
+                                            </div>
                                         </div>
                                     </div>
                                 )}

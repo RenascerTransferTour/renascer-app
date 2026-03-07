@@ -8,8 +8,9 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {model} from 'genkit/model';
+import {model, type ModelReference} from 'genkit/model';
 import {z} from 'genkit';
+import {settingsService} from '@/lib/db/services';
 
 const TestAiChatPromptInputSchema = z.object({
   masterPrompt: z
@@ -21,7 +22,7 @@ const TestAiChatPromptInputSchema = z.object({
       'The sample prompt provided by the administrator to test the AI.'
     ),
   provider: z
-    .enum(['openai', 'gemini'])
+    .enum(['openai', 'gemini', 'automatic'])
     .optional()
     .describe('The AI provider to use for the test.'),
 });
@@ -33,6 +34,20 @@ const TestAiChatPromptOutputSchema = z.object({
     .describe(
       'The AI generated response based on the master and user prompts.'
     ),
+  providerUsed: z
+    .string()
+    .optional()
+    .describe('The actual AI provider used for the generation.'),
+  wasBlocked: z
+    .boolean()
+    .describe('Indicates if the action was blocked by an autonomy rule.'),
+  blockReason: z
+    .string()
+    .optional()
+    .describe('The reason why the action was blocked.'),
+  fallbackTriggered: z
+    .boolean()
+    .describe('Indicates if a fallback provider was used.'),
 });
 export type TestAiChatPromptOutput = z.infer<
   typeof TestAiChatPromptOutputSchema
@@ -47,8 +62,10 @@ export async function testAiChatPrompt(
 const prompt = ai.definePrompt({
   name: 'testAiChatPromptBasePrompt',
   input: {schema: TestAiChatPromptInputSchema},
-  output: {schema: TestAiChatPromptOutputSchema},
-  prompt: `System Prompt (simulating {{provider | 'gemini'}}): {{{masterPrompt}}}
+  // The output schema for the prompt itself remains simple.
+  // The flow will wrap this with additional diagnostic data.
+  output: {schema: z.object({response: z.string()})},
+  prompt: `System Prompt (simulating a real request): {{{masterPrompt}}}
 
 User Input: {{{userPrompt}}}
 
@@ -62,35 +79,89 @@ const testAiChatPromptFlow = ai.defineFlow(
     outputSchema: TestAiChatPromptOutputSchema,
   },
   async input => {
-    const provider = input.provider || 'gemini';
+    console.log('[AI Test Flow] Received test request:', input);
+
+    const settings = await settingsService.getAiSettings();
+
+    // 1. Validate against global and autonomy settings
+    if (!settings.globalAiEnabled) {
+      const reason = 'Ação bloqueada: A chave geral da IA está desativada.';
+      console.log(`[AI Test Flow] Blocked: ${reason}`);
+      return {
+        response: '',
+        wasBlocked: true,
+        blockReason: reason,
+        fallbackTriggered: false,
+      };
+    }
+    if (settings.aiMode === 'off') {
+      const reason = 'Ação bloqueada: O modo de autonomia da IA está "Desligada".';
+      console.log(`[AI Test Flow] Blocked: ${reason}`);
+      return {
+        response: '',
+        wasBlocked: true,
+        blockReason: reason,
+        fallbackTriggered: false,
+      };
+    }
+
+    const testProvider = input.provider || 'automatic';
+    const primaryProvider = settings.activeProvider;
     const isGeminiConfigured = !!process.env.GEMINI_API_KEY;
     const isOpenAIConfigured = !!process.env.OPENAI_API_KEY;
 
-    if (provider === 'gemini' && !isGeminiConfigured) {
-      throw new Error(
-        'O provedor Gemini não está configurado. Adicione a GEMINI_API_KEY ao seu ambiente.'
-      );
-    }
-    if (provider === 'openai' && !isOpenAIConfigured) {
-      throw new Error(
-        'O provedor OpenAI não está configurado. Adicione a OPENAI_API_KEY ao seu ambiente.'
-      );
+    let providerToUse: 'gemini' | 'openai' | null = null;
+    let fallbackTriggered = false;
+    let desiredProvider = testProvider === 'automatic' ? primaryProvider : testProvider;
+
+    // 2. Determine which provider to use
+    if (desiredProvider === 'gemini') {
+        if (isGeminiConfigured) providerToUse = 'gemini';
+        else if (settings.isFallbackEnabled && isOpenAIConfigured) {
+            providerToUse = 'openai';
+            fallbackTriggered = true;
+        }
+    } else if (desiredProvider === 'openai') {
+        if (isOpenAIConfigured) providerToUse = 'openai';
+        else if (settings.isFallbackEnabled && isGeminiConfigured) {
+            providerToUse = 'gemini';
+            fallbackTriggered = true;
+        }
+    } else { // Automatic
+        if (primaryProvider === 'gemini' && isGeminiConfigured) providerToUse = 'gemini';
+        else if (primaryProvider === 'openai' && isOpenAIConfigured) providerToUse = 'openai';
+        else if (isGeminiConfigured) providerToUse = 'gemini';
+        else if (isOpenAIConfigured) providerToUse = 'openai';
     }
 
+
+    if (!providerToUse) {
+      const reason =
+        'Nenhum provedor de IA está configurado ou disponível. Verifique suas chaves de API no ambiente do servidor.';
+      console.error(`[AI Test Flow] Error: ${reason}`);
+      throw new Error(reason);
+    }
+    
+    console.log(`[AI Test Flow] Provider selected: ${providerToUse}. Fallback: ${fallbackTriggered}`);
+
     const modelToUse =
-      provider === 'openai'
+      providerToUse === 'openai'
         ? model('openai/gpt-4-turbo')
         : model('googleai/gemini-2.5-flash');
 
     const {output} = await prompt(input, {model: modelToUse});
 
     if (!output) {
-      // Simulate a provider-specific error message
-      const providerName = input.provider === 'openai' ? 'OpenAI' : 'Gemini';
       throw new Error(
-        `Failed to get a response from the ${providerName} simulation.`
+        `Falha ao obter resposta da simulação do provedor ${providerToUse}.`
       );
     }
-    return output;
+    
+    return {
+        response: output.response,
+        providerUsed: providerToUse,
+        wasBlocked: false,
+        fallbackTriggered: fallbackTriggered,
+    };
   }
 );
