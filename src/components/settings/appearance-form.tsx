@@ -28,29 +28,30 @@ import {
   Car,
   LayoutDashboard,
   MessageSquare,
+  Palette,
+  Type,
+  Component,
+  AlertTriangle,
+  Info,
+  CheckCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Separator } from '../ui/separator'
+import { Badge } from '../ui/badge'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table'
 
-const ColorPicker = ({ label, value, onChange }: { label: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
-  <div className="space-y-2">
-    <Label>{label}</Label>
-    <div className="flex items-center gap-2">
-      <Input
-        type="color"
-        value={value}
-        onChange={onChange}
-        className="h-10 w-10 p-1"
-      />
-      <Input
-        type="text"
-        value={value}
-        onChange={onChange}
-        className="max-w-[120px]"
-      />
+
+const ColorSwatch = ({ label, color, varName }: { label: string, color: string, varName: string }) => (
+    <div className="flex flex-col gap-2">
+      <div className="w-full h-16 rounded-md border" style={{ backgroundColor: color }} />
+      <div>
+        <p className="font-semibold text-sm">{label}</p>
+        <p className="text-xs text-muted-foreground">{varName}</p>
+        <p className="text-xs text-muted-foreground uppercase">{color}</p>
+      </div>
     </div>
-  </div>
-)
+  )
 
 const FileUpload = ({ label, description }: { label: string, description: string }) => (
   <div className="space-y-2">
@@ -79,12 +80,12 @@ export function AppearanceForm() {
     const defaultState = {
         companyName: 'Renascer Transfer Tour',
         slogan: 'Conforto, segurança, pontualidade e atendimento 24h',
-        primaryColor: '#4A4270',
+        primaryColor: '#455A8A',
         secondaryColor: '#FFFFFF',
-        accentColor: '#3C72DD',
+        accentColor: '#3B82F6',
         theme: 'light',
         sidebarStyle: 'sidebar',
-        backgroundColor: '#F0F0F5',
+        backgroundColor: '#F9FAFC',
       };
 
     const [settings, setSettings] = useState(defaultState);
@@ -93,15 +94,11 @@ export function AppearanceForm() {
         const { id, value } = e.target;
         setSettings(prev => ({ ...prev, [id]: value }));
     }
-
-    const handleSelectChange = (id: string, value: string) => {
-        setSettings(prev => ({ ...prev, [id]: value }));
-    }
     
     const handleSave = () => {
         toast({
             title: "Configurações Salvas",
-            description: "A aparência do sistema foi atualizada.",
+            description: "A aparência do sistema foi atualizada (simulado).",
         })
     }
 
@@ -118,12 +115,19 @@ export function AppearanceForm() {
         <div className="lg:col-span-2 space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Identidade Visual</CardTitle>
+                    <CardTitle>Identidade da Marca</CardTitle>
                     <CardDescription>
-                        Personalize o logo, nome e slogan da sua empresa.
+                        Posicionamento visual da marca, que deve ser profissional, confiável, premium e claro.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                    <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>Modo Simulado</AlertTitle>
+                        <AlertDescription>
+                            A identidade visual está em configuração. As alterações são aplicadas localmente para preview, mas o salvamento real não está ativado.
+                        </AlertDescription>
+                    </Alert>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FileUpload label="Logo Principal" description="PNG, JPG, SVG (max. 800x400px)" />
                         <FileUpload label="Logo Compacto / Favicon" description="PNG, ICO, SVG (max. 50x50px)" />
@@ -132,63 +136,43 @@ export function AppearanceForm() {
                         <Label htmlFor="companyName">Nome da Empresa</Label>
                         <Input id="companyName" value={settings.companyName} onChange={handleInputChange}/>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="slogan">Slogan</Label>
-                        <Input id="slogan" value={settings.slogan} onChange={handleInputChange} />
-                    </div>
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Esquema de Cores</CardTitle>
+                    <CardTitle className='flex items-center gap-2'><Palette /> Paleta Principal</CardTitle>
                     <CardDescription>
-                        Ajuste as cores para combinar com a identidade da sua marca.
+                       As cores principais que definem a identidade visual de todo o sistema.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <ColorPicker label="Primária" value={settings.primaryColor} onChange={e => setSettings(p => ({...p, primaryColor: e.target.value}))}/>
-                    <ColorPicker label="Fundo" value={settings.backgroundColor} onChange={e => setSettings(p => ({...p, backgroundColor: e.target.value}))}/>
-                    <ColorPicker label="Cards/Secundária" value={settings.secondaryColor} onChange={e => setSettings(p => ({...p, secondaryColor: e.target.value}))}/>
-                    <ColorPicker label="Destaque" value={settings.accentColor} onChange={e => setSettings(p => ({...p, accentColor: e.target.value}))}/>
+                <CardContent className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <ColorSwatch label='Primária' color='hsl(var(--primary))' varName='--primary'/>
+                    <ColorSwatch label='Destaque' color='hsl(var(--accent))' varName='--accent'/>
+                    <ColorSwatch label='Fundo' color='hsl(var(--background))' varName='--background'/>
+                    <ColorSwatch label='Card' color='hsl(var(--card))' varName='--card'/>
+                    <ColorSwatch label='Texto' color='hsl(var(--foreground))' varName='--foreground'/>
                 </CardContent>
             </Card>
-
+            
             <Card>
                 <CardHeader>
-                    <CardTitle>Estilos e Aparência</CardTitle>
+                    <CardTitle className='flex items-center gap-2'><Type /> Tipografia</CardTitle>
                     <CardDescription>
-                        Defina o tema da interface e o estilo da barra lateral.
+                        A hierarquia de fontes garante legibilidade e consistência em toda a interface.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <Label>Tema da Interface</Label>
-                        <Select value={settings.theme} onValueChange={(v) => handleSelectChange('theme', v)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione o tema" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="light"><div className="flex items-center gap-2"><Sun className="h-4 w-4"/> Modo Claro</div></SelectItem>
-                                <SelectItem value="dark"><div className="flex items-center gap-2"><Moon className="h-4 w-4"/> Modo Escuro</div></SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Estilo da Barra Lateral</Label>
-                        <Select value={settings.sidebarStyle} onValueChange={(v) => handleSelectChange('sidebarStyle', v)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione o estilo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="sidebar">Padrão</SelectItem>
-                                <SelectItem value="floating">Flutuante</SelectItem>
-                                <SelectItem value="inset">Interno</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+                <CardContent className='space-y-4'>
+                    <h1 className='text-4xl font-bold'>Título Principal (H1)</h1>
+                    <h2 className='text-2xl font-semibold border-b pb-2'>Seção Importante (H2)</h2>
+                    <h3 className='text-xl font-semibold'>Sub-seção (H3)</h3>
+                    <p className='text-base'>Este é um parágrafo de corpo de texto, usado para descrições e conteúdos mais longos. A boa legibilidade é fundamental para a experiência do usuário.</p>
+                    <p className='text-sm text-muted-foreground'>Este é um texto de apoio ou secundário, ideal para legendas, descrições de formulários e informações menos críticas.</p>
                 </CardContent>
-                 <CardFooter className="justify-end gap-2">
+            </Card>
+            
+            <Card>
+                 <CardFooter className="justify-end gap-2 pt-6">
                     <Button variant="ghost" onClick={handleReset}>Redefinir</Button>
                     <Button onClick={handleSave}>Salvar Alterações</Button>
                 </CardFooter>
@@ -197,90 +181,73 @@ export function AppearanceForm() {
         <div className="lg:col-span-1">
             <Card className="sticky top-20">
                 <CardHeader>
-                    <CardTitle>Pré-visualização</CardTitle>
-                    <CardDescription>Veja suas alterações em tempo real.</CardDescription>
+                    <CardTitle className='flex items-center gap-2'><Component /> Componentes da Marca</CardTitle>
+                    <CardDescription>Preview dos componentes principais com o tema aplicado.</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div
-                        className={cn(
-                            'w-full rounded-lg border bg-background overflow-hidden shadow-lg transition-colors',
-                             settings.theme === 'dark' ? 'dark bg-zinc-900' : 'bg-zinc-100'
-                        )}
-                        style={{
-                            backgroundColor: settings.backgroundColor,
-                        }}
-                    >
-                         <div className="flex h-full">
-                            {/* Sidebar Preview */}
-                            <div className="w-16 p-2 flex flex-col items-center gap-2" style={{ backgroundColor: settings.primaryColor }}>
-                                <div className="p-2 rounded-md" style={{ backgroundColor: settings.secondaryColor}}>
-                                    <Car className="size-5" style={{ color: settings.primaryColor }}/>
-                                </div>
-                                <div className="mt-4 space-y-2">
-                                    <div className="p-2 rounded-md" style={{backgroundColor: settings.accentColor}}>
-                                        <LayoutDashboard className="size-5" style={{ color: settings.theme === 'light' ? 'white' : 'black' }}/>
-                                    </div>
-                                    <div className="p-2 rounded-md bg-transparent">
-                                         <MessageSquare className="size-5" style={{ color: settings.secondaryColor }} />
-                                    </div>
-                                </div>
-                            </div>
-                            {/* Main content preview */}
-                            <div className="flex-1">
-                                {/* Header Preview */}
-                                <div className="p-3 border-b flex justify-between items-center" style={{ backgroundColor: settings.secondaryColor, borderColor: 'rgba(0,0,0,0.1)' }}>
-                                    <p className="text-sm font-bold" style={{ color: settings.primaryColor}}>{settings.companyName}</p>
-                                    <div className="size-6 rounded-full bg-muted" />
-                                </div>
-
-                                {/* Dashboard Card Preview */}
-                                <div className="p-4">
-                                    <div className="p-3 rounded-lg shadow-sm" style={{ backgroundColor: settings.secondaryColor }}>
-                                        <div className="flex justify-between items-center">
-                                            <p className="text-xs font-semibold text-card-foreground">Novos Contatos</p>
-                                            <Sparkles className="size-4" style={{color: settings.accentColor}}/>
-                                        </div>
-                                        <p className="text-xl font-bold text-card-foreground mt-1">12</p>
-                                    </div>
-                                </div>
-                                
-                                <Separator className='my-2'/>
-
-                                 {/* Conversation Preview */}
-                                <div className='p-4'>
-                                    <div className="flex items-start gap-2">
-                                        <div className="size-7 rounded-full bg-muted flex-shrink-0" />
-                                        <div className="p-2 rounded-lg max-w-[150px]" style={{backgroundColor: settings.primaryColor}}>
-                                            <p className="text-xs" style={{color: settings.secondaryColor}}>Olá! Gostaria de um orçamento.</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-start justify-end gap-2 mt-2">
-                                        <div className="p-2 rounded-lg bg-muted max-w-[150px]">
-                                            <p className="text-xs text-foreground">Claro! Para qual serviço?</p>
-                                        </div>
-                                        <div className="size-7 rounded-full bg-muted flex-shrink-0" />
-                                    </div>
-                                </div>
-
-                            </div>
-                         </div>
-                    </div>
-                    <p className='text-xs text-muted-foreground mt-4'>
-                        Pré-visualização da assinatura de mensagem automática:
-                    </p>
-                    <div className="rounded-lg bg-muted p-4 mt-2">
-                        <div className="flex items-start gap-3">
-                            <div className="rounded-full flex items-center justify-center size-10" style={{ backgroundColor: settings.primaryColor }}>
-                                <Sparkles className="size-5" style={{ color: settings.secondaryColor }} />
-                            </div>
-                            <div>
-                                <p className="font-bold" style={{ color: settings.primaryColor }}>{settings.companyName}</p>
-                                <div className="mt-1 text-sm text-foreground bg-card p-3 rounded-lg rounded-tl-none shadow">
-                                    Olá! Esta é uma mensagem automática. Em breve um de nossos especialistas irá te atender.
-                                    <p className="text-xs text-muted-foreground mt-2">- {settings.slogan}</p>
-                                </div>
-                            </div>
+                <CardContent className="space-y-6">
+                    <div className='space-y-2'>
+                        <Label>Botões</Label>
+                        <div className='flex flex-wrap gap-2'>
+                            <Button>Primário</Button>
+                            <Button variant='secondary'>Secundário</Button>
+                            <Button variant='destructive'>Destrutivo</Button>
+                            <Button variant='outline'>Outline</Button>
                         </div>
+                    </div>
+                     <div className='space-y-2'>
+                        <Label>Badges de Status</Label>
+                        <div className='flex flex-wrap gap-2'>
+                            <Badge>Padrão</Badge>
+                            <Badge variant='secondary'>Sucesso</Badge>
+                            <Badge variant='destructive'>Erro</Badge>
+                            <Badge variant='outline'>Aviso</Badge>
+                        </div>
+                    </div>
+                     <div className='space-y-2'>
+                        <Label htmlFor='preview-input'>Input de Formulário</Label>
+                        <Input id='preview-input' placeholder='ex: contato@renascer.ai' />
+                    </div>
+                     <div className='space-y-2'>
+                        <Label>Alertas de Sistema</Label>
+                        <div className='space-y-2'>
+                            <Alert>
+                                <Info className="h-4 w-4" />
+                                <AlertTitle>Aviso</AlertTitle>
+                                <AlertDescription>
+                                    Este é um aviso informativo para o usuário.
+                                </AlertDescription>
+                            </Alert>
+                             <Alert variant="destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>Erro Crítico</AlertTitle>
+                                <AlertDescription>
+                                   Esta ação não pode ser desfeita.
+                                </AlertDescription>
+                            </Alert>
+                        </div>
+                    </div>
+                    <div className='space-y-2'>
+                         <Label>Exemplo de Tabela</Label>
+                         <div className='border rounded-lg'>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Cliente</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow>
+                                        <TableCell className='font-medium'>Ana Silva</TableCell>
+                                        <TableCell><Badge variant='secondary'>Confirmada</Badge></TableCell>
+                                    </TableRow>
+                                     <TableRow>
+                                        <TableCell className='font-medium'>Bruno Costa</TableCell>
+                                        <TableCell><Badge>Pendente</Badge></TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                         </div>
                     </div>
                 </CardContent>
             </Card>
