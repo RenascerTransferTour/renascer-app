@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { UserCircle, Bot } from "lucide-react"
 import { Skeleton } from '@/components/ui/skeleton';
+import { getStatusBadgeClasses } from '@/lib/utils';
 
 type DealWithContact = PipelineDeal & { contact: Contact, ownerName: string };
 
@@ -52,10 +53,10 @@ const DealCard = ({ deal }: { deal: DealWithContact }) => {
                 <span>{deal.ownerName}</span>
             </Badge>
             {deal.ownerId === 'IA' && ['new-lead', 'qualified'].includes(deal.pipelineStage) && (
-              <Badge variant="outline" className="font-normal border-blue-200 text-blue-800 bg-blue-50">Lead qualificado pela IA</Badge>
+              <Badge className={cn(getStatusBadgeClasses('new-lead'), 'font-normal')}>Lead qualificado pela IA</Badge>
             )}
              {deal.pipelineStage === 'aguardando fechamento' && (
-              <Badge variant="outline" className="font-normal border-orange-200 text-orange-800 bg-orange-50">Aguardando ação da Cláudia</Badge>
+              <Badge className={cn(getStatusBadgeClasses('aguardando humano'), 'font-normal')}>Aguardando ação da Cláudia</Badge>
             )}
         </div>
       </CardContent>
