@@ -312,7 +312,7 @@ export function AiSettingsForm() {
                     <UserCheck className="h-4 w-4" />
                     <AlertTitle>Finalização Manual Obrigatória</AlertTitle>
                     <AlertDescription>
-                        Todas as ações comerciais, como orçamentos e reservas, devem ser revisadas e finalizadas manualmente pela Cláudia.
+                        Todas as ações comerciais, como orçamentos e reservas, devem ser revisadas e finalizadas manually pela Cláudia.
                     </AlertDescription>
                 </Alert>
              </CardFooter>
@@ -360,13 +360,13 @@ export function AiSettingsForm() {
                                 <p className="text-sm text-muted-foreground">A ativação comercial da IA só poderá ser liberada com autorização explícita.</p>
                             </div>
                             <Tooltip>
-                                <TooltipTrigger>
-                                    <div className="cursor-not-allowed">
+                                <TooltipTrigger asChild>
+                                    <span className="inline-flex">
                                         <Button disabled>
                                             <KeyRound className="mr-2"/>
                                             Autorizar Ativação
                                         </Button>
-                                    </div>
+                                    </span>
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p>A ativação real será configurada futuramente no backend.</p>
