@@ -3,6 +3,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,12 +27,11 @@ import {
     CardTitle,
     CardFooter,
   } from "@/components/ui/card"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type TestAiChatPromptOutput } from "@/ai/flows/test-ai-chat-prompt-flow"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle, ShieldOff, Check, Ban } from "lucide-react"
+import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle, ShieldOff, Check, Ban, UserCheck } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Badge } from "./ui/badge"
@@ -43,17 +43,18 @@ import { getStatusBadgeClasses } from "@/lib/utils"
 
 const flowPermissionsData: {id: AiFlowPermission['flowName']; label: string; description: string;}[] = [
     { id: 'welcome', label: 'Boas-Vindas', description: 'Permite que a IA envie a primeira mensagem de boas-vindas.' },
-    { id: 'qualification', label: 'Qualificação', description: 'Permite que a IA faça perguntas para coletar dados do cliente.' },
+    { id: 'qualification', label: 'Qualificação de Leads', description: 'Permite que a IA faça perguntas para coletar dados do cliente.' },
     { id: 'summarization', label: 'Geração de Resumo', description: 'Permite que a IA gere resumos de conversas.' },
     { id: 'faq', label: 'Respostas Frequentes', description: 'Permite que a IA responda perguntas gerais da base de conhecimento.' },
-    { id: 'quoteCreation', label: 'Criação de Orçamento', description: 'Permite que a IA crie rascunhos de orçamentos.' },
-    { id: 'bookingCreation', label: 'Criação de Reserva', description: 'Permite que a IA crie rascunhos de reservas.' },
+    { id: 'quoteCreation', label: 'Criação de Orçamento', description: 'Permite que a IA crie rascunhos de orçamentos para revisão.' },
+    { id: 'bookingCreation', label: 'Criação de Reserva', description: 'Permite que a IA crie rascunhos de reservas para revisão.' },
     { id: 'crmUpdate', label: 'Avanço no CRM', description: 'Permite que a IA mova cards entre etapas no pipeline.' },
-    { id: 'saleClosing', label: 'Fechamento de Venda', description: 'Permite que a IA marque um negócio como "Fechado".' },
-    { id: 'postSale', label: 'Pós-Venda', description: 'Permite que a IA envie mensagens de acompanhamento.' },
+    { id: 'saleClosing', label: 'Fechamento de Venda', description: 'Permite que a IA marque um negócio como "Ganho" e finalize a venda.' },
+    { id: 'postSale', label: 'Pós-Venda', description: 'Permite que a IA envie mensagens de acompanhamento e feedback.' },
 ];
 
-const allowedNow = ['welcome', 'qualification', 'faq', 'summarization', 'quoteCreation', 'bookingCreation', 'crmUpdate'];
+const allowedNow = ['welcome', 'qualification', 'summarization', 'faq', 'quoteCreation', 'bookingCreation', 'crmUpdate'];
+
 
 export function AiSettingsForm() {
     const [settings, setSettings] = useState<AiSettings | null>(null);
@@ -255,13 +256,6 @@ export function AiSettingsForm() {
         setPermissions(prev => prev.map(p => p.flowName === flowName ? { ...p, [field]: value } : p));
     };
 
-    const modeDescriptions: Record<string, string> = {
-        'off': 'A IA está completamente desligada e não interagirá com os clientes.',
-        'assisted': 'IA coleta dados iniciais e então transfere para um humano para o orçamento. (Padrão)',
-        'partial_autonomous': 'IA pode criar rascunhos de orçamentos e reservas, mas um humano deve aprovar.',
-        'full_autonomous': 'A IA pode fechar vendas e confirmar reservas de forma autônoma. (Requer cuidado)',
-    };
-
     const openaiStatus = providerStatus.find(p => p.id === 'openai');
     const geminiStatus = providerStatus.find(p => p.id === 'gemini');
 
@@ -284,7 +278,7 @@ export function AiSettingsForm() {
             <CardHeader>
                 <CardTitle>Status Geral da IA</CardTitle>
                 <CardDescription>
-                    Visão geral do estado atual da inteligência artificial no sistema.
+                    Visão geral do estado atual da inteligência artificial no sistema. A IA pode analisar e sugerir, mas não finaliza ações automaticamente.
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -297,7 +291,7 @@ export function AiSettingsForm() {
                         </Badge>
                     </div>
                      <p className="text-sm text-muted-foreground pt-1">
-                        A IA pode analisar, sugerir e preparar rascunhos, mas não finaliza ações automaticamente.
+                        A IA prepara rascunhos e sugestões para aprovação humana.
                     </p>
                 </div>
                 <div className="flex flex-col justify-center space-y-2 p-4 border rounded-lg bg-background">
@@ -309,7 +303,7 @@ export function AiSettingsForm() {
                         </Badge>
                      </div>
                     <p className="text-sm text-muted-foreground pt-1">
-                        A finalização automática de vendas e reservas está desabilitada.
+                        A finalização automática de vendas está desabilitada.
                     </p>
                 </div>
             </CardContent>
@@ -352,18 +346,18 @@ export function AiSettingsForm() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Chave de Ativação Comercial</CardTitle>
-                        <CardDescription>Controle a capacidade da IA de executar ações comerciais de forma autônoma.</CardDescription>
+                        <CardDescription>Controle a capacidade da IA de executar ações comerciais de forma autônoma. No momento, o sistema está em modo simulado.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                              <div className="space-y-0.5">
                                 <Label className="text-base flex items-center gap-2">
-                                     <Badge className={cn(getStatusBadgeClasses(settings.commercialActivationKey === 'authorized' ? 'connected' : 'disconnected'))}>
-                                        {settings.commercialActivationKey === 'authorized' ? 'Ativada' : 'Desativada'}
+                                     <Badge className={cn(getStatusBadgeClasses('disconnected'))}>
+                                        Desativada
                                     </Badge>
                                     <span>Ativação Comercial Autônoma</span>
                                 </Label>
-                                <p className="text-sm text-muted-foreground">A ativação comercial da IA só pode ser liberada com autorização explícita.</p>
+                                <p className="text-sm text-muted-foreground">A ativação comercial da IA só poderá ser liberada com autorização explícita.</p>
                             </div>
                             <Tooltip>
                                 <TooltipTrigger>
@@ -380,13 +374,20 @@ export function AiSettingsForm() {
                             </Tooltip>
                         </div>
                     </CardContent>
+                     <CardFooter>
+                        <Alert variant="destructive">
+                            <AlertTriangle className="h-4 w-4"/>
+                            <AlertTitle>Não Automatizado</AlertTitle>
+                            <AlertDescription>O fechamento automático de vendas e a confirmação de reservas não estão habilitados. Todas as ações comerciais são manuais.</AlertDescription>
+                        </Alert>
+                    </CardFooter>
                 </Card>
             </div>
             <div className="lg:col-span-1">
                  <Card className="h-full">
                     <CardHeader>
                         <CardTitle>Permissões da IA</CardTitle>
-                        <CardDescription>Ações que a IA pode ou não executar no modo assistente atual.</CardDescription>
+                        <CardDescription>Ações que a IA pode (e não pode) executar no modo assistente atual.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
@@ -484,58 +485,11 @@ export function AiSettingsForm() {
                 </Button>
             </CardFooter>
         </Card>
-      
-        <Card>
-            <CardHeader><CardTitle>Regras de Negócio e Roteamento</CardTitle><CardDescription>Defina quando a IA deve transferir o atendimento e quais ações ela pode tomar.</CardDescription></CardHeader>
-            <CardContent className="space-y-6">
-                <div className="space-y-4">
-                    <div className="flex flex-row items-center justify-between rounded-lg border p-4">
-                        <div className="space-y-0.5">
-                            <Label className="text-base">Exigir Aprovação Humana</Label>
-                            <p className="text-sm text-muted-foreground">Força a IA a encaminhar ações comerciais (orçamentos, reservas) para revisão manual. (Recomendado)</p>
-                        </div>
-                        <Switch checked={settings.requireHumanApproval} onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, requireHumanApproval: checked }) : null)} aria-label="Exigir Aprovação Humana" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="human-fallback">Responsável Humano (Fallback)</Label>
-                        <Input id="human-fallback" value={settings.fallbackHumanName} onChange={(e) => setSettings((s) => s ? ({ ...s, fallbackHumanName: e.target.value }) : null)} />
-                        <p className="text-sm text-muted-foreground">Nome do humano que receberá as solicitações que a IA não pode concluir.</p>
-                    </div>
-                </div>
-                <Separator/>
-                <div className="space-y-4">
-                    <Label className="font-semibold flex items-center gap-2"><Workflow/> Permissões de Fluxo (Flows)</Label>
-                    <div className="rounded-md border">
-                       {flowPermissionsData.map((perm) => {
-                            const currentPerm = permissions.find(p => p.flowName === perm.id);
-                            if (!currentPerm) return null;
-                            return (
-                                <div key={perm.id} className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 sm:space-x-2 p-4 border-b last:border-b-0">
-                                    <div className="space-y-0.5 flex-1"><Label className='font-normal'>{perm.label}</Label><p className="text-xs text-muted-foreground">{perm.description}</p></div>
-                                    <div className="flex items-center gap-4">
-                                        <Select value={currentPerm.provider} onValueChange={(v) => handlePermissionChange(perm.id, 'provider', v as any)}>
-                                            <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
-                                            <SelectContent><SelectItem value="automatic">Automático</SelectItem><SelectItem value="gemini">Gemini</SelectItem><SelectItem value="openai">OpenAI</SelectItem></SelectContent>
-                                        </Select>
-                                        <Switch checked={currentPerm.enabled} onCheckedChange={(c) => handlePermissionChange(perm.id, 'enabled', c)} />
-                                    </div>
-                                </div>
-                            )
-                        })}
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="forbidden-words">Palavras-chave para Handoff Imediato (separadas por vírgula)</Label>
-                    <Input id="forbidden-words" defaultValue="falar com atendente, falar com claudia, reclamar, problema, procon" />
-                    <p className="text-sm text-muted-foreground">Se o cliente usar uma dessas palavras, a IA irá transferir o atendimento imediatamente.</p>
-                </div>
-            </CardContent>
-        </Card>
 
         <Card>
             <CardHeader>
                 <CardTitle>Provedores de IA e Credenciais</CardTitle>
-                <CardDescription>A configuração real das chaves de API é feita no ambiente do servidor, não aqui.</CardDescription>
+                <CardDescription>A configuração real das chaves de API é feita no ambiente do servidor. Um provedor só aparecerá como "Configurado" se a chave correspondente estiver presente no servidor.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                  <div className="flex flex-col sm:flex-row sm:items-end gap-4">
@@ -572,7 +526,7 @@ export function AiSettingsForm() {
                                 <Tooltip>
                                     <TooltipTrigger>
                                         <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn('gap-1.5', getStatusBadgeClasses(p.status))}>
-                                            {p.configured ? <CheckCircle className="size-3" /> : <HelpCircle className="size-3" />}
+                                            {p.configured ? <CheckCircle className="size-3" /> : <XCircle className="size-3" />}
                                             {p.status}
                                         </Badge>
                                     </TooltipTrigger>
@@ -605,3 +559,5 @@ export function AiSettingsForm() {
     </TooltipProvider>
   )
 }
+
+    
