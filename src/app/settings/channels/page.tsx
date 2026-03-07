@@ -88,6 +88,8 @@ export default function ChannelsPage() {
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [deviceName, setDeviceName] = useState('');
+    const [inputDeviceName, setInputDeviceName] = useState('');
     const { toast } = useToast();
 
     useEffect(() => {
@@ -137,6 +139,14 @@ export default function ChannelsPage() {
         } finally {
             setSaving(false);
         }
+    };
+    
+    const handleSaveDeviceName = () => {
+        setDeviceName(inputDeviceName);
+        toast({
+            title: "Nome do dispositivo salvo",
+            description: "A identificação local foi atualizada (apenas para esta sessão).",
+        });
     };
 
     const mockHistory = [
@@ -232,7 +242,7 @@ export default function ChannelsPage() {
                                     <Button variant="destructive" disabled>Desconectar</Button>
                                 </div>
                             </TabsContent>
-                            <TabsContent value="qrcode" className="px-6 pb-6 space-y-4">
+                            <TabsContent value="qrcode" className="px-6 pb-6 space-y-6">
                                 <Alert variant="default">
                                     <AlertTriangle className="h-4 w-4" />
                                     <AlertTitle>Modo Alternativo (Não recomendado para produção)</AlertTitle>
@@ -240,14 +250,18 @@ export default function ChannelsPage() {
                                        Este modo usa a conexão do seu celular e pode ser instável, não sendo ideal para operações 24/7. Use a API Oficial para produção em nuvem.
                                     </AlertDescription>
                                 </Alert>
-                                <div className="flex flex-col md:flex-row items-center gap-6">
-                                    <div className="space-y-4 text-center md:text-left">
-                                        <div className="flex items-center justify-center md:justify-start gap-2">
-                                            <span>Status da Sessão:</span>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium">Status da Sessão:</span>
                                             {waChannel && <StatusBadge status={waChannel.status} />}
                                         </div>
-                                        <p className="text-sm text-muted-foreground max-w-md">Para conectar, gere um QR code e escaneie com seu celular no WhatsApp em <span className="font-semibold">Aparelhos Conectados &gt; Conectar um Aparelho</span>.</p>
-                                        <div className="flex gap-2 justify-center md:justify-start">
+                                         <div className="flex items-center gap-2">
+                                            <span className="text-sm font-medium">Dispositivo:</span>
+                                            <span className="text-sm font-semibold">{deviceName || "Ainda não identificado"}</span>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground">Para conectar, gere um QR code e escaneie com seu celular no WhatsApp em <span className="font-semibold">Aparelhos Conectados &gt; Conectar um Aparelho</span>.</p>
+                                        <div className="flex gap-2">
                                             <Dialog>
                                                 <DialogTrigger asChild>
                                                     <Button type="button">
@@ -275,6 +289,21 @@ export default function ChannelsPage() {
                                             </Dialog>
                                             <Button variant="destructive" disabled>Desconectar Sessão</Button>
                                         </div>
+                                    </div>
+                                    
+                                    <div className="space-y-2 rounded-lg border p-4">
+                                        <Label htmlFor="device-name" className="font-semibold">Nome do dispositivo</Label>
+                                        <p className="text-xs text-muted-foreground">Identificação local do dispositivo conectado para sua referência.</p>
+                                        <Input 
+                                            id="device-name" 
+                                            placeholder="Ex.: WhatsApp Comercial Recepção" 
+                                            value={inputDeviceName}
+                                            onChange={(e) => setInputDeviceName(e.target.value)}
+                                        />
+                                        <Button type="button" size="sm" onClick={handleSaveDeviceName}>
+                                            <Save className="mr-2 h-3 w-3" />
+                                            Salvar nome
+                                        </Button>
                                     </div>
                                 </div>
                             </TabsContent>
