@@ -232,11 +232,16 @@ export interface KnowledgeBaseArticle {
 
 export interface AuditLog {
   id: string; // UUID
+  timestamp: string; // ISO 8601
+  actor: string; // Name of the human, AI, or system component
   actorType: 'human' | 'ai' | 'system';
-  actorName: string;
-  action: string;
+  channel?: string;
   entityType: string;
   entityId: string;
-  details: Record<string, any>; // JSONB
-  createdAt: string; // ISO 8601
+  eventType: string; // The action performed
+  before?: Record<string, any>; // JSONB: State of the entity before the change
+  after?: Record<string, any>; // JSONB: State of the entity after the change
+  notes?: string;
+  source?: string; // Where the action was initiated from (e.g., 'Inbox')
+  approvedBy?: string; // ID of the user who approved
 }
