@@ -59,6 +59,7 @@ export function AiSettingsForm() {
     const [providerStatus, setProviderStatus] = useState<ProviderStatus[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
 
     const [draftPrompt, setDraftPrompt] = useState<AiPrompt | null>(null);
     const [publishedPrompt, setPublishedPrompt] = useState<AiPrompt | null>(null);
@@ -153,27 +154,91 @@ export function AiSettingsForm() {
     
     const handleSaveAll = async () => {
         setSaving(true);
-        try {
-            const [settingsRes, permsRes] = await Promise.all([
-                fetch('/api/settings/ai', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(settings)
-                }),
-                fetch('/api/settings/ai/permissions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(permissions)
-                })
-            ]);
-            if (!settingsRes.ok || !permsRes.ok) {
-                throw new Error("Uma ou mais configurações falharam ao salvar.");
+        const results = await Promise.allSettled([
+            fetch('/api/settings/ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings),
+            }).then(res => {
+                if (!res.ok) return Promise.reject({ name: 'Configurações Gerais' });
+                return res.json();
+            }),
+            fetch('/api/settings/ai/permissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(permissions),
+            }).then(res => {
+                if (!res.ok) return Promise.reject({ name: 'Permissões de Fluxo' });
+                return res.json();
+            }),
+        ]);
+    
+        let allSucceeded = true;
+    
+        results.forEach((result, index) => {
+            const sectionName = index === 0 ? 'Configurações Gerais' : 'Permissões de Fluxo';
+            if (result.status === 'fulfilled') {
+                toast({
+                    title: `Sucesso ao salvar ${sectionName}`,
+                    description: `As configurações de ${sectionName.toLowerCase()} foram atualizadas.`,
+                });
+            } else {
+                allSucceeded = false;
+                toast({
+                    variant: 'destructive',
+                    title: `Erro ao salvar ${sectionName}`,
+                    description: `Não foi possível atualizar ${sectionName.toLowerCase()}.`,
+                });
             }
-            toast({ title: "Sucesso!", description: "Todas as configurações de IA foram salvas." });
+        });
+    
+        if (allSucceeded) {
+            toast({
+                title: 'Todas as configurações foram salvas!',
+                className: 'bg-green-100 dark:bg-green-900',
+            });
+        }
+    
+        setSaving(false);
+    };
+
+    const handlePublishPrompt = async () => {
+        if (!draftPrompt) return;
+        setIsPublishing(true);
+        try {
+            // First, save the current draft content.
+            await fetch('/api/settings/prompts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(draftPrompt),
+            });
+    
+            // Then, trigger the publish action.
+            const publishRes = await fetch('/api/settings/prompts/publish', {
+                method: 'POST',
+            });
+    
+            if (!publishRes.ok) {
+                const errorData = await publishRes.json();
+                throw new Error(errorData.error || 'Falha ao publicar o prompt.');
+            }
+    
+            toast({
+                title: "Sucesso!",
+                description: "O novo prompt foi publicado e está ativo no sistema.",
+                className: 'bg-green-100 dark:bg-green-900',
+            });
+    
+            // Refetch all data to update the UI with the new state.
+            await fetchData();
         } catch (error) {
-            toast({ variant: "destructive", title: "Erro ao Salvar", description: error instanceof Error ? error.message : "Ocorreu um erro." });
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Publicar',
+                description: error instanceof Error ? error.message : 'Ocorreu um erro inesperado.',
+            });
         } finally {
-            setSaving(false);
+            setIsPublishing(false);
         }
     };
 
@@ -298,24 +363,24 @@ export function AiSettingsForm() {
                                     <CardTitle className="text-lg">{p.name}</CardTitle>
                                     <CardDescription>{p.model}</CardDescription>
                                 </div>
-                                <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn(p.configured ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
+                                <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn(p.configured ? 'bg-green-100 text-green-800 dark:bg-green-900/50' : 'bg-muted text-muted-foreground')}>
                                     {p.status}
                                 </Badge>
                             </CardHeader>
-                            <CardContent className="space-y-2">
+                            <CardContent className="space-y-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> {p.id === 'openai' ? 'OPENAI_API_KEY' : 'GEMINI_API_KEY'}</Label>
+                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> API Key</Label>
                                     <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
                                 </div>
-                                <p className="text-xs text-muted-foreground">{p.message}</p>
+                                <Alert variant="default" className="text-xs">
+                                     <Server className="h-4 w-4" />
+                                     <AlertTitle className="text-xs font-semibold">Aviso de Segurança</AlertTitle>
+                                     <AlertDescription>{p.message}</AlertDescription>
+                                </Alert>
                             </CardContent>
                         </Card>
                     ))}
                 </div>
-                 <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" /><AlertTitle>Aviso de Segurança</AlertTitle>
-                    <AlertDescription>As chaves de API reais devem ser armazenadas com segurança no backend (ex: environment variables) e nunca expostas no código do front-end. Estes campos são apenas representações visuais.</AlertDescription>
-                </Alert>
             </CardContent>
         </Card>
 
@@ -380,7 +445,12 @@ export function AiSettingsForm() {
                     </Dialog>
                 </div>
             </CardContent>
-            <CardFooter className="justify-end"><Button>Salvar e Publicar Prompt</Button></CardFooter>
+            <CardFooter className="justify-end">
+                <Button onClick={handlePublishPrompt} disabled={isPublishing || !draftPrompt}>
+                    {isPublishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Salvar e Publicar Prompt
+                </Button>
+            </CardFooter>
         </Card>
       
         <Card>

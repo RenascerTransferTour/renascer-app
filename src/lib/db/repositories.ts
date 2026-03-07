@@ -43,6 +43,9 @@ const batchUpdate = <T extends { id: string }>(table: T[], items: T[]): T[] => {
         const index = table.findIndex(i => i.id === item.id);
         if (index !== -1) {
             table[index] = { ...table[index], ...item };
+        } else {
+            // Optionally create if it doesn't exist, though batch update usually implies existence.
+            table.push(item);
         }
     });
     return items;
@@ -125,6 +128,33 @@ export const aiPrompts = {
     findPublished: () => db.aiPrompts.find(p => p.status === 'published'),
     findDraft: () => db.aiPrompts.find(p => p.status === 'draft'),
     update: (prompt: AiPrompt) => createOrUpdate(db.aiPrompts, prompt),
+    publishDraft: () => {
+        const draftIndex = db.aiPrompts.findIndex(p => p.status === 'draft');
+        if (draftIndex === -1) return null; // No draft to publish
+
+        const draft = db.aiPrompts[draftIndex];
+
+        const publishedIndex = db.aiPrompts.findIndex(p => p.status === 'published');
+        if (publishedIndex !== -1) {
+            db.aiPrompts[publishedIndex].status = 'archived';
+        }
+
+        db.aiPrompts[draftIndex].status = 'published';
+        db.aiPrompts[draftIndex].versionName = `v${Date.now()} - Published`;
+        
+        // Create a new draft based on the just-published one
+        const newDraft: AiPrompt = {
+            ...draft,
+            id: `prompt-draft-${Date.now()}`,
+            status: 'draft',
+            versionName: `vNext - Draft`,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        };
+        db.aiPrompts.push(newDraft);
+
+        return { published: db.aiPrompts[draftIndex], newDraft: newDraft };
+    }
 };
 
 export const knowledgeBase = {
