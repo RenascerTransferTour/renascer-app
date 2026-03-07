@@ -1,0 +1,308 @@
+# GraphQL Schema for Renascer Transfer Tour
+# Defines the data model for Firebase Data Connect (PostgreSQL).
+
+"""
+Represents an authenticated user of the system (e.g., an employee).
+This will be linked to Firebase Authentication.
+"""
+type Users @table(name: "users") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  uid: String! @column(name: "uid", unique: true) # Firebase Auth UID
+  fullName: String! @column(name: "full_name")
+  email: String! @column(name: "email", unique: true)
+  avatarUrl: String @column(name: "avatar_url")
+  isActive: Boolean! @column(name: "is_active", default: "true")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  roles: [Roles!]! @relation(
+    through: "UserRoles", 
+    from: "userId", 
+    to: "roleId"
+  )
+}
+
+"""
+Defines the roles available in the system (e.g., admin, agent).
+"""
+type Roles @table(name: "roles") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  name: String! @column(name: "name", unique: true) # E.g., 'admin', 'agent'
+  description: String @column(name: "description")
+  users: [Users!]! @relation(
+    through: "UserRoles",
+    from: "roleId",
+    to: "userId"
+  )
+}
+
+"""
+Join table for the many-to-many relationship between users and roles.
+"""
+type UserRoles @table(name: "user_roles") {
+  userId: ID! @column(name: "user_id")
+  user: Users! @relation(on: "userId")
+  roleId: ID! @column(name: "role_id")
+  role: Roles! @relation(on: "roleId")
+}
+
+"""
+Represents a customer or business contact.
+"""
+type Contacts @table(name: "contacts") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  fullName: String! @column(name: "full_name")
+  phone: String @column(name: "phone")
+  email: String @column(name: "email")
+  originChannel: String @column(name: "origin_channel")
+  notes: String @column(name: "notes")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  deals: [Deals!]! @relation(fk: "contactId")
+  conversations: [Conversations!]! @relation(fk: "contactId")
+}
+
+"""
+Represents a sales opportunity or lead, from initial contact to close.
+"""
+type Deals @table(name: "deals") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  title: String! @column(name: "title")
+  stage: DealStage! @column(name: "stage", default: "new")
+  estimatedValue: Float @column(name: "estimated_value")
+  nextAction: String @column(name: "next_action")
+  contactId: ID! @column(name: "contact_id")
+  contact: Contacts! @relation(on: "contactId")
+  assignedToId: ID @column(name: "assigned_to_id")
+  assignedTo: Users @relation(on: "assignedToId")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  quote: Quotes @relation(fk: "dealId")
+}
+
+"""
+Represents a single conversation with a contact on a specific channel.
+"""
+type Conversations @table(name: "conversations") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  contactId: ID! @column(name: "contact_id")
+  contact: Contacts! @relation(on: "contactId")
+  channelConnectionId: ID! @column(name: "channel_connection_id")
+  # channelConnection: ChannelConnections! @relation(on: "channelConnectionId") # Add when ChannelConnections is defined
+  status: ConversationStatus! @column(name: "status", default: "open")
+  assignedToId: ID @column(name: "assigned_to_id")
+  assignedTo: Users @relation(on: "assignedToId")
+  isAiActive: Boolean! @column(name: "is_ai_active", default: "true")
+  lastMessageSummary: String @column(name: "last_message_summary")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  messages: [Messages!]! @relation(fk: "conversationId")
+}
+
+"""
+Represents a single message within a conversation.
+"""
+type Messages @table(name: "messages") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  conversationId: ID! @column(name: "conversation_id")
+  conversation: Conversations! @relation(on: "conversationId")
+  senderType: MessageSenderType! @column(name: "sender_type")
+  senderId: String # Can be user ID, contact ID, or 'system'/'ai'
+  content: String! @column(name: "content")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+}
+
+"""
+Represents a price quote for a service.
+"""
+type Quotes @table(name: "quotes") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  dealId: ID! @column(name: "deal_id", unique: true)
+  deal: Deals! @relation(on: "dealId")
+  origin: String @column(name: "origin")
+  destination: String @column(name: "destination")
+  serviceDate: Timestamp @column(name: "service_date")
+  passengers: Int @column(name: "passengers")
+  luggageDetails: String @column(name: "luggage_details")
+  status: QuoteStatus! @column(name: "status", default: "draft")
+  aiSuggestedValue: Float @column(name: "ai_suggested_value")
+  finalValue: Float @column(name: "final_value")
+  approvedById: ID @column(name: "approved_by_id")
+  approvedBy: Users @relation(on: "approvedById")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  reservation: Reservations @relation(fk: "quoteId")
+}
+
+"""
+Represents a confirmed or pending service reservation.
+"""
+type Reservations @table(name: "reservations") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  quoteId: ID! @column(name: "quote_id", unique: true)
+  quote: Quotes! @relation(on: "quoteId")
+  status: ReservationStatus! @column(name: "status", default: "pending")
+  serviceDate: Timestamp! @column(name: "service_date")
+  confirmedById: ID @column(name: "confirmed_by_id")
+  confirmedBy: Users @relation(on: "confirmedById")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  calendarEvent: CalendarEvents @relation(fk: "reservationId")
+}
+
+"""
+Represents an event in the operational calendar.
+"""
+type CalendarEvents @table(name: "calendar_events") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  reservationId: ID @column(name: "reservation_id", unique: true)
+  reservation: Reservations @relation(on: "reservationId")
+  title: String! @column(name: "title")
+  startTime: Timestamp! @column(name: "start_time")
+  endTime: Timestamp! @column(name: "end_time")
+  assignedToId: ID @column(name: "assigned_to_id")
+  assignedTo: Users @relation(on: "assignedToId")
+  status: CalendarEventStatus! @column(name: "status", default: "tentative")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+}
+
+"""
+Logs important actions taken within the system for auditing purposes.
+"""
+type AuditLogs @table(name: "audit_logs") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  actorType: String! @column(name: "actor_type") # 'user', 'ai', 'system'
+  actorName: String @column(name: "actor_name")
+  eventType: String! @column(name: "event_type")
+  entityType: String! @column(name: "entity_type") # 'deal', 'quote', etc.
+  entityId: String! @column(name: "entity_id")
+  beforeState: JSON @column(name: "before_state")
+  afterState: JSON @column(name: "after_state")
+  notes: String @column(name: "notes")
+  source: String @column(name: "source") # 'app', 'api', 'ai_flow'
+  timestamp: Timestamp! @column(name: "timestamp", default: "now()")
+}
+
+"""
+Stores articles for the internal knowledge base.
+"""
+type KnowledgeBaseArticles @table(name: "knowledge_base_articles") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  title: String! @column(name: "title")
+  category: String @column(name: "category")
+  summary: String @column(name: "summary")
+  content: String! @column(name: "content")
+  status: ArticleStatus! @column(name: "status", default: "draft")
+  isEligibleForAI: Boolean! @column(name: "is_eligible_for_ai", default: "false")
+  authorId: ID! @column(name: "author_id")
+  author: Users! @relation(on: "authorId")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+}
+
+"""
+Holds global settings for the AI assistant.
+Intended to be a singleton table with only one row.
+"""
+type AISettings @table(name: "ai_settings") {
+  id: ID! @column(name: "id", primaryKey: true, default: "1")
+  mode: AIMode! @column(name: "mode", default: "assisted")
+  commercialActivationStatus: ActivationStatus! @column(name: "commercial_activation_status", default: "unauthorized")
+  manualFinalizationRequired: Boolean! @column(name: "manual_finalization_required", default: "true")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+}
+
+"""
+Represents a connection to an external communication channel (e.g., a specific WhatsApp number).
+"""
+type ChannelConnections @table(name: "channel_connections") {
+  id: ID! @column(name: "id", primaryKey: true, default: "gen_random_uuid()")
+  type: ChannelType! @column(name: "type")
+  displayName: String! @column(name: "display_name")
+  status: ChannelStatus! @column(name: "status", default: "not_configured")
+  isAiEnabled: Boolean! @column(name: "is_ai_enabled", default: "true")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+}
+
+# --- ENUMS ---
+
+enum DealStage {
+  new
+  qualified
+  quote_sent
+  negotiation
+  awaiting_closure
+  won
+  lost
+  canceled
+}
+
+enum ConversationStatus {
+  open
+  closed
+  pending_human
+  pending_ai
+}
+
+enum MessageSenderType {
+  user
+  agent
+  ai
+  system
+}
+
+enum QuoteStatus {
+  draft
+  awaiting_approval
+  sent
+  approved
+  rejected
+  canceled
+}
+
+enum ReservationStatus {
+  pending
+  confirmed
+  rescheduled
+  completed
+  canceled
+}
+
+enum CalendarEventStatus {
+  tentative
+  confirmed
+  canceled
+}
+
+enum ArticleStatus {
+  draft
+  in_review
+  published
+  archived
+}
+
+enum AIMode {
+  off
+  assisted
+  semi_autonomous
+}
+
+enum ActivationStatus {
+  unauthorized
+  authorized
+}
+
+enum ChannelType {
+  whatsapp
+  instagram
+  facebook
+  website
+}
+
+enum ChannelStatus {
+  not_configured
+  connected
+  disconnected
+  failing
+  mock
+}
