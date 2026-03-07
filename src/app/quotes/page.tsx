@@ -13,12 +13,30 @@ import {
   import { Button } from "@/components/ui/button"
   import { format, parseISO } from 'date-fns';
   import { ptBR } from 'date-fns/locale';
-  import { PlusCircle } from "lucide-react"
-  import { getStatusBadgeClasses } from "@/lib/utils"
+  import { PlusCircle, Bot } from "lucide-react"
+  import { getStatusBadgeClasses, cn } from "@/lib/utils"
   import type { Quote, Contact } from '@/lib/db/data-model';
   import { Skeleton } from '@/components/ui/skeleton';
 
   type QuoteWithContact = Quote & { contact?: Contact, ownerName?: string };
+
+  const StatusDisplay = ({ quote }: { quote: QuoteWithContact }) => {
+    if (quote.status === 'rascunho' && quote.ownerId === 'IA') {
+        return (
+            <Badge className={cn(getStatusBadgeClasses('rascunho'), 'gap-1.5')}>
+                <Bot className="h-3.5 w-3.5" />
+                Rascunho gerado pela IA
+            </Badge>
+        );
+    }
+
+    const statusText = quote.status.replace('-', ' ');
+    if (quote.status === 'aguardando aprovação') {
+        return <Badge className={cn(getStatusBadgeClasses(quote.status), 'capitalize')}>Aguardando aprovação da Cláudia</Badge>;
+    }
+    
+    return <Badge className={cn(getStatusBadgeClasses(quote.status), 'capitalize')}>{statusText}</Badge>;
+};
 
   export default function QuotesPage() {
     const [quotes, setQuotes] = useState<QuoteWithContact[]>([]);
@@ -45,7 +63,7 @@ import {
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Gestão de Orçamentos</h1>
                 <p className="text-muted-foreground">
-                Acompanhe todos os orçamentos enviados e seus status.
+                Acompanhe todos os orçamentos. A finalização e o envio ao cliente continuam sendo um processo manual.
                 </p>
             </div>
             <Button>
@@ -74,8 +92,8 @@ import {
                             <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                             <TableCell><Skeleton className="h-5 w-48" /></TableCell>
                             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-36" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-28" /></TableCell>
                             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                             <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                         </TableRow>
@@ -87,10 +105,10 @@ import {
                         <TableCell>{quote.summary}</TableCell>
                         <TableCell>{`R$ ${quote.priceRange[0]} - R$ ${quote.priceRange[1]}`}</TableCell>
                         <TableCell>
-                            <Badge className={`${getStatusBadgeClasses(quote.status)} capitalize`}>{quote.status.replace('-', ' ')}</Badge>
+                           <StatusDisplay quote={quote} />
                         </TableCell>
                         <TableCell>
-                            <Badge variant="outline">Claudia</Badge>
+                            <Badge variant="outline">{quote.ownerName}</Badge>
                         </TableCell>
                         <TableCell>{format(parseISO(quote.createdAt), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                         <TableCell>{format(parseISO(quote.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</TableCell>
@@ -103,4 +121,5 @@ import {
       </div>
     )
   }
-  
+
+    

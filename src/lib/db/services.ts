@@ -60,12 +60,15 @@ export const quoteService = {
   async listQuotes() {
     const quotes = repos.quotes.list();
     const contacts = repos.contacts.list();
+    const operators = repos.operators.list();
 
     return quotes.map(quote => {
         const contact = contacts.find(c => c.id === quote.contactId);
+        const owner = operators.find(o => o.id === quote.ownerId);
         return {
             ...quote,
-            contact
+            contact,
+            ownerName: owner?.fullName || 'N/A',
         }
     })
   },
@@ -204,3 +207,5 @@ export const systemService = {
         return repos.system.resetAllData();
     }
 }
+
+    

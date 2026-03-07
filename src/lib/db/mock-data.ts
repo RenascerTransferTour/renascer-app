@@ -185,13 +185,13 @@ export const originalConversations: Conversation[] = [
 ];
 
 export const originalQuotes: Quote[] = [
-  { id: 'quote-1', leadId: 'lead-1', contactId: 'contact-1', conversationId: 'conv-1', status: 'enviado', summary: 'Transfer Executivo: Av. Paulista para Aeroporto GRU', priceRange: [280, 350], createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), approvedByAi: false, ownerId: 'op-1' },
-  { id: 'quote-2', leadId: 'lead-2', contactId: 'contact-2', conversationId: 'conv-2', status: 'rascunho', summary: 'Viagem privativa: RJ para Campos do Jordão (2 pessoas)', priceRange: [1800, 2200], createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString(), approvedByAi: false, ownerId: 'op-1' },
+  { id: 'quote-1', leadId: 'lead-1', contactId: 'contact-1', conversationId: 'conv-1', status: 'enviado', summary: 'Transfer Executivo: Av. Paulista para Aeroporto GRU', priceRange: [280, 350], finalValue: 320, createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), approvedByAi: false, approvedByHumanId: 'op-1', ownerId: 'op-1' },
+  { id: 'quote-2', leadId: 'lead-2', contactId: 'contact-2', conversationId: 'conv-2', status: 'rascunho', summary: 'Viagem privativa: RJ para Campos do Jordão (2 pessoas)', priceRange: [1800, 2200], createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString(), approvedByAi: true, ownerId: 'IA' },
   { id: 'quote-3', leadId: 'lead-3', contactId: 'contact-3', conversationId: 'conv-3', status: 'aprovado', summary: 'Transporte Corporativo: Van para diretoria (12 pessoas)', priceRange: [1200, 1500], finalValue: 1450, createdAt: subDays(now, 1).toISOString(), updatedAt: now.toISOString(), approvedByAi: false, approvedByHumanId: 'op-1', ownerId: 'op-1' },
-  { id: 'quote-4', leadId: 'lead-4', contactId: 'contact-4', conversationId: 'conv-6', status: 'não confirmado', summary: 'Transfer Aeroporto Congonhas (aguardando confirmação de voo)', priceRange: [180, 220], createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString(), approvedByAi: false, ownerId: 'op-1' },
+  { id: 'quote-4', leadId: 'lead-4', contactId: 'contact-4', conversationId: 'conv-6', status: 'não confirmado', summary: 'Transfer Aeroporto Congonhas (aguardando voo)', priceRange: [180, 220], createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString(), approvedByAi: false, ownerId: 'op-1' },
   { id: 'quote-5', leadId: 'lead-5', contactId: 'contact-2', conversationId: 'conv-5', status: 'cancelado', summary: 'Viagem para Angra dos Reis (cancelado pelo cliente)', priceRange: [2500, 3000], createdAt: subDays(now, 6).toISOString(), updatedAt: subDays(now, 3).toISOString(), approvedByAi: false, ownerId: 'op-1' },
-  { id: 'quote-6', leadId: 'lead-6', contactId: 'contact-1', conversationId: 'conv-1', status: 'perdido', summary: 'Aluguel de van para evento (cliente optou por outro fornecedor)', priceRange: [900, 1100], createdAt: subDays(now, 8).toISOString(), updatedAt: subDays(now, 7).toISOString(), approvedByAi: false, ownerId: 'op-1' },
-  { id: 'quote-7', leadId: 'lead-7', contactId: 'contact-1', conversationId: 'conv-1', status: 'aguardando aprovação', summary: 'Transfer GRU (aguardando cliente aprovar o orçamento)', priceRange: [280, 350], createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), approvedByAi: false, ownerId: 'op-1' },
+  { id: 'quote-6', leadId: 'lead-6', contactId: 'contact-1', conversationId: 'conv-1', status: 'perdido', summary: 'Aluguel de van para evento (cliente optou por outro)', priceRange: [900, 1100], createdAt: subDays(now, 8).toISOString(), updatedAt: subDays(now, 7).toISOString(), approvedByAi: false, ownerId: 'op-1' },
+  { id: 'quote-7', leadId: 'lead-7', contactId: 'contact-1', conversationId: 'conv-1', status: 'aguardando aprovação', summary: 'Transfer GRU (aguardando cliente aprovar)', priceRange: [280, 350], createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), approvedByAi: true, ownerId: 'IA' },
 ];
 
 export const originalReservations: Reservation[] = [
@@ -459,3 +459,5 @@ const db = {
     originalAuditLogs,
     system
 };
+
+    
