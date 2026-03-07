@@ -126,7 +126,7 @@ export interface Reservation {
   quoteId: string; // Foreign Key to Quote
   contactId: string;
   conversationId: string; // Foreign Key to Conversation
-  status: 'pendente' | 'não confirmado' | 'confirmada' | 'reagendada' | 'concluída' | 'cancelada' | 'concluído pela IA' | 'concluído por humano';
+  status: 'pendente' | 'não confirmado' | 'confirmada' | 'reagendada' | 'concluída' | 'cancelada' | 'concluído pela IA' | 'concluído por humano' | 'aguardando aprovação';
   reservedBy: 'human' | 'ai';
   confirmationMode: 'manual' | 'automatic';
   scheduledDate: string; // ISO 8601 Date

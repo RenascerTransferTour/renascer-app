@@ -196,7 +196,7 @@ export const originalQuotes: Quote[] = [
 
 export const originalReservations: Reservation[] = [
   { id: 'res-1', leadId: 'lead-3', quoteId: 'quote-3', contactId: 'contact-3', conversationId: 'conv-3', service: 'Transfer', scheduledDate: addDays(now, 15).toISOString(), scheduledTime: '09:00', status: 'confirmada', details: 'Van executiva para evento no WTC. Aguardando no lobby principal.', reservedBy: 'human', confirmationMode: 'manual', createdAt: now.toISOString(), updatedAt: now.toISOString() },
-  { id: 'res-2', leadId: 'lead-1', quoteId: 'quote-1', contactId: 'contact-1', conversationId: 'conv-1', service: 'Transfer', scheduledDate: addDays(now, 25).toISOString(), scheduledTime: '15:00', status: 'pendente', details: 'Transfer para GRU (Terminal 3), aguardando pagamento.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString() },
+  { id: 'res-2', leadId: 'lead-1', quoteId: 'quote-1', contactId: 'contact-1', conversationId: 'conv-1', status: 'aguardando aprovação', details: 'Pré-reserva de transfer para GRU (Terminal 3), aguardando confirmação final.', reservedBy: 'ai', confirmationMode: 'manual', scheduledDate: addDays(now, 25).toISOString(), scheduledTime: '15:00', service: 'Transfer', createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString() },
   { id: 'res-3', leadId: 'lead-2', quoteId: 'quote-2', contactId: 'contact-2', conversationId: 'conv-2', service: 'Tour', scheduledDate: subDays(now, 2).toISOString(), scheduledTime: '10:00', status: 'concluído por humano', details: 'Viagem para Campos do Jordão, motorista bilíngue solicitado.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 3).toISOString(), updatedAt: subDays(now, 2).toISOString() },
   { id: 'res-4', leadId: 'lead-5', quoteId: 'quote-5', contactId: 'contact-2', conversationId: 'conv-5', service: 'Tour', scheduledDate: addDays(now, 50).toISOString(), scheduledTime: '09:00', status: 'cancelada', details: 'Viagem para Angra dos Reis (cancelado pelo cliente).', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 6).toISOString(), updatedAt: subDays(now, 3).toISOString() },
   { id: 'res-5', leadId: 'lead-4', quoteId: 'quote-4', contactId: 'contact-4', conversationId: 'conv-6', service: 'Transfer', scheduledDate: addDays(now, 10).toISOString(), scheduledTime: '18:00', status: 'não confirmado', details: 'Transfer do Aeroporto de Congonhas, aguardando confirmação do voo do cliente.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString() },
@@ -320,7 +320,6 @@ export let originalAuditLogs: AuditLog[] = [
     {
         id: 'log-ana-1',
         timestamp: subDays(now, 2).toISOString(),
-        contactId: 'contact-1',
         actor: 'Ana Silva',
         actorType: 'customer',
         channel: 'whatsapp',
@@ -332,7 +331,6 @@ export let originalAuditLogs: AuditLog[] = [
     {
         id: 'log-ana-2',
         timestamp: subMinutes(subDays(now, 2), -5).toISOString(),
-        contactId: 'contact-1',
         actor: 'Assistente IA',
         actorType: 'ai',
         channel: 'whatsapp',
@@ -345,7 +343,6 @@ export let originalAuditLogs: AuditLog[] = [
      {
         id: 'log-ana-3',
         timestamp: subMinutes(subDays(now, 1), -30).toISOString(),
-        contactId: 'contact-1',
         actor: 'Assistente IA',
         actorType: 'ai',
         entityType: 'quote',
@@ -358,7 +355,6 @@ export let originalAuditLogs: AuditLog[] = [
     {
         id: 'log-ana-4',
         timestamp: subDays(now, 1).toISOString(),
-        contactId: 'contact-1',
         actor: 'Cláudia Vaz',
         actorType: 'human',
         channel: 'whatsapp',
@@ -461,3 +457,5 @@ const db = {
 };
 
     
+
+
