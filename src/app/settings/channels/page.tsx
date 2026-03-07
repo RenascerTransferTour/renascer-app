@@ -9,6 +9,14 @@ import {
   CardTitle,
   CardFooter
 } from "@/components/ui/card"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -233,17 +241,38 @@ export default function ChannelsPage() {
                                     </AlertDescription>
                                 </Alert>
                                 <div className="flex flex-col md:flex-row items-center gap-6">
-                                    <div className="p-4 border rounded-lg bg-muted/50 flex items-center justify-center w-48 h-48">
-                                        <QrCode className="h-32 w-32 text-muted-foreground"/>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2">
+                                    <div className="space-y-4 text-center md:text-left">
+                                        <div className="flex items-center justify-center md:justify-start gap-2">
                                             <span>Status da Sessão:</span>
                                             {waChannel && <StatusBadge status={waChannel.status} />}
                                         </div>
-                                        <p className="text-sm text-muted-foreground">Aponte a câmera do seu WhatsApp em <span className="font-semibold">Aparelhos Conectados &gt; Conectar um Aparelho</span> para escanear o código.</p>
-                                        <div className="flex gap-2">
-                                            <Button>Gerar Novo QR Code</Button>
+                                        <p className="text-sm text-muted-foreground max-w-md">Para conectar, gere um QR code e escaneie com seu celular no WhatsApp em <span className="font-semibold">Aparelhos Conectados &gt; Conectar um Aparelho</span>.</p>
+                                        <div className="flex gap-2 justify-center md:justify-start">
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <Button type="button">
+                                                        <QrCode className="mr-2 h-4 w-4"/>
+                                                        Gerar QR Code Simulado
+                                                    </Button>
+                                                </DialogTrigger>
+                                                <DialogContent className="sm:max-w-lg p-0">
+                                                    <DialogHeader className="p-6 pb-2">
+                                                      <DialogTitle>Conexão por QR Code (Simulado)</DialogTitle>
+                                                      <DialogDescription>
+                                                        Escaneie o código abaixo com o app do WhatsApp para simular a conexão.
+                                                      </DialogDescription>
+                                                    </DialogHeader>
+                                                    <div className="flex flex-col items-center justify-center p-6 bg-white rounded-b-lg">
+                                                        <div className="p-4 bg-white border rounded-lg">
+                                                            <QrCode className="w-72 h-72 text-black" />
+                                                        </div>
+                                                        <div className="mt-4 text-center">
+                                                            <p className="font-semibold">QR em modo simulado</p>
+                                                            <p className="text-sm text-muted-foreground">Esta é uma demonstração visual. Não estabelece uma conexão real.</p>
+                                                        </div>
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
                                             <Button variant="destructive" disabled>Desconectar Sessão</Button>
                                         </div>
                                     </div>
