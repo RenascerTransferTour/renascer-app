@@ -70,7 +70,7 @@ export const originalContacts: Contact[] = [
 ];
 
 export const originalChannels: Channel[] = [
-    { id: 'channel-wa', name: 'WhatsApp', type: 'whatsapp', status: 'connected', aiEnabled: true, requiresHuman: false, provider: 'automatic', lastChecked: now.toISOString(), createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+    { id: 'channel-wa', name: 'WhatsApp', type: 'whatsapp', status: 'awaiting_qr', aiEnabled: true, requiresHuman: false, provider: 'automatic', lastChecked: now.toISOString(), createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'channel-ig', name: 'Instagram', type: 'instagram', status: 'failing', aiEnabled: false, requiresHuman: true, provider: 'automatic', lastChecked: subDays(now, 1).toISOString(), lastError: 'Token de acesso inválido ou expirado.', createdAt: subDays(now, 30).toISOString(), updatedAt: subDays(now, 1).toISOString() },
     { id: 'channel-fb', name: 'Facebook', type: 'facebook', status: 'connected', aiEnabled: true, requiresHuman: true, provider: 'automatic', lastChecked: now.toISOString(), createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'channel-web', name: 'Website', type: 'website', status: 'connected', aiEnabled: true, requiresHuman: false, provider: 'gemini', lastChecked: now.toISOString(), createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
