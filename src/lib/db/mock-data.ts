@@ -225,11 +225,11 @@ export const originalDeals: Deal[] = [
 ];
 
 export const originalKnowledgeBaseArticles: KnowledgeBaseArticle[] = [
-    { id: 'kb-1', category: 'Services', title: 'Tipos de Transfer', content: 'Oferecemos transfer executivo com sedans, SUVs e vans. Para grupos, dispomos de vans e micro-ônibus. A opção VIP inclui veículos de luxo e motoristas bilíngues.', language: 'pt-BR', active: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
-    { id: 'kb-2', category: 'Policies', title: 'Política de Cancelamento', content: 'Cancelamentos com até 48h de antecedência para transfers e 7 dias para viagens longas têm reembolso integral. Fora desse prazo, há uma taxa de 30%.', language: 'pt-BR', active: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
-    { id: 'kb-3', category: 'Destinations', title: 'Principais Destinos e Viagens', content: 'Atendemos todos os aeroportos de SP, Campos do Jordão, Litoral Norte, e viagens para todo o sudeste. Oferecemos pacotes de turismo para as principais cidades históricas de MG.', language: 'pt-BR', active: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
-    { id: 'kb-4', category: 'Company', title: 'Nossos Diferenciais', content: 'Frota moderna com Wi-Fi e água, motoristas profissionais com treinamento em direção defensiva, pontualidade e atendimento 24h via WhatsApp.', language: 'pt-BR', active: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
-    { id: 'kb-5', category: 'Bookings', title: 'Como fazer uma reserva', content: 'A reserva é confirmada após a aprovação do orçamento e o pagamento de 50% do valor. O restante pode ser pago até a data do serviço.', language: 'pt-BR', active: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
+    { id: 'kb-1', category: 'Services', title: 'Tipos de Transfer', summary: 'Detalhes sobre as opções de veículos para transfers.', content: 'Oferecemos transfer executivo com sedans, SUVs e vans. Para grupos, dispomos de vans e micro-ônibus. A opção VIP inclui veículos de luxo e motoristas bilíngues.', language: 'pt-BR', active: true, author: 'op-1', status: 'published', isEligibleForAI: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
+    { id: 'kb-2', category: 'Policies', title: 'Política de Cancelamento', summary: 'Regras e taxas para cancelamento de serviços.', content: 'Cancelamentos com até 48h de antecedência para transfers e 7 dias para viagens longas têm reembolso integral. Fora desse prazo, há uma taxa de 30%.', language: 'pt-BR', active: true, author: 'op-1', status: 'published', isEligibleForAI: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
+    { id: 'kb-3', category: 'Destinations', title: 'Principais Destinos e Viagens', summary: 'Lista de destinos atendidos e pacotes de turismo.', content: 'Atendemos todos os aeroportos de SP, Campos do Jordão, Litoral Norte, e viagens para todo o sudeste. Oferecemos pacotes de turismo para as principais cidades históricas de MG.', language: 'pt-BR', active: true, author: 'op-1', status: 'published', isEligibleForAI: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
+    { id: 'kb-4', category: 'Company', title: 'Nossos Diferenciais', summary: 'Pontos que destacam a qualidade do nosso serviço.', content: 'Frota moderna com Wi-Fi e água, motoristas profissionais com treinamento em direção defensiva, pontualidade e atendimento 24h via WhatsApp.', language: 'pt-BR', active: true, author: 'op-1', status: 'reviewed', isEligibleForAI: false, createdAt: now.toISOString(), updatedAt: now.toISOString() },
+    { id: 'kb-5', category: 'Bookings', title: 'Como fazer uma reserva', summary: 'Passo a passo para a confirmação de uma reserva.', content: 'A reserva é confirmada após a aprovação do orçamento e o pagamento de 50% do valor. O restante pode ser pago até a data do serviço.', language: 'pt-BR', active: false, author: 'op-2', status: 'draft', isEligibleForAI: false, createdAt: now.toISOString(), updatedAt: now.toISOString() },
 ];
 
 
@@ -462,6 +462,7 @@ const db = {
 };
 
     
+
 
 
 

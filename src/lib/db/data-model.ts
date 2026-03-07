@@ -219,15 +219,20 @@ export interface AiPrompt {
 }
 
 export interface KnowledgeBaseArticle {
-  id: string; // UUID
+  id: string;
   category: 'Services' | 'Destinations' | 'Policies' | 'Bookings' | 'Company';
   title: string;
+  summary: string;
   content: string;
+  author: string;
+  status: 'draft' | 'reviewed' | 'published' | 'archived';
+  isEligibleForAI: boolean;
   language: string; // e.g., 'pt-BR'
   active: boolean;
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }
+
 
 // --- SYSTEM & LOGGING ---
 
