@@ -179,6 +179,7 @@ export interface AiSettings {
   fallbackHumanName: string;
   activeProvider: 'openai' | 'gemini' | 'automatic';
   fallbackProvider: 'openai' | 'gemini';
+  commercialActivationKey: 'authorized' | 'unauthorized';
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }

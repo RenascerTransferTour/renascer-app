@@ -241,6 +241,7 @@ export const originalAiSettings: AiSettings = {
     fallbackHumanName: 'Claudia',
     activeProvider: 'automatic',
     fallbackProvider: 'openai',
+    commercialActivationKey: 'unauthorized',
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
 };

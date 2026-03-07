@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -30,7 +31,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type TestAiChatPromptOutput } from "@/ai/flows/test-ai-chat-prompt-flow"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle } from "lucide-react"
+import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle, ShieldOff, Check, Ban } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Badge } from "./ui/badge"
@@ -51,6 +52,8 @@ const flowPermissionsData: {id: AiFlowPermission['flowName']; label: string; des
     { id: 'saleClosing', label: 'Fechamento de Venda', description: 'Permite que a IA marque um negócio como "Fechado".' },
     { id: 'postSale', label: 'Pós-Venda', description: 'Permite que a IA envie mensagens de acompanhamento.' },
 ];
+
+const allowedNow = ['welcome', 'qualification', 'faq', 'summarization', 'quoteCreation', 'bookingCreation', 'crmUpdate'];
 
 export function AiSettingsForm() {
     const [settings, setSettings] = useState<AiSettings | null>(null);
@@ -265,9 +268,10 @@ export function AiSettingsForm() {
     if (loading || !settings) {
         return (
             <div className="space-y-8">
-                <Card><CardHeader><Skeleton className="h-8 w-64"/></CardHeader><CardContent><Skeleton className="h-40 w-full"/></CardContent></Card>
-                <Card><CardHeader><Skeleton className="h-8 w-72"/></CardHeader><CardContent><Skeleton className="h-32 w-full"/></CardContent></Card>
-                <Card><CardHeader><Skeleton className="h-8 w-80"/></CardHeader><CardContent><Skeleton className="h-64 w-full"/></CardContent></Card>
+                <Skeleton className="h-24 w-full" />
+                <Skeleton className="h-64 w-full" />
+                <Skeleton className="h-48 w-full" />
+                <Skeleton className="h-48 w-full" />
             </div>
         )
     }
@@ -275,124 +279,142 @@ export function AiSettingsForm() {
   return (
     <TooltipProvider>
     <div className="space-y-8">
-        <Card>
+
+        <Card className="bg-gradient-to-br from-background to-muted/50">
             <CardHeader>
-                <CardTitle>Controle Geral e Modo de Autonomia</CardTitle>
-                <CardDescription>Ative ou desative a IA e defina seu nível de autonomia no sistema.</CardDescription>
+                <CardTitle>Status Geral da IA</CardTitle>
+                <CardDescription>
+                    Visão geral do estado atual da inteligência artificial no sistema.
+                </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="flex items-center space-x-4 p-4 border rounded-lg">
-                    <Label htmlFor="ai-active" className="flex-1">
-                        <h4 className='font-semibold'>Chave Geral da IA</h4>
-                        <p className='text-xs text-muted-foreground'>Ativa ou desativa completamente a inteligência artificial em todos os canais.</p>
-                    </Label>
-                    <Switch id="ai-active" checked={settings.globalAiEnabled} onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, globalAiEnabled: checked }) : null)} />
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col justify-center space-y-2 p-4 border rounded-lg bg-background">
+                    <Label className="text-xs text-muted-foreground">Modo de Operação</Label>
+                    <div className="flex items-center gap-2">
+                        <Badge className={cn(getStatusBadgeClasses('IA assistida'), 'text-sm')}>
+                            <Bot className="h-4 w-4"/>
+                            Modo Assistente
+                        </Badge>
+                    </div>
+                     <p className="text-sm text-muted-foreground pt-1">
+                        A IA pode analisar, sugerir e preparar rascunhos, mas não finaliza ações automaticamente.
+                    </p>
                 </div>
-                
-                <div className="space-y-2">
-                    <Label>Modo de Automação</Label>
-                    <RadioGroup value={settings.aiMode} onValueChange={(value) => setSettings((s) => s ? ({ ...s, aiMode: value as any }) : null)} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <RadioGroupItem value="off" id="r0" className="peer sr-only" />
-                            <Label htmlFor="r0" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                <Bot className="mb-2"/> IA Desligada
-                            </Label>
-                        </div>
-                        <div>
-                            <RadioGroupItem value="assisted" id="r2" className="peer sr-only" />
-                            <Label htmlFor="r2" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                <Bot className="mb-2"/> IA Assistida
-                            </Label>
-                        </div>
-                        <div>
-                            <RadioGroupItem value="partial_autonomous" id="r3" className="peer sr-only"/>
-                            <Label htmlFor="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                <Bot className="mb-2"/> IA Operacional Parcial
-                            </Label>
-                        </div>
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <div>
-                                    <RadioGroupItem value="full_autonomous" id="r4" className="peer sr-only" disabled />
-                                    <Label htmlFor="r4" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 opacity-60 cursor-not-allowed">
-                                        <div className='relative'><Bot className="mb-2"/><Lock className='absolute -top-1 -right-1 size-3 bg-background text-muted-foreground p-0.5 rounded-full'/></div>
-                                        IA Completa (Autônoma)
-                                    </Label>
-                                </div>
-                            </TooltipTrigger>
-                            <TooltipContent><p>Este modo estará disponível em breve.</p></TooltipContent>
-                        </Tooltip>
-                    </RadioGroup>
-                    <Alert variant={settings.aiMode === 'full_autonomous' ? 'destructive' : 'default'} className="mt-4">
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>Modo selecionado: {settings.aiMode}</AlertTitle>
-                        <AlertDescription>{modeDescriptions[settings.aiMode]}</AlertDescription>
-                    </Alert>
+                <div className="flex flex-col justify-center space-y-2 p-4 border rounded-lg bg-background">
+                    <Label className="text-xs text-muted-foreground">Autorização Comercial</Label>
+                     <div className="flex items-center gap-2">
+                        <Badge className={cn(getStatusBadgeClasses('IA bloqueada'), 'text-sm')}>
+                            <ShieldOff className="h-4 w-4" />
+                            Chave de ativação não autorizada
+                        </Badge>
+                     </div>
+                    <p className="text-sm text-muted-foreground pt-1">
+                        A finalização automática de vendas e reservas está desabilitada.
+                    </p>
                 </div>
             </CardContent>
+             <CardFooter>
+                 <Alert variant="default" className="w-full">
+                    <UserCheck className="h-4 w-4" />
+                    <AlertTitle>Finalização Manual Obrigatória</AlertTitle>
+                    <AlertDescription>
+                        Todas as ações comerciais, como orçamentos e reservas, devem ser revisadas e finalizadas manualmente pela Cláudia.
+                    </AlertDescription>
+                </Alert>
+             </CardFooter>
         </Card>
 
-        <Card>
-            <CardHeader>
-                <CardTitle>Provedores de IA e Credenciais</CardTitle>
-                <CardDescription>Gerencie quais modelos de IA são usados e suas credenciais. A configuração das chaves de API é feita no ambiente do servidor.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                 <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-                    <div className="space-y-2 flex-1">
-                        <Label>Provedor Principal</Label>
-                        <Select value={settings.activeProvider} onValueChange={(value) => setSettings((s) => s ? ({ ...s, activeProvider: value as any }) : null)}>
-                            <SelectTrigger className="w-full sm:w-[280px]">
-                                <SelectValue placeholder="Selecione um provedor" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="gemini">Gemini (Google)</SelectItem>
-                                <SelectItem value="openai">OpenAI (ChatGPT)</SelectItem>
-                                <SelectItem value="automatic">Automático / Fallback</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                        <Label htmlFor="fallback-enabled" className="flex-1">
-                            <h4 className='font-semibold'>Ativar Fallback</h4>
-                            <p className='text-xs text-muted-foreground'>Se o provedor principal falhar, tentar o outro.</p>
-                        </Label>
-                        <Switch id="fallback-enabled" checked={settings.isFallbackEnabled} onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, isFallbackEnabled: checked }) : null)} />
-                    </div>
-                </div>
-                <Separator/>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {providerStatus.map(p => (
-                        <Card key={p.id}>
-                            <CardHeader className="flex-row items-start justify-between">
-                                <div>
-                                    <CardTitle className="text-lg">{p.name}</CardTitle>
-                                    <CardDescription>{p.model}</CardDescription>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Fluxo Operacional Híbrido</CardTitle>
+                        <CardDescription>Etapas do processo comercial com a assistência da IA e finalização humana.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex items-center justify-between overflow-x-auto py-4">
+                        {['Recebido', 'Analisado pela IA', 'Rascunho gerado', 'Aguardando aprovação da Cláudia', 'Finalizado manualmente pela Cláudia'].map((step, index, arr) => (
+                            <React.Fragment key={index}>
+                                <div className="flex flex-col items-center text-center space-y-2 min-w-32">
+                                    <div className={cn(
+                                        "flex items-center justify-center size-10 rounded-full border-2",
+                                        index < 3 ? "bg-blue-100 border-blue-200" : "bg-orange-100 border-orange-200"
+                                    )}>
+                                        {index < 3 ? <Bot className="size-5 text-blue-600"/> : <UserCheck className="size-5 text-orange-600"/>}
+                                    </div>
+                                    <p className="text-xs font-medium">{step}</p>
                                 </div>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn('gap-1.5', getStatusBadgeClasses(p.status))}>
-                                            {p.configured ? <CheckCircle className="size-3" /> : <HelpCircle className="size-3" />}
-                                            {p.status}
-                                        </Badge>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>{p.message}</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div className="space-y-1">
-                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> Chave de API (somente visual)</Label>
-                                    <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
-                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo é uma representação. A chave real é configurada no ambiente do servidor e não é exposta aqui.</p>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </div>
-            </CardContent>
-        </Card>
+                                {index < arr.length - 1 && <ChevronRight className="size-5 text-muted-foreground shrink-0 mx-4"/>}
+                            </React.Fragment>
+                        ))}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Chave de Ativação Comercial</CardTitle>
+                        <CardDescription>Controle a capacidade da IA de executar ações comerciais de forma autônoma.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                             <div className="space-y-0.5">
+                                <Label className="text-base flex items-center gap-2">
+                                     <Badge className={cn(getStatusBadgeClasses(settings.commercialActivationKey === 'authorized' ? 'connected' : 'disconnected'))}>
+                                        {settings.commercialActivationKey === 'authorized' ? 'Ativada' : 'Desativada'}
+                                    </Badge>
+                                    <span>Ativação Comercial Autônoma</span>
+                                </Label>
+                                <p className="text-sm text-muted-foreground">A ativação comercial da IA só pode ser liberada com autorização explícita.</p>
+                            </div>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <div className="cursor-not-allowed">
+                                        <Button disabled>
+                                            <KeyRound className="mr-2"/>
+                                            Autorizar Ativação
+                                        </Button>
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>A ativação real será configurada futuramente no backend.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className="lg:col-span-1">
+                 <Card className="h-full">
+                    <CardHeader>
+                        <CardTitle>Permissões da IA</CardTitle>
+                        <CardDescription>Ações que a IA pode ou não executar no modo assistente atual.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <h4 className="font-semibold text-sm mb-2">Permitido Agora</h4>
+                            <ul className="space-y-1 text-sm text-muted-foreground">
+                                {flowPermissionsData.filter(p => allowedNow.includes(p.id)).map(p => (
+                                    <li key={p.id} className="flex items-center gap-2">
+                                        <CheckCircle className="size-4 text-green-500" />
+                                        <span>{p.label}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                         <div>
+                            <h4 className="font-semibold text-sm mb-2">Bloqueado por Enquanto</h4>
+                            <ul className="space-y-1 text-sm text-muted-foreground">
+                                {flowPermissionsData.filter(p => !allowedNow.includes(p.id)).map(p => (
+                                    <li key={p.id} className="flex items-center gap-2">
+                                        <Ban className="size-4 text-destructive" />
+                                        <span>{p.label}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
 
         <Card>
             <CardHeader>
@@ -506,6 +528,68 @@ export function AiSettingsForm() {
                     <Label htmlFor="forbidden-words">Palavras-chave para Handoff Imediato (separadas por vírgula)</Label>
                     <Input id="forbidden-words" defaultValue="falar com atendente, falar com claudia, reclamar, problema, procon" />
                     <p className="text-sm text-muted-foreground">Se o cliente usar uma dessas palavras, a IA irá transferir o atendimento imediatamente.</p>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Provedores de IA e Credenciais</CardTitle>
+                <CardDescription>A configuração real das chaves de API é feita no ambiente do servidor, não aqui.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                 <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                    <div className="space-y-2 flex-1">
+                        <Label>Provedor Principal</Label>
+                        <Select value={settings.activeProvider} onValueChange={(value) => setSettings((s) => s ? ({ ...s, activeProvider: value as any }) : null)}>
+                            <SelectTrigger className="w-full sm:w-[280px]">
+                                <SelectValue placeholder="Selecione um provedor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="gemini">Gemini (Google)</SelectItem>
+                                <SelectItem value="openai">OpenAI (ChatGPT)</SelectItem>
+                                <SelectItem value="automatic">Automático / Fallback</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                        <Label htmlFor="fallback-enabled" className="flex-1">
+                            <h4 className='font-semibold'>Ativar Fallback</h4>
+                            <p className='text-xs text-muted-foreground'>Se o provedor principal falhar, tentar o outro.</p>
+                        </Label>
+                        <Switch id="fallback-enabled" checked={settings.isFallbackEnabled} onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, isFallbackEnabled: checked }) : null)} />
+                    </div>
+                </div>
+                <Separator/>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {providerStatus.map(p => (
+                        <Card key={p.id}>
+                            <CardHeader className="flex-row items-start justify-between">
+                                <div>
+                                    <CardTitle className="text-lg">{p.name}</CardTitle>
+                                    <CardDescription>{p.model}</CardDescription>
+                                </div>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn('gap-1.5', getStatusBadgeClasses(p.status))}>
+                                            {p.configured ? <CheckCircle className="size-3" /> : <HelpCircle className="size-3" />}
+                                            {p.status}
+                                        </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{p.message}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-1">
+                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> Chave de API (somente visual)</Label>
+                                    <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
+                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo não edita o segredo real. A chave deve ser configurada no ambiente do servidor.</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
             </CardContent>
         </Card>
