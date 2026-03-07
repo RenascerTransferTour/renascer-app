@@ -26,3 +26,5 @@ export type Customer = Contact & {
 export type AiFlowPermission = CoreAiFlowPermission;
 
 export type AuditLog = CoreAuditLog;
+
+export type PipelineDeal = import('./db/data-model').Deal;

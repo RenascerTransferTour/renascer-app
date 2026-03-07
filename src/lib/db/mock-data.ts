@@ -17,7 +17,7 @@ const now = new Date();
 // --- Seed Data (immutable originals) ---
 
 export const originalOperators: Operator[] = [
-    { id: 'op-1', fullName: 'Claudia', email: 'claudia@renascer.ai', role: 'admin', active: true, avatar: 'https://picsum.photos/seed/99/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+    { id: 'op-1', fullName: 'Claudia Vaz', email: 'claudia@renascer.ai', role: 'admin', active: true, avatar: 'https://picsum.photos/seed/99/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'op-2', fullName: 'Carlos', email: 'carlos@renascer.ai', role: 'agent', active: true, avatar: 'https://picsum.photos/seed/98/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'IA', fullName: 'Assistente IA', email: 'ia@renascer.ai', role: 'agent', active: true, avatar: '', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
 ];
@@ -83,7 +83,7 @@ export const originalMessages: Message[] = [
     { id: 'msg-1-2', conversationId: 'conv-1', senderType: 'ai', authorName: "Assistente IA", content: 'Olá, Ana! Seja bem-vinda à Renascer. Para qual data e horário você precisa do transfer? E qual o local de partida?', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
     { id: 'msg-1-3', conversationId: 'conv-1', senderType: 'user', content: 'Seria para o dia 28, às 15h. Partindo da Av. Paulista.', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
     { id: 'msg-1-4', conversationId: 'conv-1', senderType: 'ai', authorName: "Assistente IA", content: 'Entendido, Ana. Coletei as informações. A Cláudia, nossa especialista em orçamentos, irá preparar sua proposta e entrará em contato em breve.', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
-    { id: 'msg-1-5', conversationId: 'conv-1', senderType: 'agent', authorName: 'Claudia', content: 'Olá Ana, aqui é a Claudia. Recebi sua solicitação. Preparei seu orçamento para o transfer executivo. Ele já está disponível para sua aprovação.', contentType: 'text', deliveryStatus: 'sent', createdAt: subDays(now, 1).toISOString() },
+    { id: 'msg-1-5', conversationId: 'conv-1', senderType: 'agent', authorName: 'Claudia Vaz', content: 'Olá Ana, aqui é a Claudia. Recebi sua solicitação. Preparei seu orçamento para o transfer executivo. Ele já está disponível para sua aprovação.', contentType: 'text', deliveryStatus: 'sent', createdAt: subDays(now, 1).toISOString() },
     { id: 'msg-2-1', conversationId: 'conv-2', senderType: 'user', content: 'Oi, vcs fazem viagens para Campos do Jordão? Saindo do Rio.', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 5).toISOString() },
     { id: 'msg-2-2', conversationId: 'conv-2', senderType: 'ai', authorName: "Assistente IA", content: 'Oi, Bruno! Fazemos sim. Uma excelente escolha de destino! Para quantas pessoas e qual data você estaria planejando?', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 5).toISOString() },
     { id: 'msg-3-1', conversationId: 'conv-3', senderType: 'user', content: 'PRECISO URGENTE de um contato para transporte de diretoria para um evento. Me liguem!', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 1).toISOString() },
@@ -238,7 +238,7 @@ export const originalAiSettings: AiSettings = {
     aiMode: 'assisted',
     requireHumanApproval: true,
     isFallbackEnabled: true,
-    fallbackHumanName: 'Claudia',
+    fallbackHumanName: 'Claudia Vaz',
     activeProvider: 'automatic',
     fallbackProvider: 'openai',
     commercialActivationKey: 'unauthorized',
@@ -316,26 +316,7 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
     }
 ];
 
-// --- Mutable State (the "database") ---
-// Deep clone the original data to create a mutable state
-const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
-
-export let operators: Operator[] = deepClone(originalOperators);
-export let contacts: Contact[] = deepClone(originalContacts);
-export let channels: Channel[] = deepClone(originalChannels);
-export let leads: Lead[] = deepClone(originalLeads);
-export let messages: Message[] = deepClone(originalMessages);
-export let conversations: Conversation[] = deepClone(originalConversations);
-export let quotes: Quote[] = deepClone(originalQuotes);
-export let reservations: Reservation[] = deepClone(originalReservations);
-export let calendarEvents: CalendarEvent[] = deepClone(originalCalendarEvents);
-export let deals: Deal[] = deepClone(originalDeals);
-export let knowledgeBaseArticles: KnowledgeBaseArticle[] = deepClone(originalKnowledgeBaseArticles);
-export let aiSettings: AiSettings = deepClone(originalAiSettings);
-export let aiFlowPermissions: AiFlowPermission[] = deepClone(originalAiFlowPermissions);
-export let aiProviderConfigs: AiProviderConfig[] = deepClone(originalAiProviderConfigs);
-export let aiPrompts: AiPrompt[] = deepClone(originalAiPrompts);
-export let auditLogs: AuditLog[] = [
+export let originalAuditLogs: AuditLog[] = [
     {
         id: 'log-ana-1',
         timestamp: subDays(now, 2).toISOString(),
@@ -378,7 +359,7 @@ export let auditLogs: AuditLog[] = [
         id: 'log-ana-4',
         timestamp: subDays(now, 1).toISOString(),
         contactId: 'contact-1',
-        actor: 'Claudia',
+        actor: 'Claudia Vaz',
         actorType: 'human',
         channel: 'whatsapp',
         entityType: 'quote',
@@ -391,6 +372,28 @@ export let auditLogs: AuditLog[] = [
         after: { status: 'enviado' }
     }
 ];
+
+
+// --- Mutable State (the "database") ---
+// Deep clone the original data to create a mutable state
+const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
+
+export let operators: Operator[] = deepClone(originalOperators);
+export let contacts: Contact[] = deepClone(originalContacts);
+export let channels: Channel[] = deepClone(originalChannels);
+export let leads: Lead[] = deepClone(originalLeads);
+export let messages: Message[] = deepClone(originalMessages);
+export let conversations: Conversation[] = deepClone(originalConversations);
+export let quotes: Quote[] = deepClone(originalQuotes);
+export let reservations: Reservation[] = deepClone(originalReservations);
+export let calendarEvents: CalendarEvent[] = deepClone(originalCalendarEvents);
+export let deals: Deal[] = deepClone(originalDeals);
+export let knowledgeBaseArticles: KnowledgeBaseArticle[] = deepClone(originalKnowledgeBaseArticles);
+export let aiSettings: AiSettings = deepClone(originalAiSettings);
+export let aiFlowPermissions: AiFlowPermission[] = deepClone(originalAiFlowPermissions);
+export let aiProviderConfigs: AiProviderConfig[] = deepClone(originalAiProviderConfigs);
+export let aiPrompts: AiPrompt[] = deepClone(originalAiPrompts);
+export let auditLogs: AuditLog[] = deepClone(originalAuditLogs);
 
 // --- System-wide Operations ---
 const deepCloneReset = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));

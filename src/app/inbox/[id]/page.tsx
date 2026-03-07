@@ -423,7 +423,7 @@ export default function ConversationPage() {
                     <div className="flex items-center gap-2">
                         <UserCircle className="h-4 w-4 text-muted-foreground" />
                         <span className='text-muted-foreground'>Responsável:</span>
-                        <span className='font-medium ml-auto'>{conversation.humanOwnerId === 'op-1' ? 'Claudia' : 'IA'}</span>
+                        <span className='font-medium ml-auto'>{conversation.humanOwnerId === 'op-1' ? 'Claudia Vaz' : 'IA'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
@@ -498,38 +498,42 @@ export default function ConversationPage() {
                     <CardTitle>Histórico de Atividades</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {auditLogs.map(log => {
-                        const Icon = eventTypeIcons[log.eventType] || eventTypeIcons.default;
-                        const actorIcon = log.actorType === 'human' ? User : log.actorType === 'ai' ? Bot : UserCircle;
-                        const label = eventTypeLabels[log.eventType] || log.eventType.replace(/_/g, ' ');
-                        return (
-                            <div key={log.id} className="flex gap-3">
-                                <div className="flex flex-col items-center">
-                                    <div className={cn("flex items-center justify-center size-8 rounded-full bg-muted", getStatusBadgeClasses(log.eventType))}>
-                                        <Icon className="size-4" />
+                    {auditLogs && auditLogs.length > 0 ? (
+                        auditLogs.map(log => {
+                            const Icon = eventTypeIcons[log.eventType] || eventTypeIcons.default;
+                            const actorIcon = log.actorType === 'human' ? User : log.actorType === 'ai' ? Bot : UserCircle;
+                            const label = eventTypeLabels[log.eventType] || log.eventType.replace(/_/g, ' ');
+                            return (
+                                <div key={log.id} className="flex gap-3">
+                                    <div className="flex flex-col items-center">
+                                        <div className={cn("flex items-center justify-center size-8 rounded-full bg-muted", getStatusBadgeClasses(log.eventType))}>
+                                            <Icon className="size-4" />
+                                        </div>
+                                        <div className="w-px h-full bg-border"></div>
                                     </div>
-                                    <div className="w-px h-full bg-border"></div>
-                                </div>
-                                <div>
-                                    <p className="text-sm font-medium capitalize">{label}</p>
-                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                        <svelte:fragment>
-                                            <actorIcon className="size-3" />
-                                            <span>{log.actor}</span>
-                                            <span>•</span>
-                                            <Tooltip>
-                                                <TooltipTrigger>
-                                                    <span>{formatDistanceToNow(parseISO(log.timestamp), { addSuffix: true, locale: ptBR })}</span>
-                                                </TooltipTrigger>
-                                                <TooltipContent>{format(parseISO(log.timestamp), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</TooltipContent>
-                                            </Tooltip>
-                                        </svelte:fragment>
+                                    <div>
+                                        <p className="text-sm font-medium capitalize">{label}</p>
+                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                            <>
+                                                <actorIcon className="size-3" />
+                                                <span>{log.actor}</span>
+                                                <span>•</span>
+                                                <Tooltip>
+                                                    <TooltipTrigger>
+                                                        <span>{formatDistanceToNow(parseISO(log.timestamp), { addSuffix: true, locale: ptBR })}</span>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>{format(parseISO(log.timestamp), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</TooltipContent>
+                                                </Tooltip>
+                                            </>
+                                        </div>
+                                        {log.notes && <p className="text-xs text-muted-foreground mt-1 bg-muted/50 p-2 rounded-md">{log.notes}</p>}
                                     </div>
-                                    {log.notes && <p className="text-xs text-muted-foreground mt-1 bg-muted/50 p-2 rounded-md">{log.notes}</p>}
                                 </div>
-                            </div>
-                        )
-                    })}
+                            )
+                        })
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center py-4">Nenhum evento registrado para este cliente.</p>
+                    )}
                 </CardContent>
             </Card>
         </div>
