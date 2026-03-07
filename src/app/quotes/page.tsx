@@ -38,6 +38,7 @@ import {
                 <TableHead>Resumo</TableHead>
                 <TableHead>Faixa de Preço</TableHead>
                 <TableHead>Situação</TableHead>
+                <TableHead>Responsável</TableHead>
                 <TableHead>Criado em</TableHead>
                 <TableHead>Última Atualização</TableHead>
                 </TableRow>
@@ -51,7 +52,10 @@ import {
                     <TableCell>{quote.summary}</TableCell>
                     <TableCell>{`R$ ${quote.priceRange[0]} - R$ ${quote.priceRange[1]}`}</TableCell>
                     <TableCell>
-                        <Badge className={`${getStatusBadgeClasses(quote.status)} capitalize`}>{quote.status}</Badge>
+                        <Badge className={`${getStatusBadgeClasses(quote.status)} capitalize`}>{quote.status.replace('-', ' ')}</Badge>
+                    </TableCell>
+                    <TableCell>
+                        <Badge variant="outline">Claudia</Badge>
                     </TableCell>
                     <TableCell>{format(parseISO(quote.createdAt), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                     <TableCell>{format(parseISO(quote.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</TableCell>

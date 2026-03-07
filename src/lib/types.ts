@@ -30,19 +30,20 @@ export type Conversation = {
   id: string;
   customerId: string;
   channel: 'WhatsApp' | 'Instagram' | 'Facebook' | 'Website';
-  status: 'open' | 'closed' | 'pending' | 'unconfirmed' | 'canceled';
+  status: 'open' | 'closed' | 'pending' | 'unconfirmed' | 'canceled' | 'aguardando humano';
   priority: 'low' | 'medium' | 'high';
   isAiActive: boolean;
   lastMessage: string;
   lastMessageAt: string;
   messages: Message[];
+  humanAgent?: 'Claudia' | 'Carlos' | null;
 };
 
 export type Quote = {
   id: string;
   customerId: string;
   conversationId: string;
-  status: 'rascunho' | 'em revisão' | 'enviado' | 'não confirmado' | 'aprovado' | 'perdido' | 'cancelado';
+  status: 'rascunho' | 'em revisão' | 'enviado' | 'não confirmado' | 'aprovado' | 'perdido' | 'cancelado' | 'aguardando aprovação';
   summary: string;
   priceRange: [number, number];
   createdAt: string;
@@ -75,9 +76,10 @@ export type PipelineDeal = {
   id: string;
   customerId: string;
   title: string;
-  stage: 'new-lead' | 'qualified' | 'quote-sent' | 'negotiation' | 'unconfirmed' | 'closed-won' | 'closed-lost' | 'canceled';
+  stage: 'new-lead' | 'qualified' | 'quote-sent' | 'negotiation' | 'unconfirmed' | 'closed-won' | 'closed-lost' | 'canceled' | 'aguardando fechamento';
   value: number;
   createdAt: string;
+  owner: 'IA' | 'Claudia' | 'Carlos';
 };
 
 export type KnowledgeBaseArticle = {

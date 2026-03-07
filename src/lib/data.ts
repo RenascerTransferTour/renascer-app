@@ -70,7 +70,8 @@ const messages: { [key: string]: Message[] } = {
     { id: 'msg-1-1', role: 'user', content: 'Olá, gostaria de um orçamento para um transfer para o aeroporto de Guarulhos.', timestamp: subDays(now, 2).toISOString() },
     { id: 'msg-1-2', role: 'ai', content: 'Olá, Ana! Seja bem-vinda à Renascer. Para qual data e horário você precisa do transfer? E qual o local de partida?', timestamp: subDays(now, 2).toISOString() },
     { id: 'msg-1-3', role: 'user', content: 'Seria para o dia 28, às 15h. Partindo da Av. Paulista.', timestamp: subDays(now, 2).toISOString() },
-    { id: 'msg-1-4', role: 'agent', authorName: 'Carlos', content: 'Olá Ana, Carlos aqui. Já estou preparando seu orçamento para o transfer executivo. Só um momento.', timestamp: subDays(now, 1).toISOString() }
+    { id: 'msg-1-4', role: 'ai', content: 'Entendido, Ana. Coletei as informações. A Cláudia, nossa especialista em orçamentos, irá preparar sua proposta e entrará em contato em breve.', timestamp: subDays(now, 2).toISOString() },
+    { id: 'msg-1-5', role: 'agent', authorName: 'Claudia', content: 'Olá Ana, aqui é a Claudia. Recebi sua solicitação. Preparei seu orçamento para o transfer executivo. Ele já está disponível para sua aprovação.', timestamp: subDays(now, 1).toISOString() }
   ],
   'conv-2': [
     { id: 'msg-2-1', role: 'user', content: 'Oi, vcs fazem viagens para Campos do Jordão? Saindo do Rio.', timestamp: subDays(now, 5).toISOString() },
@@ -92,10 +93,11 @@ export const conversations: Conversation[] = [
     id: 'conv-1',
     customerId: 'customer-1',
     channel: 'WhatsApp',
-    status: 'open',
+    status: 'aguardando humano',
     priority: 'medium',
     isAiActive: false,
-    lastMessage: 'Olá Ana, Carlos aqui. Já estou preparando seu orçamento para o transfer executivo. Só um momento.',
+    humanAgent: 'Claudia',
+    lastMessage: 'Olá Ana, aqui é a Claudia. Recebi sua solicitação. Preparei seu orçamento...',
     lastMessageAt: subDays(now, 1).toISOString(),
     messages: messages['conv-1'],
   },
@@ -106,6 +108,7 @@ export const conversations: Conversation[] = [
     status: 'pending',
     priority: 'low',
     isAiActive: true,
+    humanAgent: null,
     lastMessage: 'Oi, Bruno! Fazemos sim. Uma excelente escolha de destino! Para quantas pessoas e qual data você estaria planejando?',
     lastMessageAt: subDays(now, 5).toISOString(),
     messages: messages['conv-2'],
@@ -117,6 +120,7 @@ export const conversations: Conversation[] = [
     status: 'open',
     priority: 'high',
     isAiActive: false,
+    humanAgent: 'Carlos',
     lastMessage: 'Empresa S.A. O telefone é (31) 99999-8888',
     lastMessageAt: subDays(now, 1).toISOString(),
     messages: messages['conv-3'],
@@ -128,6 +132,7 @@ export const conversations: Conversation[] = [
     status: 'closed',
     priority: 'low',
     isAiActive: true,
+    humanAgent: null,
     lastMessage: 'Olá! Nosso e-mail para contato é contato@renascertour.com.br. Em que podemos ajudar?',
     lastMessageAt: subDays(now, 10).toISOString(),
     messages: messages['conv-4'],
@@ -139,6 +144,7 @@ export const conversations: Conversation[] = [
     status: 'canceled',
     priority: 'low',
     isAiActive: false,
+    humanAgent: 'Claudia',
     lastMessage: 'Infelizmente precisei cancelar a viagem. Fica para a próxima.',
     lastMessageAt: subDays(now, 3).toISOString(),
     messages: [],
@@ -150,6 +156,7 @@ export const conversations: Conversation[] = [
     status: 'unconfirmed',
     priority: 'medium',
     isAiActive: true,
+    humanAgent: 'Claudia',
     lastMessage: 'Ainda estou aguardando a confirmação do meu voo para fechar o transfer.',
     lastMessageAt: subDays(now, 4).toISOString(),
     messages: [],
@@ -216,6 +223,16 @@ export const quotes: Quote[] = [
     priceRange: [900, 1100],
     createdAt: subDays(now, 8).toISOString(),
     updatedAt: subDays(now, 7).toISOString(),
+  },
+   {
+    id: 'quote-7',
+    customerId: 'customer-1',
+    conversationId: 'conv-1',
+    status: 'aguardando aprovação',
+    summary: 'Transfer GRU (aguardando cliente aprovar o orçamento)',
+    priceRange: [280, 350],
+    createdAt: subDays(now, 1).toISOString(),
+    updatedAt: subDays(now, 1).toISOString(),
   },
 ];
 
@@ -292,13 +309,14 @@ export const calendarEvents: CalendarEvent[] = [
 ];
 
 export const pipelineDeals: PipelineDeal[] = [
-  { id: 'deal-1', customerId: 'customer-1', title: 'Transfer GRU - Ana Silva', stage: 'quote-sent', value: 320, createdAt: subDays(now, 2).toISOString() },
-  { id: 'deal-2', customerId: 'customer-2', title: 'Viagem Campos do Jordão - B. Costa', stage: 'negotiation', value: 2000, createdAt: subDays(now, 5).toISOString() },
-  { id: 'deal-3', customerId: 'customer-3', title: 'Contrato Corporativo - Empresa S.A.', stage: 'closed-won', value: 15000, createdAt: subDays(now, 1).toISOString() },
-  { id: 'deal-4', customerId: 'customer-4', title: 'Interesse em Turismo - Daniel Martins', stage: 'new-lead', value: 800, createdAt: subDays(now, 10).toISOString() },
-  { id: 'deal-5', customerId: 'customer-2', title: 'Viagem Angra (Cancelado)', stage: 'canceled', value: 2750, createdAt: subDays(now, 6).toISOString() },
-  { id: 'deal-6', customerId: 'customer-4', title: 'Transfer Congonhas (Não confirmado)', stage: 'unconfirmed', value: 200, createdAt: subDays(now, 4).toISOString() },
-  { id: 'deal-7', customerId: 'customer-1', title: 'Aluguel de Van (Perdido)', stage: 'closed-lost', value: 1000, createdAt: subDays(now, 8).toISOString() },
+  { id: 'deal-1', customerId: 'customer-1', title: 'Transfer GRU - Ana Silva', stage: 'quote-sent', value: 320, createdAt: subDays(now, 2).toISOString(), owner: 'Claudia' },
+  { id: 'deal-2', customerId: 'customer-2', title: 'Viagem Campos do Jordão - B. Costa', stage: 'negotiation', value: 2000, createdAt: subDays(now, 5).toISOString(), owner: 'Claudia' },
+  { id: 'deal-3', customerId: 'customer-3', title: 'Contrato Corporativo - Empresa S.A.', stage: 'closed-won', value: 15000, createdAt: subDays(now, 1).toISOString(), owner: 'Claudia' },
+  { id: 'deal-4', customerId: 'customer-4', title: 'Interesse em Turismo - Daniel Martins', stage: 'new-lead', value: 800, createdAt: subDays(now, 10).toISOString(), owner: 'IA' },
+  { id: 'deal-5', customerId: 'customer-2', title: 'Viagem Angra (Cancelado)', stage: 'canceled', value: 2750, createdAt: subDays(now, 6).toISOString(), owner: 'Claudia' },
+  { id: 'deal-6', customerId: 'customer-4', title: 'Transfer Congonhas (Não confirmado)', stage: 'unconfirmed', value: 200, createdAt: subDays(now, 4).toISOString(), owner: 'Claudia' },
+  { id: 'deal-7', customerId: 'customer-1', title: 'Aluguel de Van (Perdido)', stage: 'closed-lost', value: 1000, createdAt: subDays(now, 8).toISOString(), owner: 'Claudia' },
+  { id: 'deal-8', customerId: 'customer-1', title: 'Transfer para evento (Aguardando Fechamento)', stage: 'aguardando fechamento', value: 700, createdAt: subDays(now, 1).toISOString(), owner: 'Claudia' },
 ];
 
 export const knowledgeBaseArticles: KnowledgeBaseArticle[] = [

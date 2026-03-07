@@ -34,6 +34,7 @@ const statusLabels: Record<string, string> = {
     pending: 'Pendente',
     unconfirmed: 'Não Confirmado',
     canceled: 'Cancelado',
+    'aguardando humano': 'Aguardando Humano',
 }
 
 
@@ -120,13 +121,15 @@ export const columns: ColumnDef<InboxItem>[] = [
     accessorKey: "isAiActive",
     header: "Atendente",
     cell: ({ row }) => {
-      const isAiActive: boolean = row.getValue("isAiActive");
-      const status = isAiActive ? 'IA' : 'Humano';
-      const badgeClass = isAiActive ? getStatusBadgeClasses('open') : getStatusBadgeClasses('aguardando humano');
+      const isAiActive: boolean = row.original.isAiActive;
+      const agent = row.original.humanAgent;
+      const attendant = isAiActive ? 'IA' : (agent || 'Humano');
+      const badgeClass = isAiActive ? getStatusBadgeClasses('open') : getStatusBadgeClasses('humano');
+      
       return (
         <Badge className={`${badgeClass} gap-2`}>
           {isAiActive ? <Bot className="size-3.5" /> : <User className="size-3.5" />}
-          <span className="text-sm font-medium">{status}</span>
+          <span className="text-sm font-medium">{attendant}</span>
         </Badge>
       )
     }

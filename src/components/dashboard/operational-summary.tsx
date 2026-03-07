@@ -1,14 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { CheckCircle2, XCircle, AlertCircle, Clock } from "lucide-react"
+import { CheckCircle2, XCircle, AlertCircle, Clock, UserCheck } from "lucide-react"
+import { conversations, bookings, quotes } from "@/lib/data"
 
-const summaryItems = [
-    { title: 'Confirmados Hoje', value: 5, icon: CheckCircle2, color: 'text-green-500' },
-    { title: 'Não Confirmados', value: 3, icon: AlertCircle, color: 'text-yellow-500' },
-    { title: 'Cancelados (24h)', value: 1, icon: XCircle, color: 'text-red-500' },
-    { title: 'Aguardando Ação', value: 8, icon: Clock, color: 'text-blue-500' },
-]
 
 export function OperationalSummary() {
+    const confirmedToday = bookings.filter(b => b.status === 'confirmada' && new Date(b.createdAt).toDateString() === new Date().toDateString()).length;
+    const unconfirmed = bookings.filter(b => b.status === 'não confirmado').length;
+    const cancelled24h = bookings.filter(b => b.status === 'cancelada' && new Date(b.createdAt) > new Date(Date.now() - 24 * 60 * 60 * 1000)).length;
+    const awaitingAction = conversations.filter(c => c.status === 'aguardando humano').length;
+
+    const summaryItems = [
+        { title: 'Confirmados Hoje', value: confirmedToday, icon: CheckCircle2, color: 'text-green-500' },
+        { title: 'Aguardando Cliente', value: unconfirmed, icon: AlertCircle, color: 'text-yellow-500' },
+        { title: 'Cancelados (24h)', value: cancelled24h, icon: XCircle, color: 'text-red-500' },
+        { title: 'Aguardando Claudia', value: awaitingAction, icon: UserCheck, color: 'text-orange-500' },
+    ]
+
   return (
     <Card>
       <CardHeader>

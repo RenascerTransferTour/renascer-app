@@ -17,6 +17,8 @@ import {
   Waypoints,
   Star,
   Zap,
+  Lock,
+  UserCircle,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -46,6 +48,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
   
 const statusLabels: Record<string, string> = {
     open: 'Aberto',
@@ -53,6 +56,7 @@ const statusLabels: Record<string, string> = {
     pending: 'Pendente',
     unconfirmed: 'Não Confirmado',
     canceled: 'Cancelado',
+    'aguardando humano': 'Aguardando Humano',
 }
 
 export default function ConversationPage() {
@@ -84,7 +88,7 @@ export default function ConversationPage() {
       role: 'agent',
       content: newMessage,
       timestamp: new Date().toISOString(),
-      authorName: 'Admin',
+      authorName: conversation.humanAgent || 'Admin',
     };
 
     setMessages([...messages, msg]);
@@ -112,7 +116,7 @@ export default function ConversationPage() {
   
   const urgencyClasses = getStatusBadgeClasses(customer.urgency === 'high' ? 'cancelado' : (customer.urgency === 'medium' ? 'não confirmado' : 'concluída'));
   const interestClasses = getStatusBadgeClasses(customer.interestLevel === 'high' ? 'confirmada' : (customer.interestLevel === 'medium' ? 'pendente' : 'rascunho'));
-
+  const aiPermissions = { canCreateQuote: false, canCreateBooking: false }; // Mock permissions
 
   return (
     <div className="grid h-[calc(100vh-8rem)] grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -246,7 +250,12 @@ export default function ConversationPage() {
           </CardHeader>
           <Separator />
           <CardContent className="py-4 space-y-4 text-sm flex-1">
-            <div className='space-y-1'>
+            <div className='space-y-2'>
+                <div className="flex items-center gap-2">
+                    <UserCircle className="h-4 w-4 text-muted-foreground" />
+                    <span className='text-muted-foreground'>Responsável:</span>
+                    <span className='font-medium ml-auto'>{conversation.humanAgent || 'IA'}</span>
+                </div>
                 <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
                     <span className='text-muted-foreground'>Telefone:</span>
@@ -285,8 +294,24 @@ export default function ConversationPage() {
             <Separator />
             <div className="space-y-2">
                 <p className='text-xs font-semibold text-muted-foreground uppercase'>Ações Rápidas</p>
-                <Button className="w-full justify-start" variant="ghost"><FileText className="mr-2 h-4 w-4"/> Criar Orçamento</Button>
-                <Button className="w-full justify-start" variant="ghost"><Bookmark className="mr-2 h-4 w-4"/> Criar Reserva</Button>
+                <Tooltip>
+                    <TooltipTrigger className='w-full'>
+                        <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateQuote}>
+                            <FileText className="mr-2 h-4 w-4"/> Criar Orçamento
+                            {!aiPermissions.canCreateQuote && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
+                        </Button>
+                    </TooltipTrigger>
+                    {!aiPermissions.canCreateQuote && <TooltipContent>Requer aprovação de {conversation.humanAgent || 'um humano'}</TooltipContent>}
+                </Tooltip>
+                <Tooltip>
+                    <TooltipTrigger className='w-full'>
+                        <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateBooking}>
+                            <Bookmark className="mr-2 h-4 w-4"/> Criar Reserva
+                            {!aiPermissions.canCreateBooking && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
+                        </Button>
+                    </TooltipTrigger>
+                    {!aiPermissions.canCreateBooking && <TooltipContent>Requer aprovação de {conversation.humanAgent || 'um humano'}</TooltipContent>}
+                </Tooltip>
             </div>
           </CardContent>
           <Separator />

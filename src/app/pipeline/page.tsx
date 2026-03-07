@@ -5,6 +5,8 @@ import { pipelineDeals, customers } from "@/lib/data"
 import type { PipelineDeal } from "@/lib/types"
 import { getStatusBadgeClasses } from "@/lib/utils"
 import { cn } from "@/lib/utils"
+import { Badge } from "@/components/ui/badge"
+import { UserCircle, Bot } from "lucide-react"
 
 
 const stages = [
@@ -12,6 +14,7 @@ const stages = [
   { id: 'qualified', title: 'Qualificado' },
   { id: 'quote-sent', title: 'Orçamento Enviado' },
   { id: 'negotiation', title: 'Negociação' },
+  { id: 'aguardando fechamento', title: 'Aguardando Fechamento' },
   { id: 'unconfirmed', title: 'Não Confirmado' },
   { id: 'closed-won', title: 'Fechado' },
   { id: 'canceled', title: 'Cancelado' },
@@ -26,6 +29,7 @@ const getStageColor = (stageId: string) => {
         case 'negotiation': 
         case 'unconfirmed': return 'border-t-yellow-500';
         case 'quote-sent': return 'border-t-purple-500';
+        case 'aguardando fechamento': return 'border-t-orange-500';
         default: return 'border-t-blue-500';
     }
 }
@@ -37,11 +41,15 @@ const DealCard = ({ deal }: { deal: PipelineDeal }) => {
       <CardHeader className="p-3 pb-1">
         <CardTitle className="text-sm font-medium">{deal.title}</CardTitle>
       </CardHeader>
-      <CardContent className="p-3 text-xs">
+      <CardContent className="p-3 pt-1 text-xs">
         <p className="text-muted-foreground">{customer?.name}</p>
         <p className="font-bold text-primary mt-1">
           {deal.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
         </p>
+        <div className="flex items-center gap-2 mt-2">
+            {deal.owner === 'IA' ? <Bot className="size-3.5 text-muted-foreground"/> : <UserCircle className="size-3.5 text-muted-foreground"/>}
+            <Badge variant="secondary">{deal.owner}</Badge>
+        </div>
       </CardContent>
     </Card>
   )

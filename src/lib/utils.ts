@@ -20,6 +20,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'pendente':
     case 'em revisão':
     case 'negotiation':
+    case 'aguardando aprovação':
       return 'border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300';
     // Red / Destructive
     case 'cancelada':
@@ -36,6 +37,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     // Orange / Warning
     case 'aguardando humano':
     case 'humano':
+    case 'aguardando fechamento':
       return 'border-transparent bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-300';
     // Purple / Special
     case 'enviado':
