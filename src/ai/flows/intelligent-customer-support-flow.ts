@@ -120,6 +120,27 @@ const intelligentCustomerSupportFlow = ai.defineFlow(
         };
     }
     const { output } = await intelligentCustomerSupportPrompt(input, { model: activeModel });
-    return output!;
+    if (!output) {
+      // In case the model fails to return a structured output
+      return {
+            aiResponse: "Ocorreu um problema ao processar sua solicitação com a IA. Um atendente humano irá ajudá-lo.",
+            escalateToHuman: true,
+            gatheredInformation: {
+                customerName: null,
+                customerPhone: null,
+                originChannel: null,
+                serviceType: null,
+                destination: null,
+                departureDate: null,
+                departureTime: null,
+                numberOfPassengers: null,
+                luggageDetails: null,
+                urgencyLevel: 'medium',
+                interestLevel: 'medium',
+                observations: 'AI failed to return structured output.'
+            }
+        };
+    }
+    return output;
   }
 );
