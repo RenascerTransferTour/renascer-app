@@ -31,7 +31,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type TestAiChatPromptOutput } from "@/ai/flows/test-ai-chat-prompt-flow"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle, ShieldOff, Check, Ban, UserCheck } from "lucide-react"
+import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle, ShieldOff, Check, Ban, UserCheck, Eye, EyeOff } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Badge } from "./ui/badge"
@@ -75,6 +75,8 @@ export function AiSettingsForm() {
     const { toast } = useToast();
     
     const [testProvider, setTestProvider] = useState<'openai' | 'gemini' | 'automatic'>('automatic');
+    const [visualApiKeys, setVisualApiKeys] = useState<{[key: string]: string}>({ openai: '', gemini: '' });
+    const [showApiKey, setShowApiKey] = useState<{[key: string]: boolean}>({ openai: false, gemini: false });
 
     const fetchData = useCallback(async () => {
         try {
@@ -297,7 +299,7 @@ export function AiSettingsForm() {
                 <div className="flex flex-col justify-center space-y-2 p-4 border rounded-lg bg-background">
                     <Label className="text-xs text-muted-foreground">Autorização Comercial</Label>
                      <div className="flex items-center gap-2">
-                        <Badge className={cn(getStatusBadgeClasses('IA bloqueada'), 'text-sm')}>
+                        <Badge className={cn(getStatusBadgeClasses('disconnected'), 'text-sm')}>
                             <ShieldOff className="h-4 w-4" />
                             Chave de ativação não autorizada
                         </Badge>
@@ -538,8 +540,26 @@ export function AiSettingsForm() {
                             <CardContent className="space-y-4">
                                 <div className="space-y-1">
                                     <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> Chave de API (somente visual)</Label>
-                                    <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
-                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo não edita o segredo real. A chave deve ser configurada no ambiente do servidor.</p>
+                                    <div className="relative">
+                                        <Input 
+                                            id={`${p.id}-key`} 
+                                            type={showApiKey[p.id] ? 'text' : 'password'}
+                                            placeholder="Cole a chave aqui para teste visual"
+                                            value={visualApiKeys[p.id]}
+                                            onChange={(e) => setVisualApiKeys(prev => ({...prev, [p.id]: e.target.value}))}
+                                        />
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                                            onClick={() => setShowApiKey(prev => ({...prev, [p.id]: !prev[p.id]}))}
+                                        >
+                                            {showApiKey[p.id] ? <EyeOff className="size-4"/> : <Eye className="size-4"/>}
+                                            <span className="sr-only">{showApiKey[p.id] ? 'Ocultar chave' : 'Mostrar chave'}</span>
+                                        </Button>
+                                    </div>
+                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo é apenas visual e não altera o segredo real. A chave real deve ser configurada no ambiente do servidor.</p>
                                 </div>
                             </CardContent>
                         </Card>
