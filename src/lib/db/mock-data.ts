@@ -9,7 +9,7 @@
 import { subDays, addDays, setHours, setMinutes } from 'date-fns';
 import type { 
     Operator, Contact, Channel, Lead, Conversation, Message, Quote, Reservation, CalendarEvent, Deal, 
-    AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, KnowledgeBaseArticle
+    AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, KnowledgeBaseArticle, AuditLog
 } from './data-model';
 
 const now = new Date();
@@ -335,4 +335,48 @@ export let aiSettings: AiSettings = deepClone(originalAiSettings);
 export let aiFlowPermissions: AiFlowPermission[] = deepClone(originalAiFlowPermissions);
 export let aiProviderConfigs: AiProviderConfig[] = deepClone(originalAiProviderConfigs);
 export let aiPrompts: AiPrompt[] = deepClone(originalAiPrompts);
-export let auditLogs: any[] = [];
+export let auditLogs: AuditLog[] = [
+    {
+        id: 'log-1',
+        timestamp: new Date().toISOString(),
+        actor: 'Claudia Vaz',
+        actorType: 'human',
+        channel: 'whatsapp',
+        entityType: 'orçamento',
+        entityId: 'ORC-204',
+        eventType: 'orçamento_finalizado',
+        before: { status: 'rascunho' },
+        after: { status: 'enviado' },
+        source: 'manual',
+        approvedBy: 'Claudia Vaz'
+    }
+];
+
+// --- System-wide Operations ---
+const deepCloneReset = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
+
+export const system = {
+    resetOperationalData: () => {
+        db.conversations = deepCloneReset(db.originalConversations);
+        db.messages = deepCloneReset(db.originalMessages);
+        db.leads = deepCloneReset(db.originalLeads);
+        db.quotes = deepCloneReset(db.originalQuotes);
+        db.reservations = deepCloneReset(db.originalReservations);
+        db.deals = deepCloneReset(db.originalDeals);
+        db.calendarEvents = deepCloneReset(db.originalCalendarEvents);
+        db.auditLogs = [];
+        return { success: true, message: "Operational data has been reset." };
+    },
+    resetAllData: () => {
+        // Resets operational data
+        system.resetOperationalData();
+        
+        // Also resets settings data
+        db.aiSettings = deepCloneReset(db.originalAiSettings);
+        db.aiFlowPermissions = deepCloneReset(db.originalAiFlowPermissions);
+        db.aiPrompts = deepCloneReset(db.originalAiPrompts);
+        db.channels = deepCloneReset(db.originalChannels);
+
+        return { success: true, message: "All local mock data has been reset to defaults." };
+    }
+}
