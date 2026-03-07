@@ -1,5 +1,3 @@
-'use server';
-
 /**
  * @fileoverview Server-side configuration management.
  * This module is responsible for securely accessing environment variables
