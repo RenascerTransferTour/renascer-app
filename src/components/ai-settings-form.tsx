@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -218,12 +219,20 @@ export function AiSettingsForm() {
                         <h4 className='font-semibold'>Chave Geral da IA</h4>
                         <p className='text-xs text-muted-foreground'>Ativa ou desativa completamente a inteligência artificial em todos os canais.</p>
                     </Label>
-                    <Switch id="ai-active" checked={settings.globalAiEnabled} />
+                    <Switch 
+                        id="ai-active" 
+                        checked={settings.globalAiEnabled} 
+                        onCheckedChange={(checked) => setSettings((s: any) => ({ ...s, globalAiEnabled: checked }))}
+                    />
                 </div>
                 
                 <div className="space-y-2">
                     <Label>Modo de Automação</Label>
-                    <RadioGroup value={settings.aiMode} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <RadioGroup 
+                        value={settings.aiMode} 
+                        onValueChange={(value) => setSettings((s: any) => ({ ...s, aiMode: value }))}
+                        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+                    >
                         <div>
                             <RadioGroupItem value="off" id="r0" className="peer sr-only" />
                             <Label htmlFor="r0" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
@@ -282,7 +291,10 @@ export function AiSettingsForm() {
             <CardContent className="space-y-6">
                 <div className="space-y-2">
                     <Label>Provedor Principal</Label>
-                    <Select value={settings.activeProvider}>
+                    <Select 
+                        value={settings.activeProvider}
+                        onValueChange={(value) => setSettings((s: any) => ({ ...s, activeProvider: value }))}
+                    >
                         <SelectTrigger className="w-[280px]">
                             <SelectValue placeholder="Selecione um provedor" />
                         </SelectTrigger>
@@ -308,7 +320,7 @@ export function AiSettingsForm() {
                         <CardContent className="space-y-2">
                              <div className="space-y-1">
                                 <Label htmlFor="openai-key" className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> OPENAI_API_KEY</Label>
-                                <Input id="openai-key" type="password" disabled value="*******************************" />
+                                <Input id="openai-key" type="password" readOnly value="*******************************" />
                             </div>
                         </CardContent>
                         <CardFooter>
@@ -328,7 +340,7 @@ export function AiSettingsForm() {
                         <CardContent className="space-y-2">
                              <div className="space-y-1">
                                 <Label htmlFor="gemini-key" className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> GEMINI_API_KEY</Label>
-                                <Input id="gemini-key" type="password" disabled value="*******************************" />
+                                <Input id="gemini-key" type="password" readOnly value="*******************************" />
                             </div>
                         </CardContent>
                         <CardFooter>
@@ -513,12 +525,17 @@ export function AiSettingsForm() {
                         </div>
                         <Switch
                             checked={settings.requireHumanApproval}
+                            onCheckedChange={(checked) => setSettings((s: any) => ({ ...s, requireHumanApproval: checked }))}
                             aria-label="Exigir Aprovação Humana"
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="human-fallback">Responsável Humano (Fallback)</Label>
-                        <Input id="human-fallback" value={settings.fallbackHumanName} />
+                        <Input 
+                            id="human-fallback" 
+                            value={settings.fallbackHumanName} 
+                            onChange={(e) => setSettings((s: any) => ({ ...s, fallbackHumanName: e.target.value }))}
+                        />
                         <p className="text-sm text-muted-foreground">Nome do humano que receberá as solicitações que a IA não pode concluir.</p>
                     </div>
                 </div>
@@ -580,3 +597,5 @@ export function AiSettingsForm() {
     </TooltipProvider>
   )
 }
+
+    
