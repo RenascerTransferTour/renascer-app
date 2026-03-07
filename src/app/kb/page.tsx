@@ -12,6 +12,7 @@ import { cn, getStatusBadgeClasses } from "@/lib/utils"
 import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { FileText, Bot, Search, Info, UserCircle, Calendar } from "lucide-react"
+import { Separator } from "@/components/ui/separator"
 
 const categories = Array.from(new Set(knowledgeBaseArticles.map(a => a.category)));
 
@@ -62,11 +63,8 @@ export default function KnowledgeBasePage() {
                                 {articlesInCategory.map(article => (
                                     <AccordionItem value={article.id} key={article.id} className="border rounded-md px-4 hover:bg-muted/50">
                                         <AccordionTrigger className="py-3">
-                                          <div className="flex-1 text-left space-y-1">
-                                            <p className="font-semibold">{article.title}</p>
-                                            <p className="text-sm text-muted-foreground font-normal">{article.summary}</p>
-                                          </div>
-                                          <div className="flex items-center gap-2 ml-4">
+                                          <p className="font-semibold flex-1 text-left">{article.title}</p>
+                                          <div className="flex items-center gap-2 ml-4 shrink-0">
                                             {article.isEligibleForAI && (
                                               <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50 gap-1.5">
                                                 <Bot className="h-3.5 w-3.5" />
@@ -77,6 +75,8 @@ export default function KnowledgeBasePage() {
                                           </div>
                                         </AccordionTrigger>
                                         <AccordionContent className="text-muted-foreground pt-2 pb-4 space-y-4">
+                                            <p className="text-sm text-foreground italic">{article.summary}</p>
+                                            <Separator/>
                                             <p>{article.content}</p>
                                             <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
                                                 <div className="flex items-center gap-1.5">
