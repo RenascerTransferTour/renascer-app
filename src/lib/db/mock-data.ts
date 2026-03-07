@@ -215,13 +215,13 @@ export const originalCalendarEvents: CalendarEvent[] = [
 
 export const originalDeals: Deal[] = [
   { id: 'deal-1', leadId: 'lead-1', contactId: 'contact-1', title: 'Transfer GRU - Ana Silva', pipelineStage: 'quote-sent', estimatedValue: 320, createdAt: subDays(now, 2).toISOString(), updatedAt: subDays(now, 2).toISOString(), ownerId: 'op-1', status: 'open' },
-  { id: 'deal-2', leadId: 'lead-2', contactId: 'contact-2', title: 'Viagem Campos do Jordão - B. Costa', pipelineStage: 'negotiation', estimatedValue: 2000, createdAt: subDays(now, 5).toISOString(), updatedAt: subDays(now, 5).toISOString(), ownerId: 'op-1', status: 'open' },
+  { id: 'deal-2', leadId: 'lead-2', contactId: 'contact-2', title: 'Viagem Campos do Jordão - B. Costa', pipelineStage: 'qualified', estimatedValue: 2000, createdAt: subDays(now, 5).toISOString(), updatedAt: subDays(now, 5).toISOString(), ownerId: 'IA', status: 'open' },
   { id: 'deal-3', leadId: 'lead-3', contactId: 'contact-3', title: 'Contrato Corporativo - Empresa S.A.', pipelineStage: 'closed-won', estimatedValue: 15000, closedValue: 14500, createdAt: subDays(now, 1).toISOString(), updatedAt: now.toISOString(), ownerId: 'op-1', status: 'won' },
   { id: 'deal-4', leadId: 'lead-4', contactId: 'contact-4', title: 'Interesse em Turismo - Daniel Martins', pipelineStage: 'new-lead', estimatedValue: 800, createdAt: subDays(now, 10).toISOString(), updatedAt: subDays(now, 10).toISOString(), ownerId: 'IA', status: 'open' },
   { id: 'deal-5', leadId: 'lead-5', contactId: 'contact-2', title: 'Viagem Angra (Cancelado)', pipelineStage: 'canceled', estimatedValue: 2750, createdAt: subDays(now, 6).toISOString(), updatedAt: subDays(now, 3).toISOString(), ownerId: 'op-1', status: 'canceled' },
   { id: 'deal-6', leadId: 'lead-6', contactId: 'contact-4', title: 'Transfer Congonhas (Não confirmado)', pipelineStage: 'unconfirmed', estimatedValue: 200, createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString(), ownerId: 'op-1', status: 'open' },
   { id: 'deal-7', leadId: 'lead-7', contactId: 'contact-1', title: 'Aluguel de Van (Perdido)', pipelineStage: 'closed-lost', estimatedValue: 1000, createdAt: subDays(now, 8).toISOString(), updatedAt: subDays(now, 7).toISOString(), ownerId: 'op-1', status: 'lost' },
-  { id: 'deal-8', leadId: 'lead-8', contactId: 'contact-1', title: 'Transfer para evento (Aguardando Fechamento)', pipelineStage: 'aguardando fechamento', estimatedValue: 700, createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), ownerId: 'op-1', status: 'open' },
+  { id: 'deal-8', leadId: 'lead-8', contactId: 'contact-1', title: 'Transfer para evento (Aguardando)', pipelineStage: 'aguardando fechamento', estimatedValue: 700, createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), ownerId: 'op-1', status: 'open' },
 ];
 
 export const originalKnowledgeBaseArticles: KnowledgeBaseArticle[] = [
@@ -458,6 +458,8 @@ const db = {
 };
 
     
+
+
 
 
 

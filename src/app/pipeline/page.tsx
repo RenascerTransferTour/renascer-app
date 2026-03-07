@@ -11,15 +11,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 type DealWithContact = PipelineDeal & { contact: Contact, ownerName: string };
 
 const stages = [
-  { id: 'new-lead', title: 'Novo Lead' },
-  { id: 'qualified', title: 'Qualificado' },
-  { id: 'quote-sent', title: 'Orçamento Enviado' },
-  { id: 'negotiation', title: 'Negociação' },
-  { id: 'aguardando fechamento', title: 'Aguardando Fechamento' },
+  { id: 'new-lead', title: 'Novos Leads' },
+  { id: 'qualified', title: 'Qualificados' },
+  { id: 'quote-sent', title: 'Proposta Enviada' },
+  { id: 'negotiation', title: 'Em Negociação' },
+  { id: 'aguardando fechamento', title: 'Aguardando Ação da Cláudia' },
   { id: 'unconfirmed', title: 'Não Confirmado' },
-  { id: 'closed-won', title: 'Fechado' },
-  { id: 'canceled', title: 'Cancelado' },
-  { id: 'closed-lost', title: 'Perdido' },
+  { id: 'closed-won', title: 'Ganhos' },
+  { id: 'canceled', title: 'Cancelados' },
+  { id: 'closed-lost', title: 'Perdidos' },
 ]
 
 const getStageColor = (stageId: string) => {
@@ -47,8 +47,10 @@ const DealCard = ({ deal }: { deal: DealWithContact }) => {
           {deal.estimatedValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
         </p>
         <div className="flex items-center gap-2 mt-2">
-            {deal.ownerId === 'IA' ? <Bot className="size-3.5 text-muted-foreground"/> : <UserCircle className="size-3.5 text-muted-foreground"/>}
-            <Badge variant="secondary">{deal.ownerName}</Badge>
+            <Badge variant="secondary" className="font-normal flex items-center gap-1.5">
+                {deal.ownerId === 'IA' ? <Bot className="size-3"/> : <UserCircle className="size-3"/>}
+                <span>{deal.ownerName}</span>
+            </Badge>
         </div>
       </CardContent>
     </Card>
@@ -79,7 +81,7 @@ export default function PipelinePage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Pipeline de Vendas (CRM)</h1>
         <p className="text-muted-foreground">
-          Gerencie seu processo comercial com o pipeline no estilo Kanban.
+          Gerencie seu processo comercial. A IA pode qualificar leads, mas a Cláudia é responsável por propostas e fechamentos.
         </p>
       </div>
       <div className="flex gap-4 overflow-x-auto pb-4">

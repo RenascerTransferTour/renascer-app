@@ -105,7 +105,7 @@ export const crmService = {
             return {
                 ...deal,
                 contact,
-                ownerName: deal.ownerId === 'IA' ? 'IA' : owner?.fullName || 'N/A'
+                ownerName: owner?.fullName || 'N/A'
             }
         })
     },
@@ -163,7 +163,7 @@ export const dashboardService = {
         const quotes = repos.quotes.list();
 
         const awaitingHuman = conversations.filter(c => c.status === 'aguardando humano').length;
-        const concludedByAI = reservations.filter(q => q.status === 'concluído pela IA').length;
+        const concludedByAI = reservations.filter(q => q.reservedBy === 'ai' && q.status === 'concluída').length;
         
         return {
             newContactsToday: 12, // Mock
