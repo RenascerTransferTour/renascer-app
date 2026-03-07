@@ -146,7 +146,8 @@ export interface CalendarEvent {
   start: string; // ISO 8601
   end: string; // ISO 8601
   assignedTeamMemberId?: string; // Foreign Key to Operator
-  status: 'confirmada' | 'pendente' | 'cancelada' | 'concluída';
+  status: 'confirmada' | 'pendente' | 'cancelada' | 'concluída' | 'aguardando aprovação';
+  source?: 'ai' | 'human';
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }

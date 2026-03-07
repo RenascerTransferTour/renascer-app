@@ -9,7 +9,7 @@
 import { subDays, addDays, setHours, setMinutes, subMinutes } from 'date-fns';
 import type { 
     Operator, Contact, Channel, Lead, Conversation, Message, Quote, Reservation, CalendarEvent, Deal, 
-    AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, AuditLog
+    AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, AuditLog, KnowledgeBaseArticle
 } from './data-model';
 
 const now = new Date();
@@ -197,7 +197,7 @@ export const originalQuotes: Quote[] = [
 export const originalReservations: Reservation[] = [
   { id: 'res-1', leadId: 'lead-3', quoteId: 'quote-3', contactId: 'contact-3', conversationId: 'conv-3', service: 'Transfer', scheduledDate: addDays(now, 15).toISOString(), scheduledTime: '09:00', status: 'confirmada', details: 'Van executiva para evento no WTC. Aguardando no lobby principal.', reservedBy: 'human', confirmationMode: 'manual', createdAt: now.toISOString(), updatedAt: now.toISOString() },
   { id: 'res-2', leadId: 'lead-1', quoteId: 'quote-1', contactId: 'contact-1', conversationId: 'conv-1', status: 'aguardando aprovação', details: 'Pré-reserva para GRU (Terminal 3), gerada pela IA, aguardando confirmação final.', reservedBy: 'ai', confirmationMode: 'manual', scheduledDate: addDays(now, 25).toISOString(), scheduledTime: '15:00', service: 'Transfer', createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString() },
-  { id: 'res-3', leadId: 'lead-2', quoteId: 'quote-2', contactId: 'contact-2', conversationId: 'conv-2', service: 'Tour', scheduledDate: subDays(now, 2).toISOString(), scheduledTime: '10:00', status: 'concluído por humano', details: 'Viagem para Campos do Jordão, motorista bilíngue solicitado.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 3).toISOString(), updatedAt: subDays(now, 2).toISOString() },
+  { id: 'res-3', leadId: 'lead-2', quoteId: 'quote-2', contactId: 'contact-2', conversationId: 'conv-2', service: 'Tour', scheduledDate: subDays(now, 2).toISOString(), scheduledTime: '10:00', status: 'concluída', details: 'Viagem para Campos do Jordão, motorista bilíngue solicitado.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 3).toISOString(), updatedAt: subDays(now, 2).toISOString() },
   { id: 'res-4', leadId: 'lead-5', quoteId: 'quote-5', contactId: 'contact-2', conversationId: 'conv-5', service: 'Tour', scheduledDate: addDays(now, 50).toISOString(), scheduledTime: '09:00', status: 'cancelada', details: 'Viagem para Angra dos Reis (cancelado pelo cliente).', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 6).toISOString(), updatedAt: subDays(now, 3).toISOString() },
   { id: 'res-5', leadId: 'lead-4', quoteId: 'quote-4', contactId: 'contact-4', conversationId: 'conv-6', service: 'Transfer', scheduledDate: addDays(now, 10).toISOString(), scheduledTime: '18:00', status: 'não confirmado', details: 'Transfer do Aeroporto de Congonhas, aguardando confirmação do voo do cliente.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString() },
   { id: 'res-6', leadId: 'lead-1', quoteId: 'quote-1', contactId: 'contact-1', conversationId: 'conv-1', service: 'Transfer', scheduledDate: addDays(now, 5).toISOString(), scheduledTime: '15:00', status: 'reagendada', details: 'Transfer para GRU. Cliente reagendou do dia 28 para o dia 30.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 1).toISOString(), updatedAt: now.toISOString() },
@@ -205,11 +205,11 @@ export const originalReservations: Reservation[] = [
 ];
 
 export const originalCalendarEvents: CalendarEvent[] = [
-  { id: 'ce-1', reservationId: 'res-1', title: 'Pickup Evento WTC (Empresa S.A)', eventType: 'Pickup', start: setMinutes(setHours(addDays(now, 15), 9), 0).toISOString(), end: setMinutes(setHours(addDays(now, 15), 18), 0).toISOString(), assignedTeamMemberId: 'op-2', status: 'confirmada', createdAt: now.toISOString(), updatedAt: now.toISOString() },
-  { id: 'ce-2', reservationId: 'res-3', title: 'Viagem Campos do Jordão (B. Costa)', eventType: 'Tour', start: setMinutes(setHours(subDays(now, 2), 10), 0).toISOString(), end: setMinutes(setHours(addDays(subDays(now, 2), 2), 16), 0).toISOString(), assignedTeamMemberId: 'op-1', status: 'concluída', createdAt: subDays(now, 3).toISOString(), updatedAt: subDays(now, 2).toISOString() },
-  { id: 'ce-3', reservationId: 'res-2', title: 'Transfer Ana Silva (GRU)', eventType: 'Transfer', start: setMinutes(setHours(addDays(now, 25), 15), 0).toISOString(), end: setMinutes(setHours(addDays(now, 25), 16), 30).toISOString(), assignedTeamMemberId: 'op-1', status: 'pendente', createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString() },
-  { id: 'ce-4', title: 'Manutenção Van 01', eventType: 'Maintenance', start: setMinutes(setHours(addDays(now, 2), 8), 0).toISOString(), end: setMinutes(setHours(addDays(now, 2), 12), 0).toISOString(), status: 'confirmada', createdAt: addDays(now, 1).toISOString(), updatedAt: addDays(now, 1).toISOString() },
-  { id: 'ce-5', reservationId: 'res-4', title: 'Viagem Angra (Cancelado)', eventType: 'Tour', start: setMinutes(setHours(addDays(now, 50), 9), 0).toISOString(), end: setMinutes(setHours(addDays(now, 52), 18), 0).toISOString(), status: 'cancelada', createdAt: subDays(now, 6).toISOString(), updatedAt: subDays(now, 3).toISOString() }
+  { id: 'ce-1', reservationId: 'res-1', title: 'Pickup Evento WTC (Empresa S.A)', eventType: 'Pickup', start: setMinutes(setHours(addDays(now, 15), 9), 0).toISOString(), end: setMinutes(setHours(addDays(now, 15), 18), 0).toISOString(), assignedTeamMemberId: 'op-2', status: 'confirmada', source: 'human', createdAt: now.toISOString(), updatedAt: now.toISOString() },
+  { id: 'ce-2', reservationId: 'res-3', title: 'Viagem Campos do Jordão (B. Costa)', eventType: 'Tour', start: setMinutes(setHours(subDays(now, 2), 10), 0).toISOString(), end: setMinutes(setHours(addDays(subDays(now, 2), 2), 16), 0).toISOString(), assignedTeamMemberId: 'op-1', status: 'concluída', source: 'human', createdAt: subDays(now, 3).toISOString(), updatedAt: subDays(now, 2).toISOString() },
+  { id: 'ce-3', reservationId: 'res-2', title: 'Transfer Ana Silva (GRU)', eventType: 'Transfer', start: setMinutes(setHours(addDays(now, 25), 15), 0).toISOString(), end: setMinutes(setHours(addDays(now, 25), 16), 30).toISOString(), assignedTeamMemberId: 'op-1', status: 'aguardando aprovação', source: 'ai', createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString() },
+  { id: 'ce-4', title: 'Manutenção Van 01', eventType: 'Maintenance', start: setMinutes(setHours(addDays(now, 2), 8), 0).toISOString(), end: setMinutes(setHours(addDays(now, 2), 12), 0).toISOString(), status: 'confirmada', source: 'human', createdAt: addDays(now, 1).toISOString(), updatedAt: addDays(now, 1).toISOString() },
+  { id: 'ce-5', reservationId: 'res-4', title: 'Viagem Angra (Cancelado)', eventType: 'Tour', start: setMinutes(setHours(addDays(now, 50), 9), 0).toISOString(), end: setMinutes(setHours(addDays(now, 52), 18), 0).toISOString(), status: 'cancelada', source: 'human', createdAt: subDays(now, 6).toISOString(), updatedAt: subDays(now, 3).toISOString() }
 ];
 
 export const originalDeals: Deal[] = [
@@ -457,6 +457,8 @@ const db = {
 };
 
     
+
+
 
 
 

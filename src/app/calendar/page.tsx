@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { ChevronLeft, ChevronRight, Circle } from "lucide-react"
+import { ChevronLeft, ChevronRight, Bot, UserCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import type { CalendarEvent } from '@/lib/db/data-model';
@@ -16,6 +16,8 @@ const getEventStyle = (status: string) => {
         return 'bg-green-500 border-green-700 text-white';
       case 'pendente':
         return 'bg-yellow-500 border-yellow-700 text-white';
+      case 'aguardando aprovação':
+        return 'bg-orange-500 border-orange-700 text-white';
       case 'cancelada':
         return 'bg-red-500 border-red-700 text-white opacity-75';
       case 'concluída':
@@ -78,7 +80,7 @@ export default function CalendarPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Calendário de Atividades</h1>
           <p className="text-muted-foreground">
-            Acompanhe todos os seus eventos e serviços agendados.
+            Visualize todos os eventos. Sugestões de horários da IA devem ser confirmadas manualmente pela Cláudia.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -107,12 +109,32 @@ export default function CalendarPage() {
               >
                 <span className={`text-sm font-semibold ${isCurrentMonth ? 'text-foreground' : 'text-muted-foreground/50'}`}>{isCurrentMonth ? format(date, 'd') : ''}</span>
                 <div className="mt-1 space-y-1 flex-1">
-                  {events.map(event => (
-                    <div key={event.id} className={cn('text-xs rounded-md p-1.5 cursor-pointer hover:opacity-80 transition-opacity border-l-4', getEventStyle(event.status))}>
-                      <p className="font-semibold">{event.title}</p>
-                      <p className="text-white/80">{event.eventType}</p>
-                    </div>
-                  ))}
+                  {events.map(event => {
+                    let subText = event.eventType;
+                    let Icon = null;
+
+                    if (event.status === 'pendente' && event.source === 'ai') {
+                        subText = 'Horário sugerido pela IA';
+                        Icon = Bot;
+                    } else if (event.status === 'aguardando aprovação') {
+                        subText = 'Aguardando aprovação';
+                        Icon = UserCheck;
+                    } else if (event.status === 'confirmada' && event.source === 'human') {
+                        subText = 'Agendado manualmente';
+                    }
+
+                    return (
+                        <div key={event.id} className={cn('text-xs rounded-md p-1.5 cursor-pointer hover:opacity-80 transition-opacity border-l-4', getEventStyle(event.status))}>
+                          <div className="flex items-start gap-1.5">
+                            {Icon && <Icon className="h-3 w-3 mt-0.5 shrink-0" />}
+                            <div className='min-w-0'>
+                                <p className="font-semibold truncate">{event.title}</p>
+                                <p className="text-white/80">{subText}</p>
+                            </div>
+                          </div>
+                        </div>
+                    );
+                  })}
                 </div>
               </div>
             ))}
