@@ -28,7 +28,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { testAiChatPrompt, TestAiChatPromptOutput } from "@/ai/flows/test-ai-chat-prompt-flow"
+import { type TestAiChatPromptOutput } from "@/ai/flows/test-ai-chat-prompt-flow"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
@@ -138,7 +138,9 @@ export function AiSettingsForm() {
                 body: JSON.stringify({ masterPrompt: draftPrompt.content, userPrompt: testUserPrompt, provider: testProvider }),
             });
             const result = await res.json();
-            if (!res.ok || result.error) throw new Error(result.details || result.error || "Erro desconhecido");
+            if (!res.ok) {
+                 throw new Error(result.blockReason || result.error || "A API retornou um erro inesperado.");
+            }
             setTestResult(result);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : "Não foi possível obter uma resposta da IA.";
@@ -218,7 +220,7 @@ export function AiSettingsForm() {
                 
                 <div className="space-y-2">
                     <Label>Modo de Automação</Label>
-                    <RadioGroup value={settings.aiMode} onValueChange={(value) => setSettings((s) => s ? ({ ...s, aiMode: value }) : null)} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <RadioGroup value={settings.aiMode} onValueChange={(value) => setSettings((s) => s ? ({ ...s, aiMode: value as any }) : null)} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <RadioGroupItem value="off" id="r0" className="peer sr-only" />
                             <Label htmlFor="r0" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
@@ -305,7 +307,7 @@ export function AiSettingsForm() {
                                     <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> {p.id === 'openai' ? 'OPENAI_API_KEY' : 'GEMINI_API_KEY'}</Label>
                                     <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
                                 </div>
-                                {!p.configured && <p className="text-xs text-destructive">{p.message}</p>}
+                                <p className="text-xs text-muted-foreground">{p.message}</p>
                             </CardContent>
                         </Card>
                     ))}
@@ -362,7 +364,7 @@ export function AiSettingsForm() {
                                 {testResult && (
                                     <div className="space-y-4">
                                         {testResult.wasBlocked ? (
-                                            <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Ação Bloqueada pela Política de Autonomia</AlertTitle><AlertDescription>{testResult.blockReason || 'A configuração de autonomia atual impediu a IA de responder.'}</AlertDescription></Alert>
+                                            <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Ação Bloqueada</AlertTitle><AlertDescription>{testResult.blockReason || 'A configuração de autonomia atual impediu a IA de responder.'}</AlertDescription></Alert>
                                         ) : (
                                             <div><Label>Resposta da IA:</Label><div className="rounded-md border bg-muted p-4 text-sm mt-2">{testResult.response}</div></div>
                                         )}

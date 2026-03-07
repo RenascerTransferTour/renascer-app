@@ -10,6 +10,7 @@
 import {ai} from '@/ai/genkit';
 import {getActiveModel} from '@/ai/utils';
 import {z} from 'zod';
+import { settingsService } from '@/lib/db/services';
 
 const GenerateConversationSummaryInputSchema = z.object({
   conversationHistory: z
@@ -62,10 +63,22 @@ const generateConversationSummaryFlow = ai.defineFlow(
     outputSchema: GenerateConversationSummaryOutputSchema,
   },
   async input => {
+    // Enforce Autonomy Rules before executing the flow.
+    const settings = await settingsService.getAiSettings();
+    const permissions = await settingsService.listPermissions();
+    const summaryPermission = permissions.find(p => p.flowName === 'summarization');
+
+    if (!settings.globalAiEnabled) {
+        throw new Error("Ação bloqueada: A IA está desativada globalmente.");
+    }
+    if (!summaryPermission?.enabled) {
+        throw new Error("Ação bloqueada: A geração de resumo está desativada nas permissões de fluxo.");
+    }
+
     const activeModel = await getActiveModel();
     const {output} = await prompt(input, {model: activeModel});
     if (!output) {
-      throw new Error('Failed to generate conversation summary.');
+      throw new Error('Falha ao gerar resumo: a IA não retornou uma resposta estruturada.');
     }
     return output;
   }

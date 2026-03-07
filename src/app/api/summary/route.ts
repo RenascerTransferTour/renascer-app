@@ -1,43 +1,37 @@
 import { NextResponse } from 'next/server';
 import { generateConversationSummary, GenerateConversationSummaryInput } from '@/ai/flows/generate-conversation-summary-flow';
-import { settingsService } from '@/lib/db/services';
 
 /**
  * API route to generate an AI-powered conversation summary.
- * This now calls the actual Genkit flow and checks for permissions.
+ * This route now calls the Genkit flow which contains its own permission checks.
  */
 export async function POST(request: Request) {
     try {
-        const settings = await settingsService.getAiSettings();
-        const permissions = await settingsService.listPermissions();
-        
-        const summaryPermission = permissions.find(p => p.flowName === 'summarization');
-
-        if (!settings.globalAiEnabled || !summaryPermission?.enabled) {
-            const reason = !settings.globalAiEnabled
-                ? "A IA está desativada globalmente."
-                : "A geração de resumo está desativada nas permissões de fluxo.";
-            
-            return NextResponse.json({ success: false, error: reason }, { status: 403 });
-        }
-
         const body: GenerateConversationSummaryInput = await request.json();
         
         if (!body.conversationHistory) {
              return NextResponse.json({ success: false, error: 'conversationHistory is required.' }, { status: 400 });
         }
 
-        // In a real app, you might fetch the conversation from a DB first
-        // based on an ID, instead of passing the whole history.
+        // The generateConversationSummary flow now contains its own autonomy checks.
+        // If an action is blocked, it will throw an error, which will be caught here.
         console.log(`[AI Summary API] Generating summary for conversation...`);
-        
         const result = await generateConversationSummary({ conversationHistory: body.conversationHistory });
         
         return NextResponse.json({ success: true, summary: result.summary });
 
     } catch (error) {
-        console.error("Error generating summary:", error);
+        console.error("[API /summary] Error generating summary:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
-        return NextResponse.json({ success: false, error: "Failed to generate AI summary.", details: errorMessage }, { status: 500 });
+        
+        // If the error message indicates a blocked action, return a 403 Forbidden status.
+        const isBlocked = /Ação bloqueada/i.test(errorMessage);
+        const status = isBlocked ? 403 : 500;
+
+        return NextResponse.json({ 
+            success: false, 
+            error: isBlocked ? "Não foi possível gerar o resumo." : "Falha ao gerar resumo de IA.",
+            details: errorMessage 
+        }, { status });
     }
 }

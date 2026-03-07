@@ -34,7 +34,6 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn, getStatusBadgeClasses } from '@/lib/utils';
 import { useMemo, useState, useEffect } from 'react';
-import { generateConversationSummary } from '@/ai/flows/generate-conversation-summary-flow';
 import {
     Dialog,
     DialogContent,
@@ -265,9 +264,9 @@ export default function ConversationPage() {
                          <Tooltip>
                             <TooltipTrigger asChild>
                                 <div>
-                                    <Button variant="outline" size="sm" onClick={aiPermissions.canSummarize ? handleGenerateSummary : undefined} disabled={!aiPermissions.canSummarize}>
-                                        <Sparkles className="mr-2 h-4 w-4" />
-                                        Gerar Resumo
+                                    <Button variant="outline" size="sm" onClick={aiPermissions.canSummarize ? handleGenerateSummary : undefined} disabled={isGeneratingSummary || !aiPermissions.canSummarize}>
+                                        {isGeneratingSummary ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                        {isGeneratingSummary ? 'Gerando...' : 'Gerar Resumo'}
                                         {!aiPermissions.canSummarize && <Lock className="ml-2 h-3 w-3"/>}
                                     </Button>
                                 </div>
