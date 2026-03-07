@@ -9,7 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {getActiveModel} from '@/ai/utils';
-import {z} from 'genkit';
+import {z} from 'zod';
 
 const GenerateConversationSummaryInputSchema = z.object({
   conversationHistory: z

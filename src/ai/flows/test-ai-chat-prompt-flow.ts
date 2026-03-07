@@ -9,7 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {modelRef, type ModelReference} from 'genkit/model';
-import {z} from 'genkit';
+import {z} from 'zod';
 import {settingsService} from '@/lib/db/services';
 
 const TestAiChatPromptInputSchema = z.object({
