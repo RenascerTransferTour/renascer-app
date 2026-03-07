@@ -9,7 +9,9 @@ const stages = [
   { id: 'qualified', title: 'Qualificado' },
   { id: 'quote-sent', title: 'Orçamento Enviado' },
   { id: 'negotiation', title: 'Negociação' },
+  { id: 'unconfirmed', title: 'Não Confirmado' },
   { id: 'closed-won', title: 'Fechado' },
+  { id: 'canceled', title: 'Cancelado' },
   { id: 'closed-lost', title: 'Perdido' },
 ]
 

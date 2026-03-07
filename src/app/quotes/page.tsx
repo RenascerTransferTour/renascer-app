@@ -15,14 +15,16 @@ import {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'approved':
+      case 'aprovado':
         return 'default';
-      case 'sent':
+      case 'enviado':
         return 'secondary';
-      case 'draft':
-      case 'review':
+      case 'rascunho':
+      case 'em revisão':
+      case 'não confirmado':
         return 'outline';
-      case 'lost':
+      case 'perdido':
+      case 'cancelado':
         return 'destructive';
       default:
         return 'outline';
@@ -66,7 +68,7 @@ import {
                     <TableCell>{quote.summary}</TableCell>
                     <TableCell>{`R$ ${quote.priceRange[0]} - R$ ${quote.priceRange[1]}`}</TableCell>
                     <TableCell>
-                        <Badge variant={getStatusVariant(quote.status)}>{quote.status}</Badge>
+                        <Badge variant={getStatusVariant(quote.status)} className="capitalize">{quote.status}</Badge>
                     </TableCell>
                     <TableCell>{format(parseISO(quote.createdAt), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                     <TableCell>{format(parseISO(quote.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</TableCell>

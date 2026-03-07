@@ -32,16 +32,29 @@ const getPriorityVariant = (priority: 'low' | 'medium' | 'high') => {
   }
 };
 
-const getStatusVariant = (status: 'open' | 'closed' | 'pending') => {
+const getStatusVariant = (status: 'open' | 'closed' | 'pending' | 'unconfirmed' | 'canceled') => {
     switch (status) {
       case 'open':
         return 'default';
       case 'pending':
         return 'secondary';
+      case 'canceled':
+        return 'destructive';
+      case 'unconfirmed':
+      case 'closed':
+        return 'outline';
       default:
         return 'outline';
     }
   };
+
+const statusLabels: Record<string, string> = {
+    open: 'Aberto',
+    closed: 'Fechado',
+    pending: 'Pendente',
+    unconfirmed: 'Não Confirmado',
+    canceled: 'Cancelado',
+}
 
 
 export const columns: ColumnDef<InboxItem>[] = [
@@ -106,7 +119,12 @@ export const columns: ColumnDef<InboxItem>[] = [
   {
     accessorKey: "status",
     header: "Status",
-    cell: ({ row }) => <Badge variant={getStatusVariant(row.getValue("status"))}>{row.getValue("status")}</Badge>,
+    cell: ({ row }) => {
+        const status = row.getValue("status") as any;
+        return (
+            <Badge variant={getStatusVariant(status)}>{statusLabels[status] || status}</Badge>
+        )
+    }
   },
   {
     accessorKey: "priority",

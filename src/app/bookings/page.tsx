@@ -15,14 +15,15 @@ import {
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'confirmed':
+      case 'confirmada':
         return 'default';
-      case 'completed':
+      case 'concluída':
         return 'secondary';
-      case 'pending':
+      case 'pendente':
+      case 'não confirmado':
         return 'outline';
-      case 'canceled':
-      case 'rescheduled':
+      case 'cancelada':
+      case 'reagendada':
         return 'destructive';
       default:
         return 'outline';
@@ -65,7 +66,7 @@ import {
                     <TableCell>{booking.service}</TableCell>
                     <TableCell>{format(parseISO(booking.date), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                     <TableCell>
-                        <Badge variant={getStatusVariant(booking.status)}>{booking.status}</Badge>
+                        <Badge variant={getStatusVariant(booking.status)} className="capitalize">{booking.status}</Badge>
                     </TableCell>
                     <TableCell className="max-w-[300px] truncate">{booking.details}</TableCell>
                     </TableRow>

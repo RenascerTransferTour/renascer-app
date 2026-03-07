@@ -30,7 +30,7 @@ export type Conversation = {
   id: string;
   customerId: string;
   channel: 'WhatsApp' | 'Instagram' | 'Facebook' | 'Website';
-  status: 'open' | 'closed' | 'pending';
+  status: 'open' | 'closed' | 'pending' | 'unconfirmed' | 'canceled';
   priority: 'low' | 'medium' | 'high';
   isAiActive: boolean;
   lastMessage: string;
@@ -42,7 +42,7 @@ export type Quote = {
   id: string;
   customerId: string;
   conversationId: string;
-  status: 'draft' | 'review' | 'sent' | 'approved' | 'lost';
+  status: 'rascunho' | 'em revisão' | 'enviado' | 'não confirmado' | 'aprovado' | 'perdido' | 'cancelado';
   summary: string;
   priceRange: [number, number];
   createdAt: string;
@@ -55,7 +55,7 @@ export type Booking = {
   quoteId: string;
   service: 'Pickup' | 'Transfer' | 'Tour';
   date: string;
-  status: 'pending' | 'confirmed' | 'rescheduled' | 'completed' | 'canceled';
+  status: 'pendente' | 'não confirmado' | 'confirmada' | 'reagendada' | 'concluída' | 'cancelada';
   details: string;
   createdAt: string;
 };
@@ -75,7 +75,7 @@ export type PipelineDeal = {
   id: string;
   customerId: string;
   title: string;
-  stage: 'new-lead' | 'qualified' | 'quote-sent' | 'negotiation' | 'closed-won' | 'closed-lost';
+  stage: 'new-lead' | 'qualified' | 'quote-sent' | 'negotiation' | 'closed-won' | 'closed-lost' | 'unconfirmed' | 'canceled';
   value: number;
   createdAt: string;
 };

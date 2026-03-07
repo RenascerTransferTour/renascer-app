@@ -13,6 +13,8 @@ import {
   Clock,
   ThumbsUp,
   TrendingUp,
+  Ban,
+  FileQuestion,
 } from 'lucide-react';
 
 const stats = [
@@ -51,6 +53,20 @@ const stats = [
     change: '+30%',
     description: 'em relação ao mês passado'
   },
+  {
+    title: 'Orçamentos Cancelados (Mês)',
+    value: '2',
+    icon: Ban,
+    change: '-5%',
+    description: 'em relação ao mês passado',
+    changeColor: 'text-destructive',
+  },
+  {
+    title: 'Reservas Não Confirmadas',
+    value: '3',
+    icon: FileQuestion,
+    change: 'Aguardando cliente',
+  },
 ];
 
 const highlights = [
@@ -74,7 +90,7 @@ const highlights = [
 export function StatsCards() {
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
