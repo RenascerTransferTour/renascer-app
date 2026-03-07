@@ -15,7 +15,7 @@ const stages = [
   { id: 'qualified', title: 'Qualificados' },
   { id: 'quote-sent', title: 'Proposta Enviada' },
   { id: 'negotiation', title: 'Em Negociação' },
-  { id: 'aguardando fechamento', title: 'Aguardando Ação da Cláudia' },
+  { id: 'aguardando fechamento', title: 'Aguardando Ação' },
   { id: 'unconfirmed', title: 'Não Confirmado' },
   { id: 'closed-won', title: 'Ganhos' },
   { id: 'canceled', title: 'Cancelados' },
@@ -41,16 +41,22 @@ const DealCard = ({ deal }: { deal: DealWithContact }) => {
       <CardHeader className="p-3 pb-1">
         <CardTitle className="text-sm font-medium">{deal.title}</CardTitle>
       </CardHeader>
-      <CardContent className="p-3 pt-1 text-xs">
+      <CardContent className="p-3 pt-1 text-xs space-y-2">
         <p className="text-muted-foreground">{deal.contact?.fullName}</p>
-        <p className="font-bold text-primary mt-1">
+        <p className="font-bold text-primary">
           {deal.estimatedValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
         </p>
-        <div className="flex items-center gap-2 mt-2">
+        <div className="flex flex-wrap items-center gap-1">
             <Badge variant="secondary" className="font-normal flex items-center gap-1.5">
                 {deal.ownerId === 'IA' ? <Bot className="size-3"/> : <UserCircle className="size-3"/>}
                 <span>{deal.ownerName}</span>
             </Badge>
+            {deal.ownerId === 'IA' && ['new-lead', 'qualified'].includes(deal.pipelineStage) && (
+              <Badge variant="outline" className="font-normal border-blue-200 text-blue-800 bg-blue-50">Lead qualificado pela IA</Badge>
+            )}
+             {deal.pipelineStage === 'aguardando fechamento' && (
+              <Badge variant="outline" className="font-normal border-orange-200 text-orange-800 bg-orange-50">Aguardando ação da Cláudia</Badge>
+            )}
         </div>
       </CardContent>
     </Card>
