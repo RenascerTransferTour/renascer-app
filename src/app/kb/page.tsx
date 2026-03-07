@@ -68,7 +68,7 @@ export default function KnowledgeBasePage() {
                                             {article.isEligibleForAI && (
                                               <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50 gap-1.5">
                                                 <Bot className="h-3.5 w-3.5" />
-                                                Elegível para IA
+                                                Conteúdo elegível para IA no futuro
                                               </Badge>
                                             )}
                                             <Badge className={cn(getStatusBadgeClasses(article.status))}>{statusLabels[article.status] || article.status}</Badge>
