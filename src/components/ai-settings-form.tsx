@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -35,13 +35,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Badge } from "./ui/badge"
 import { Skeleton } from "./ui/skeleton"
-import type { AiSettings, AiPrompt } from "@/lib/db/data-model"
+import type { AiSettings, AiPrompt, AiFlowPermission } from "@/lib/db/data-model"
 import type { ProviderStatus } from "@/app/api/settings/ai/providers/route"
 import { cn } from "@/lib/utils"
 
-const flowPermissionsData = [
+const flowPermissionsData: {id: AiFlowPermission['flowName']; label: string; description: string;}[] = [
     { id: 'welcome', label: 'Boas-Vindas', description: 'Permite que a IA envie a primeira mensagem de boas-vindas.' },
     { id: 'qualification', label: 'Qualificação', description: 'Permite que a IA faça perguntas para coletar dados do cliente.' },
+    { id: 'summarization', label: 'Geração de Resumo', description: 'Permite que a IA gere resumos de conversas.' },
     { id: 'faq', label: 'Respostas Frequentes', description: 'Permite que a IA responda perguntas gerais da base de conhecimento.' },
     { id: 'quoteCreation', label: 'Criação de Orçamento', description: 'Permite que a IA crie rascunhos de orçamentos.' },
     { id: 'bookingCreation', label: 'Criação de Reserva', description: 'Permite que a IA crie rascunhos de reservas.' },
@@ -51,12 +52,13 @@ const flowPermissionsData = [
 ];
 
 export function AiSettingsForm() {
-    const [settings, setSettings] = useState<any | null>(null);
+    const [settings, setSettings] = useState<AiSettings | null>(null);
     const [prompts, setPrompts] = useState<AiPrompt[]>([]);
-    const [loading, setLoading] = useState(true);
-
+    const [permissions, setPermissions] = useState<AiFlowPermission[]>([]);
+    
     const [providerStatus, setProviderStatus] = useState<ProviderStatus[]>([]);
-    const [loadingProviders, setLoadingProviders] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
 
     const [draftPrompt, setDraftPrompt] = useState<AiPrompt | null>(null);
     const [publishedPrompt, setPublishedPrompt] = useState<AiPrompt | null>(null);
@@ -68,75 +70,63 @@ export function AiSettingsForm() {
     
     const [testProvider, setTestProvider] = useState<'openai' | 'gemini' | 'automatic'>('automatic');
 
-    const handleFetchError = (error: any, context: string) => {
-        console.error(`Failed to fetch ${context}`, error);
-        toast({
-            variant: "destructive",
-            title: `Erro ao carregar ${context}`,
-            description: error instanceof Error ? error.message : "O servidor retornou uma resposta inesperada.",
-        });
-    }
+    const fetchData = useCallback(async () => {
+        try {
+            setLoading(true);
+            const processResponse = async (res: Response, name: string) => {
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    let errorDetails = errorText;
+                    try { errorDetails = JSON.parse(errorText).details || errorText; } catch (e) { /* Not a JSON response */ }
+                    throw new Error(`Falha ao buscar ${name}. Status: ${res.status}. Detalhes: ${errorDetails}`);
+                }
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    console.error(`Resposta não-JSON para ${name}`, await res.text());
+                    throw new TypeError(`Resposta inesperada do servidor para ${name}.`);
+                }
+                return res.json();
+            };
 
-     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                setLoadingProviders(true);
+            const [settingsRes, promptsRes, providersRes, permissionsRes] = await Promise.all([
+                fetch('/api/settings/ai'),
+                fetch('/api/settings/prompts'),
+                fetch('/api/settings/ai/providers'),
+                fetch('/api/settings/ai/permissions')
+            ]);
+            
+            const settingsData = await processResponse(settingsRes, 'configurações de IA');
+            const promptsData = await processResponse(promptsRes, 'prompts');
+            const providersData = await processResponse(providersRes, 'status do provedor');
+            const permissionsData = await processResponse(permissionsRes, 'permissões de IA');
+            
+            setSettings(settingsData);
+            setPrompts(promptsData);
+            setProviderStatus(providersData);
+            setPermissions(permissionsData);
 
-                const processResponse = async (res: Response, name: string) => {
-                    if (!res.ok) {
-                        const errorText = await res.text();
-                        let errorDetails = errorText;
-                        try {
-                           errorDetails = JSON.parse(errorText).details || errorText;
-                        } catch (e) { /* Not a JSON response */ }
-                        throw new Error(`Falha ao buscar ${name}. Status: ${res.status}. Detalhes: ${errorDetails}`);
-                    }
-                    const contentType = res.headers.get("content-type");
-                    if (!contentType || !contentType.includes("application/json")) {
-                        console.error(`Resposta não-JSON para ${name}`, await res.text());
-                        throw new TypeError(`Resposta inesperada do servidor para ${name}.`);
-                    }
-                    return res.json();
-                };
+            setDraftPrompt(promptsData.find((p: AiPrompt) => p.status === 'draft') || null);
+            setPublishedPrompt(promptsData.find((p: AiPrompt) => p.status === 'published') || null);
 
-                const [settingsRes, promptsRes, providersRes] = await Promise.all([
-                    fetch('/api/settings/ai'),
-                    fetch('/api/settings/prompts'),
-                    fetch('/api/settings/ai/providers')
-                ]);
-                
-                const settingsData = await processResponse(settingsRes, 'configurações de IA');
-                const promptsData = await processResponse(promptsRes, 'prompts');
-                const providersData = await processResponse(providersRes, 'status do provedor');
-                
-                setSettings(settingsData);
-                setPrompts(promptsData);
-                setProviderStatus(providersData);
-
-                const draft = promptsData.find((p: AiPrompt) => p.status === 'draft');
-                const published = promptsData.find((p: AiPrompt) => p.status === 'published');
-                setDraftPrompt(draft || null);
-                setPublishedPrompt(published || null);
-
-            } catch (error) {
-                handleFetchError(error, "configurações");
-            } finally {
-                setLoading(false);
-                setLoadingProviders(false);
-            }
-        };
-        fetchData();
+        } catch (error) {
+            console.error("Failed to fetch settings data", error);
+            toast({
+                variant: "destructive",
+                title: "Erro ao carregar configurações",
+                description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
+            });
+        } finally {
+            setLoading(false);
+        }
     }, [toast]);
 
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleTestPrompt = async () => {
         if (!testUserPrompt.trim() || !draftPrompt?.content) {
-            toast({
-                variant: "destructive",
-                title: "Aviso",
-                description: "O prompt de rascunho e a mensagem do usuário não podem estar vazios.",
-            });
+            toast({ variant: "destructive", title: "Aviso", description: "O prompt de rascunho e a mensagem do usuário não podem estar vazios." });
             return;
         }
         setIsTesting(true);
@@ -145,52 +135,56 @@ export function AiSettingsForm() {
             const res = await fetch('/api/ai/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    masterPrompt: draftPrompt.content,
-                    userPrompt: testUserPrompt,
-                    provider: testProvider,
-                }),
+                body: JSON.stringify({ masterPrompt: draftPrompt.content, userPrompt: testUserPrompt, provider: testProvider }),
             });
-
-            if (!res.ok) {
-                 const errorBody = await res.text();
-                 let errorDetails = "Ocorreu um erro no servidor.";
-                 try {
-                     const errorJson = JSON.parse(errorBody);
-                     errorDetails = errorJson.details || errorJson.error || errorDetails;
-                 } catch (e) {
-                     console.error("Received non-JSON error response from test API", errorBody);
-                     errorDetails = `Resposta inesperada do servidor: ${errorBody.substring(0, 100)}`;
-                 }
-                 throw new Error(errorDetails);
-            }
-            
             const result = await res.json();
-            if (result.error) {
-                 throw new Error(result.details || result.error);
-            }
-
+            if (!res.ok || result.error) throw new Error(result.details || result.error || "Erro desconhecido");
             setTestResult(result);
         } catch (error) {
-            console.error(error);
             const errorMessage = error instanceof Error ? error.message : "Não foi possível obter uma resposta da IA.";
             setTestResult({ wasBlocked: true, blockReason: errorMessage });
-            toast({
-                variant: "destructive",
-                title: "Erro no Teste",
-                description: errorMessage,
-            })
+            toast({ variant: "destructive", title: "Erro no Teste", description: errorMessage });
         } finally {
             setIsTesting(false);
         }
-    }
+    };
     
+    const handleSaveAll = async () => {
+        setSaving(true);
+        try {
+            const [settingsRes, permsRes] = await Promise.all([
+                fetch('/api/settings/ai', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(settings)
+                }),
+                fetch('/api/settings/ai/permissions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(permissions)
+                })
+            ]);
+            if (!settingsRes.ok || !permsRes.ok) {
+                throw new Error("Uma ou mais configurações falharam ao salvar.");
+            }
+            toast({ title: "Sucesso!", description: "Todas as configurações de IA foram salvas." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Erro ao Salvar", description: error instanceof Error ? error.message : "Ocorreu um erro." });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handlePermissionChange = (flowName: AiFlowPermission['flowName'], field: keyof AiFlowPermission, value: any) => {
+        setPermissions(prev => prev.map(p => p.flowName === flowName ? { ...p, [field]: value } : p));
+    };
+
     const modeDescriptions: Record<string, string> = {
         'off': 'A IA está completamente desligada e não interagirá com os clientes.',
         'assisted': 'IA coleta dados iniciais e então transfere para um humano para o orçamento. (Padrão)',
         'partial_autonomous': 'IA pode criar rascunhos de orçamentos e reservas, mas um humano deve aprovar.',
         'full_autonomous': 'A IA pode fechar vendas e confirmar reservas de forma autônoma. (Requer cuidado)',
-    }
+    };
 
     const openaiStatus = providerStatus.find(p => p.id === 'openai');
     const geminiStatus = providerStatus.find(p => p.id === 'gemini');
@@ -219,39 +213,28 @@ export function AiSettingsForm() {
                         <h4 className='font-semibold'>Chave Geral da IA</h4>
                         <p className='text-xs text-muted-foreground'>Ativa ou desativa completamente a inteligência artificial em todos os canais.</p>
                     </Label>
-                    <Switch 
-                        id="ai-active" 
-                        checked={settings.globalAiEnabled} 
-                        onCheckedChange={(checked) => setSettings((s: any) => ({ ...s, globalAiEnabled: checked }))}
-                    />
+                    <Switch id="ai-active" checked={settings.globalAiEnabled} onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, globalAiEnabled: checked }) : null)} />
                 </div>
                 
                 <div className="space-y-2">
                     <Label>Modo de Automação</Label>
-                    <RadioGroup 
-                        value={settings.aiMode} 
-                        onValueChange={(value) => setSettings((s: any) => ({ ...s, aiMode: value }))}
-                        className="grid grid-cols-1 md:grid-cols-3 gap-4"
-                    >
+                    <RadioGroup value={settings.aiMode} onValueChange={(value) => setSettings((s) => s ? ({ ...s, aiMode: value }) : null)} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <RadioGroupItem value="off" id="r0" className="peer sr-only" />
                             <Label htmlFor="r0" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                <Bot className="mb-2"/>
-                                IA Desligada
+                                <Bot className="mb-2"/> IA Desligada
                             </Label>
                         </div>
                         <div>
                             <RadioGroupItem value="assisted" id="r2" className="peer sr-only" />
                             <Label htmlFor="r2" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                <Bot className="mb-2"/>
-                                IA Assistida
+                                <Bot className="mb-2"/> IA Assistida
                             </Label>
                         </div>
                         <div>
                             <RadioGroupItem value="partial_autonomous" id="r3" className="peer sr-only"/>
                             <Label htmlFor="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                                <Bot className="mb-2"/>
-                                IA Operacional Parcial
+                                <Bot className="mb-2"/> IA Operacional Parcial
                             </Label>
                         </div>
                         <Tooltip>
@@ -259,25 +242,18 @@ export function AiSettingsForm() {
                                 <div>
                                     <RadioGroupItem value="full_autonomous" id="r4" className="peer sr-only" disabled />
                                     <Label htmlFor="r4" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 opacity-60 cursor-not-allowed">
-                                        <div className='relative'>
-                                            <Bot className="mb-2"/>
-                                            <Lock className='absolute -top-1 -right-1 size-3 bg-background text-muted-foreground p-0.5 rounded-full'/>
-                                        </div>
+                                        <div className='relative'><Bot className="mb-2"/><Lock className='absolute -top-1 -right-1 size-3 bg-background text-muted-foreground p-0.5 rounded-full'/></div>
                                         IA Completa (Autônoma)
                                     </Label>
                                 </div>
                             </TooltipTrigger>
-                            <TooltipContent>
-                                <p>Este modo estará disponível em breve.</p>
-                            </TooltipContent>
+                            <TooltipContent><p>Este modo estará disponível em breve.</p></TooltipContent>
                         </Tooltip>
                     </RadioGroup>
                     <Alert variant={settings.aiMode === 'full_autonomous' ? 'destructive' : 'default'} className="mt-4">
                         <Info className="h-4 w-4" />
                         <AlertTitle>Modo selecionado: {settings.aiMode}</AlertTitle>
-                        <AlertDescription>
-                            {modeDescriptions[settings.aiMode]}
-                        </AlertDescription>
+                        <AlertDescription>{modeDescriptions[settings.aiMode]}</AlertDescription>
                     </Alert>
                 </div>
             </CardContent>
@@ -289,71 +265,54 @@ export function AiSettingsForm() {
                 <CardDescription>Gerencie quais modelos de IA são usados e suas credenciais (placeholders).</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="space-y-2">
-                    <Label>Provedor Principal</Label>
-                    <Select 
-                        value={settings.activeProvider}
-                        onValueChange={(value) => setSettings((s: any) => ({ ...s, activeProvider: value }))}
-                    >
-                        <SelectTrigger className="w-[280px]">
-                            <SelectValue placeholder="Selecione um provedor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="gemini">Gemini (Google)</SelectItem>
-                            <SelectItem value="openai">OpenAI (ChatGPT)</SelectItem>
-                            <SelectItem value="automatic">Automático / Fallback</SelectItem>
-                        </SelectContent>
-                    </Select>
+                 <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+                    <div className="space-y-2 flex-1">
+                        <Label>Provedor Principal</Label>
+                        <Select value={settings.activeProvider} onValueChange={(value) => setSettings((s) => s ? ({ ...s, activeProvider: value as any }) : null)}>
+                            <SelectTrigger className="w-full sm:w-[280px]">
+                                <SelectValue placeholder="Selecione um provedor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="gemini">Gemini (Google)</SelectItem>
+                                <SelectItem value="openai">OpenAI (ChatGPT)</SelectItem>
+                                <SelectItem value="automatic">Automático / Fallback</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-center space-x-2 p-4 border rounded-lg">
+                        <Label htmlFor="fallback-enabled" className="flex-1">
+                            <h4 className='font-semibold'>Ativar Fallback</h4>
+                            <p className='text-xs text-muted-foreground'>Se o provedor principal falhar, tentar o outro.</p>
+                        </Label>
+                        <Switch id="fallback-enabled" checked={settings.isFallbackEnabled} onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, isFallbackEnabled: checked }) : null)} />
+                    </div>
                 </div>
                 <Separator/>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card>
-                        <CardHeader className="flex-row items-start justify-between">
-                            <div>
-                                <CardTitle className="text-lg">OpenAI (ChatGPT)</CardTitle>
-                                <CardDescription>{openaiStatus?.model || 'gpt-4-turbo'}</CardDescription>
-                            </div>
-                            <Badge variant={openaiStatus?.configured ? 'secondary' : 'outline'} className={cn(openaiStatus?.configured ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
-                                {loadingProviders ? 'Verificando...' : (openaiStatus?.status || 'Indisponível')}
-                            </Badge>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                             <div className="space-y-1">
-                                <Label htmlFor="openai-key" className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> OPENAI_API_KEY</Label>
-                                <Input id="openai-key" type="password" readOnly value="*******************************" />
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button variant="outline" className="w-full" disabled={!openaiStatus?.configured}>Testar Conexão</Button>
-                        </CardFooter>
-                    </Card>
-                     <Card>
-                        <CardHeader className="flex-row items-start justify-between">
-                            <div>
-                                <CardTitle className="text-lg">Gemini (Google)</CardTitle>
-                                <CardDescription>{geminiStatus?.model || 'gemini-2.5-flash'}</CardDescription>
-                            </div>
-                             <Badge variant={geminiStatus?.configured ? 'secondary' : 'outline'} className={cn(geminiStatus?.configured ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
-                                {loadingProviders ? 'Verificando...' : (geminiStatus?.status || 'Indisponível')}
-                            </Badge>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                             <div className="space-y-1">
-                                <Label htmlFor="gemini-key" className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> GEMINI_API_KEY</Label>
-                                <Input id="gemini-key" type="password" readOnly value="*******************************" />
-                            </div>
-                        </CardContent>
-                        <CardFooter>
-                            <Button variant="outline" className="w-full" disabled={!geminiStatus?.configured}>Testar Conexão</Button>
-                        </CardFooter>
-                    </Card>
+                    {providerStatus.map(p => (
+                        <Card key={p.id}>
+                            <CardHeader className="flex-row items-start justify-between">
+                                <div>
+                                    <CardTitle className="text-lg">{p.name}</CardTitle>
+                                    <CardDescription>{p.model}</CardDescription>
+                                </div>
+                                <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn(p.configured ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
+                                    {p.status}
+                                </Badge>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                <div className="space-y-1">
+                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> {p.id === 'openai' ? 'OPENAI_API_KEY' : 'GEMINI_API_KEY'}</Label>
+                                    <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
+                                </div>
+                                {!p.configured && <p className="text-xs text-destructive">{p.message}</p>}
+                            </CardContent>
+                        </Card>
+                    ))}
                 </div>
                  <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Aviso de Segurança</AlertTitle>
-                    <AlertDescription>
-                        As chaves de API reais devem ser armazenadas com segurança no backend (ex: environment variables) e nunca expostas no código do front-end. Estes campos são apenas representações visuais.
-                    </AlertDescription>
+                    <AlertTriangle className="h-4 w-4" /><AlertTitle>Aviso de Segurança</AlertTitle>
+                    <AlertDescription>As chaves de API reais devem ser armazenadas com segurança no backend (ex: environment variables) e nunca expostas no código do front-end. Estes campos são apenas representações visuais.</AlertDescription>
                 </Alert>
             </CardContent>
         </Card>
@@ -370,54 +329,25 @@ export function AiSettingsForm() {
                         <TabsTrigger value="published">Publicado</TabsTrigger>
                     </TabsList>
                     <TabsContent value="draft" className="space-y-4">
-                        <Textarea
-                        id="master-prompt"
-                        placeholder="Defina as instruções principais para a IA..."
-                        className="min-h-[250px] font-mono text-xs"
-                        value={draftPrompt?.content || ''}
-                        onChange={(e) => setDraftPrompt(p => p ? {...p, content: e.target.value} : null)}
-                        />
-                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Info className="size-4 shrink-0"/> 
-                            <p>Você está editando o rascunho. Para aplicar as mudanças, salve e publique o prompt.</p>
-                        </div>
+                        <Textarea id="master-prompt" placeholder="Defina as instruções principais para a IA..." className="min-h-[250px] font-mono text-xs" value={draftPrompt?.content || ''} onChange={(e) => setDraftPrompt(p => p ? {...p, content: e.target.value} : null)} />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground"><Info className="size-4 shrink-0"/> <p>Você está editando o rascunho. Para aplicar as mudanças, salve e publique o prompt.</p></div>
                     </TabsContent>
-                     <TabsContent value="published" className="space-y-4">
-                        <Textarea
-                        id="master-prompt-published"
-                        className="min-h-[250px] font-mono text-xs bg-muted/70"
-                        value={publishedPrompt?.content || 'Nenhum prompt publicado encontrado.'}
-                        readOnly
-                        />
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Info className="size-4 shrink-0"/> 
-                            <p>Esta é a versão atualmente em produção. Para alterá-la, edite o rascunho e publique.</p>
-                        </div>
+                    <TabsContent value="published" className="space-y-4">
+                        <Textarea id="master-prompt-published" className="min-h-[250px] font-mono text-xs bg-muted/70" value={publishedPrompt?.content || 'Nenhum prompt publicado encontrado.'} readOnly />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground"><Info className="size-4 shrink-0"/> <p>Esta é a versão atualmente em produção. Para alterá-la, edite o rascunho e publique.</p></div>
                     </TabsContent>
                 </Tabs>
                 <div className="flex items-center gap-4">
-                    <Button variant="outline" className="w-full">
-                        <History className="mr-2"/> Ver Histórico de Versões
-                    </Button>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full">Testar Prompt</Button>
-                        </DialogTrigger>
+                    <Button variant="outline" className="w-full"><History className="mr-2"/> Ver Histórico de Versões</Button>
+                    <Dialog><DialogTrigger asChild><Button variant="outline" className="w-full">Testar Prompt</Button></DialogTrigger>
                         <DialogContent className="sm:max-w-2xl">
-                            <DialogHeader>
-                            <DialogTitle>Testar Prompt da IA</DialogTitle>
-                            <DialogDescription>
-                                Envie uma mensagem de teste para ver como a IA responderá com o prompt de rascunho.
-                            </DialogDescription>
-                            </DialogHeader>
+                            <DialogHeader><DialogTitle>Testar Prompt da IA</DialogTitle><DialogDescription>Envie uma mensagem de teste para ver como a IA responderá com o prompt de rascunho.</DialogDescription></DialogHeader>
                             <div className="grid gap-4 py-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="test-provider">Provedor para Teste</Label>
                                         <Select value={testProvider} onValueChange={(v) => setTestProvider(v as any)}>
-                                            <SelectTrigger id="test-provider">
-                                                <SelectValue placeholder="Selecione o provedor" />
-                                            </SelectTrigger>
+                                            <SelectTrigger id="test-provider"><SelectValue placeholder="Selecione o provedor" /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="automatic">Automático (usa configurações)</SelectItem>
                                                 <SelectItem value="gemini" disabled={!geminiStatus?.configured}>Gemini (Simulado)</SelectItem>
@@ -425,163 +355,72 @@ export function AiSettingsForm() {
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Status do Prompt</Label>
-                                        <div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-muted text-sm">
-                                            {publishedPrompt ? <CheckCircle className="size-4 text-green-500" /> : <XCircle className="size-4 text-destructive" />}
-                                            <span>{publishedPrompt ? 'Publicado' : 'Não Publicado'}</span>
-                                        </div>
-                                    </div>
+                                    <div className="space-y-2"><Label>Status do Prompt</Label><div className="flex items-center gap-2 h-10 px-3 border rounded-md bg-muted text-sm">{publishedPrompt ? <CheckCircle className="size-4 text-green-500" /> : <XCircle className="size-4 text-destructive" />}<span>{publishedPrompt ? 'Publicado' : 'Não Publicado'}</span></div></div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="test-prompt">
-                                        Mensagem do Usuário:
-                                    </Label>
-                                    <Textarea
-                                    id="test-prompt"
-                                    value={testUserPrompt}
-                                    onChange={(e) => setTestUserPrompt(e.target.value)}
-                                    className="min-h-[80px]"
-                                    />
-                                </div>
-                                {isTesting && (
-                                    <div className="flex flex-col items-center justify-center p-4 gap-2">
-                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                        <p className="text-sm text-muted-foreground">Aguardando resposta da IA...</p>
-                                    </div>
-                                )}
+                                <div className="space-y-2"><Label htmlFor="test-prompt">Mensagem do Usuário:</Label><Textarea id="test-prompt" value={testUserPrompt} onChange={(e) => setTestUserPrompt(e.target.value)} className="min-h-[80px]" /></div>
+                                {isTesting && (<div className="flex flex-col items-center justify-center p-4 gap-2"><Loader2 className="h-6 w-6 animate-spin" /><p className="text-sm text-muted-foreground">Aguardando resposta da IA...</p></div>)}
                                 {testResult && (
                                     <div className="space-y-4">
                                         {testResult.wasBlocked ? (
-                                            <Alert variant="destructive">
-                                                <AlertTriangle className="h-4 w-4" />
-                                                <AlertTitle>Ação Bloqueada pela Política de Autonomia</AlertTitle>
-                                                <AlertDescription>
-                                                    {testResult.blockReason || 'A configuração de autonomia atual impediu a IA de responder.'}
-                                                </AlertDescription>
-                                            </Alert>
+                                            <Alert variant="destructive"><AlertTriangle className="h-4 w-4" /><AlertTitle>Ação Bloqueada pela Política de Autonomia</AlertTitle><AlertDescription>{testResult.blockReason || 'A configuração de autonomia atual impediu a IA de responder.'}</AlertDescription></Alert>
                                         ) : (
-                                            <div>
-                                                <Label>Resposta da IA:</Label>
-                                                <div className="rounded-md border bg-muted p-4 text-sm mt-2">
-                                                    {testResult.response}
-                                                </div>
-                                            </div>
+                                            <div><Label>Resposta da IA:</Label><div className="rounded-md border bg-muted p-4 text-sm mt-2">{testResult.response}</div></div>
                                         )}
                                         <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground border-t pt-4">
-                                            <div className="flex items-center gap-2">
-                                                <p>Provedor usado:</p>
-                                                <Badge variant="outline" className="capitalize">{testResult.providerUsed || 'N/D'}</Badge>
-                                            </div>
-                                             <div className="flex items-center gap-2">
-                                                <p>Fallback Ativado:</p>
-                                                <Badge variant={testResult.fallbackTriggered ? "default" : "outline"} className={cn(testResult.fallbackTriggered ? 'bg-orange-100 text-orange-800' : '')}>
-                                                    {testResult.fallbackTriggered ? 'Sim' : 'Não'}
-                                                </Badge>
-                                            </div>
+                                            <div className="flex items-center gap-2"><p>Provedor usado:</p><Badge variant="outline" className="capitalize">{testResult.providerUsed || 'N/D'}</Badge></div>
+                                            <div className="flex items-center gap-2"><p>Fallback Ativado:</p><Badge variant={testResult.fallbackTriggered ? "default" : "outline"} className={cn(testResult.fallbackTriggered ? 'bg-orange-100 text-orange-800' : '')}>{testResult.fallbackTriggered ? 'Sim' : 'Não'}</Badge></div>
                                         </div>
                                     </div>
                                 )}
                             </div>
-                            <DialogFooter>
-                            <Button type="submit" onClick={handleTestPrompt} disabled={isTesting}>
-                                {isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                Enviar Teste
-                            </Button>
-                            </DialogFooter>
+                            <DialogFooter><Button type="submit" onClick={handleTestPrompt} disabled={isTesting}>{isTesting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} Enviar Teste</Button></DialogFooter>
                         </DialogContent>
                     </Dialog>
                 </div>
-                 <div className="border rounded-lg p-4 space-y-2">
-                    <h4 className="font-semibold text-sm">Compatibilidade do Prompt</h4>
-                    <div className="flex items-center justify-between text-sm">
-                        <p className="flex items-center gap-2"><span className="font-semibold">OpenAI</span> (gpt-4, gpt-3.5-turbo)</p>
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">Compatível</Badge>
-                    </div>
-                     <div className="flex items-center justify-between text-sm">
-                        <p className="flex items-center gap-2"><span className="font-semibold">Gemini</span> (gemini-2.5-flash)</p>
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">Compatível</Badge>
-                    </div>
-                </div>
             </CardContent>
-            <CardFooter className="justify-end">
-                 <Button>Salvar e Publicar Prompt</Button>
-            </CardFooter>
+            <CardFooter className="justify-end"><Button>Salvar e Publicar Prompt</Button></CardFooter>
         </Card>
       
         <Card>
-            <CardHeader>
-                <CardTitle>Regras de Negócio e Roteamento</CardTitle>
-                <CardDescription>Defina quando a IA deve transferir o atendimento e quais ações ela pode tomar.</CardDescription>
-            </CardHeader>
+            <CardHeader><CardTitle>Regras de Negócio e Roteamento</CardTitle><CardDescription>Defina quando a IA deve transferir o atendimento e quais ações ela pode tomar.</CardDescription></CardHeader>
             <CardContent className="space-y-6">
                 <div className="space-y-4">
                     <div className="flex flex-row items-center justify-between rounded-lg border p-4">
                         <div className="space-y-0.5">
                             <Label className="text-base">Exigir Aprovação Humana</Label>
-                            <p className="text-sm text-muted-foreground">
-                                Força a IA a encaminhar ações comerciais (orçamentos, reservas) para revisão manual. (Recomendado)
-                            </p>
+                            <p className="text-sm text-muted-foreground">Força a IA a encaminhar ações comerciais (orçamentos, reservas) para revisão manual. (Recomendado)</p>
                         </div>
-                        <Switch
-                            checked={settings.requireHumanApproval}
-                            onCheckedChange={(checked) => setSettings((s: any) => ({ ...s, requireHumanApproval: checked }))}
-                            aria-label="Exigir Aprovação Humana"
-                        />
+                        <Switch checked={settings.requireHumanApproval} onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, requireHumanApproval: checked }) : null)} aria-label="Exigir Aprovação Humana" />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="human-fallback">Responsável Humano (Fallback)</Label>
-                        <Input 
-                            id="human-fallback" 
-                            value={settings.fallbackHumanName} 
-                            onChange={(e) => setSettings((s: any) => ({ ...s, fallbackHumanName: e.target.value }))}
-                        />
+                        <Input id="human-fallback" value={settings.fallbackHumanName} onChange={(e) => setSettings((s) => s ? ({ ...s, fallbackHumanName: e.target.value }) : null)} />
                         <p className="text-sm text-muted-foreground">Nome do humano que receberá as solicitações que a IA não pode concluir.</p>
                     </div>
                 </div>
                 <Separator/>
-
-                 <div className="space-y-4">
-                    <Label className="font-semibold flex items-center gap-2"><Workflow/> Roteamento por Fluxo (Flows)</Label>
-                    <div className="rounded-md border">
-                       {flowPermissionsData.map((perm, index) => (
-                             <div key={perm.id} className="flex flex-row items-center justify-between space-x-2 p-4">
-                                <div className="space-y-0.5">
-                                    <Label className='font-normal'>{perm.label}</Label>
-                                    <p className="text-xs text-muted-foreground">
-                                        {perm.description}
-                                    </p>
-                                </div>
-                                 <Select value={'automatic'}>
-                                    <SelectTrigger className="w-[180px]">
-                                        <SelectValue placeholder="Selecione Provedor" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="automatic">Automático</SelectItem>
-                                        <SelectItem value="gemini">Gemini</SelectItem>
-                                        <SelectItem value="openai">OpenAI</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
                 <div className="space-y-4">
-                    <Label className="font-semibold flex items-center gap-2"><MessageSquare/> Autorizações de Canal</Label>
-                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 rounded-md border p-4">
-                        {['whatsapp', 'instagram', 'facebook', 'website'].map((id) => (
-                             <div key={id} className="flex flex-row items-center justify-between">
-                                <Label className='font-normal capitalize'>{id}</Label>
-                                <Switch
-                                    checked={true}
-                                />
-                            </div>
-                        ))}
+                    <Label className="font-semibold flex items-center gap-2"><Workflow/> Permissões de Fluxo (Flows)</Label>
+                    <div className="rounded-md border">
+                       {flowPermissionsData.map((perm) => {
+                            const currentPerm = permissions.find(p => p.flowName === perm.id);
+                            if (!currentPerm) return null;
+                            return (
+                                <div key={perm.id} className="flex flex-col sm:flex-row sm:items-center justify-between space-y-2 sm:space-y-0 sm:space-x-2 p-4 border-b last:border-b-0">
+                                    <div className="space-y-0.5 flex-1"><Label className='font-normal'>{perm.label}</Label><p className="text-xs text-muted-foreground">{perm.description}</p></div>
+                                    <div className="flex items-center gap-4">
+                                        <Select value={currentPerm.provider} onValueChange={(v) => handlePermissionChange(perm.id, 'provider', v as any)}>
+                                            <SelectTrigger className="w-[160px] h-9"><SelectValue /></SelectTrigger>
+                                            <SelectContent><SelectItem value="automatic">Automático</SelectItem><SelectItem value="gemini">Gemini</SelectItem><SelectItem value="openai">OpenAI</SelectItem></SelectContent>
+                                        </Select>
+                                        <Switch checked={currentPerm.enabled} onCheckedChange={(c) => handlePermissionChange(perm.id, 'enabled', c)} />
+                                    </div>
+                                </div>
+                            )
+                        })}
                     </div>
                 </div>
-                
-                 <div className="space-y-2">
+                <div className="space-y-2">
                     <Label htmlFor="forbidden-words">Palavras-chave para Handoff Imediato (separadas por vírgula)</Label>
                     <Input id="forbidden-words" defaultValue="falar com atendente, falar com claudia, reclamar, problema, procon" />
                     <p className="text-sm text-muted-foreground">Se o cliente usar uma dessas palavras, a IA irá transferir o atendimento imediatamente.</p>
@@ -590,12 +429,13 @@ export function AiSettingsForm() {
         </Card>
       
         <div className="flex items-center justify-end gap-4">
-            <Button variant="outline">Descartar Alterações</Button>
-            <Button>Salvar e Publicar Alterações</Button>
+            <Button variant="outline" onClick={fetchData}>Descartar Alterações</Button>
+            <Button onClick={handleSaveAll} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar Todas as Configurações
+            </Button>
         </div>
     </div>
     </TooltipProvider>
   )
 }
-
-    

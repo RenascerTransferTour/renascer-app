@@ -47,7 +47,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Message, Conversation, Contact } from '@/lib/types';
+import type { Message, Conversation, Contact, AiFlowPermission } from '@/lib/types';
   
 const statusLabels: Record<string, string> = {
     open: 'Aberto',
@@ -76,6 +76,7 @@ export default function ConversationPage() {
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [permissions, setPermissions] = useState<AiFlowPermission[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [newMessage, setNewMessage] = useState('');
@@ -89,12 +90,23 @@ export default function ConversationPage() {
         const fetchConversation = async () => {
             try {
                 setLoading(true);
-                const res = await fetch(`/api/conversations/${id}`);
-                const data = await res.json();
-                setConversation(data);
-                setMessages(data.messages);
-                setCustomer(data.contact); // This needs to be improved with proper lead data
-                setIsAiActive(data.isAiActive);
+                const [convRes, permsRes] = await Promise.all([
+                    fetch(`/api/conversations/${id}`),
+                    fetch('/api/settings/ai/permissions'),
+                ]);
+
+                if (!convRes.ok || !permsRes.ok) {
+                    throw new Error("Failed to fetch initial data");
+                }
+
+                const convData = await convRes.json();
+                const permsData = await permsRes.json();
+
+                setConversation(convData);
+                setMessages(convData.messages);
+                setCustomer(convData.contact); // This needs to be improved with proper lead data
+                setIsAiActive(convData.isAiActive);
+                setPermissions(permsData);
             } catch (error) {
                 console.error("Failed to fetch conversation", error);
                  toast({
@@ -110,6 +122,14 @@ export default function ConversationPage() {
     }
   }, [id, toast]);
 
+  const aiPermissions = useMemo(() => {
+    const getPerm = (flowName: AiFlowPermission['flowName']) => permissions.find(p => p.flowName === flowName)?.enabled ?? false;
+    return {
+        canCreateQuote: getPerm('quoteCreation'),
+        canCreateBooking: getPerm('bookingCreation'),
+        canSummarize: getPerm('summarization'),
+    }
+  }, [permissions]);
 
   if (loading) {
       return (
@@ -156,9 +176,6 @@ export default function ConversationPage() {
     return <div className='text-center'>Conversa não encontrada ou falha ao carregar.</div>;
   }
   
-  // Mock permissions based on AI settings (IA Assistida mode by default)
-  const aiPermissions = { canCreateQuote: false, canCreateBooking: false }; 
-
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;
 
@@ -192,27 +209,13 @@ export default function ConversationPage() {
             body: JSON.stringify({ conversationHistory: convHistory })
         });
         
-        if (!response.ok) {
-            let errorDetails = "Ocorreu um erro no servidor.";
-            try {
-                const errorText = await response.text();
-                // Check if it's our structured JSON error
-                const errorJson = JSON.parse(errorText);
-                errorDetails = errorJson.details || errorJson.error || errorDetails;
-            } catch (e) {
-                // The response was not JSON, so it might be an HTML error page.
-                console.error("Received non-JSON error response from summary API");
-                errorDetails = "Resposta inesperada do servidor.";
-            }
-            throw new Error(errorDetails);
-        }
-
         const result = await response.json();
+        if (!response.ok) throw new Error(result.details || result.error || 'Ocorreu um erro no servidor.');
 
         if (result.success) {
             setSummary(result.summary);
         } else {
-             throw new Error(result.details || 'Failed to generate summary from API.');
+             throw new Error(result.details || 'Falha ao gerar resumo da API.');
         }
 
     } catch (error) {
@@ -259,10 +262,18 @@ export default function ConversationPage() {
             <div className="flex items-center gap-2">
                 <Dialog>
                     <DialogTrigger asChild>
-                        <Button variant="outline" size="sm" onClick={handleGenerateSummary}>
-                            <Sparkles className="mr-2 h-4 w-4" />
-                            Gerar Resumo
-                        </Button>
+                         <Tooltip>
+                            <TooltipTrigger asChild>
+                                <div>
+                                    <Button variant="outline" size="sm" onClick={aiPermissions.canSummarize ? handleGenerateSummary : undefined} disabled={!aiPermissions.canSummarize}>
+                                        <Sparkles className="mr-2 h-4 w-4" />
+                                        Gerar Resumo
+                                        {!aiPermissions.canSummarize && <Lock className="ml-2 h-3 w-3"/>}
+                                    </Button>
+                                </div>
+                            </TooltipTrigger>
+                             {!aiPermissions.canSummarize && <TooltipContent>A geração de resumo está desativada nas configurações.</TooltipContent>}
+                        </Tooltip>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
@@ -409,21 +420,25 @@ export default function ConversationPage() {
                 <p className='text-xs font-semibold text-muted-foreground uppercase'>Ações Rápidas</p>
                 <Tooltip>
                     <TooltipTrigger className='w-full'>
-                        <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateQuote}>
-                            <FileText className="mr-2 h-4 w-4"/> Criar Orçamento
-                            {!aiPermissions.canCreateQuote && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
-                        </Button>
+                        <div className='w-full'>
+                            <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateQuote}>
+                                <FileText className="mr-2 h-4 w-4"/> Criar Orçamento
+                                {!aiPermissions.canCreateQuote && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
+                            </Button>
+                        </div>
                     </TooltipTrigger>
-                    {!aiPermissions.canCreateQuote && <TooltipContent>A IA não tem permissão para criar orçamentos. Requer aprovação de {conversation.humanOwnerId === 'op-1' ? 'Claudia' : 'um humano'}.</TooltipContent>}
+                    {!aiPermissions.canCreateQuote && <TooltipContent>A criação de orçamento está desativada nas configurações.</TooltipContent>}
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger className='w-full'>
-                        <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateBooking}>
-                            <Bookmark className="mr-2 h-4 w-4"/> Criar Reserva
-                            {!aiPermissions.canCreateBooking && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
-                        </Button>
+                         <div className='w-full'>
+                            <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateBooking}>
+                                <Bookmark className="mr-2 h-4 w-4"/> Criar Reserva
+                                {!aiPermissions.canCreateBooking && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
+                            </Button>
+                        </div>
                     </TooltipTrigger>
-                    {!aiPermissions.canCreateBooking && <TooltipContent>A IA não tem permissão para criar reservas. Requer aprovação de {conversation.humanOwnerId === 'op-1' ? 'Claudia' : 'um humano'}.</TooltipContent>}
+                    {!aiPermissions.canCreateBooking && <TooltipContent>A criação de reserva está desativada nas configurações.</TooltipContent>}
                 </Tooltip>
             </div>
           </CardContent>

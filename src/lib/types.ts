@@ -3,7 +3,7 @@
  * or combined from the core data model for easier consumption by components.
  */
 
-import type { Conversation as CoreConversation, Message as CoreMessage, Contact } from './db/data-model';
+import type { Conversation as CoreConversation, Message as CoreMessage, Contact, AiFlowPermission as CoreAiFlowPermission } from './db/data-model';
 
 // The main Conversation type used in the Inbox list.
 // It combines Conversation with Contact details.
@@ -20,3 +20,6 @@ export type Customer = Contact & {
     interestLevel: 'low' | 'medium' | 'high';
     originChannel?: string;
 };
+
+// AI Flow Permission type
+export type AiFlowPermission = CoreAiFlowPermission;

@@ -68,10 +68,10 @@ export let contacts: Contact[] = [
 ];
 
 export let channels: Channel[] = [
-    { id: 'channel-wa', name: 'WhatsApp', type: 'whatsapp', status: 'connected', aiEnabled: true, createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
-    { id: 'channel-ig', name: 'Instagram', type: 'instagram', status: 'disconnected', aiEnabled: false, createdAt: subDays(now, 30).toISOString(), updatedAt: subDays(now, 1).toISOString() },
-    { id: 'channel-fb', name: 'Facebook', type: 'facebook', status: 'connected', aiEnabled: true, createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
-    { id: 'channel-web', name: 'Website', type: 'website', status: 'connected', aiEnabled: true, createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+    { id: 'channel-wa', name: 'WhatsApp', type: 'whatsapp', status: 'connected', aiEnabled: true, requiresHuman: false, provider: 'automatic', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+    { id: 'channel-ig', name: 'Instagram', type: 'instagram', status: 'disconnected', aiEnabled: false, requiresHuman: true, provider: 'automatic', createdAt: subDays(now, 30).toISOString(), updatedAt: subDays(now, 1).toISOString() },
+    { id: 'channel-fb', name: 'Facebook', type: 'facebook', status: 'connected', aiEnabled: true, requiresHuman: true, provider: 'automatic', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+    { id: 'channel-web', name: 'Website', type: 'website', status: 'connected', aiEnabled: true, requiresHuman: false, provider: 'gemini', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
 ];
 
 export let leads: Lead[] = []; // Leads can be derived or created from conversations
@@ -235,9 +235,9 @@ export let aiSettings: AiSettings = {
     globalAiEnabled: true,
     aiMode: 'assisted',
     requireHumanApproval: true,
+    isFallbackEnabled: true,
     fallbackHumanName: 'Claudia',
-    activeProvider: 'gemini',
-    isFallbackEnabled: false,
+    activeProvider: 'automatic',
     fallbackProvider: 'openai',
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
@@ -247,11 +247,12 @@ export let aiFlowPermissions: AiFlowPermission[] = [
     { id: 'flow-1', aiSettingsId: 1, flowName: 'welcome', enabled: true, requiresHumanApproval: false, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'flow-2', aiSettingsId: 1, flowName: 'qualification', enabled: true, requiresHumanApproval: false, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'flow-3', aiSettingsId: 1, flowName: 'faq', enabled: true, requiresHumanApproval: false, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
-    { id: 'flow-4', aiSettingsId: 1, flowName: 'quoteCreation', enabled: false, requiresHumanApproval: true, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
+    { id: 'flow-4', aiSettingsId: 1, flowName: 'quoteCreation', enabled: true, requiresHumanApproval: true, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'flow-5', aiSettingsId: 1, flowName: 'bookingCreation', enabled: false, requiresHumanApproval: true, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'flow-6', aiSettingsId: 1, flowName: 'crmUpdate', enabled: false, requiresHumanApproval: true, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'flow-7', aiSettingsId: 1, flowName: 'saleClosing', enabled: false, requiresHumanApproval: true, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'flow-8', aiSettingsId: 1, flowName: 'postSale', enabled: false, requiresHumanApproval: true, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
+    { id: 'flow-9', aiSettingsId: 1, flowName: 'summarization', enabled: true, requiresHumanApproval: false, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
 ];
 
 export let aiProviderConfigs: AiProviderConfig[] = [

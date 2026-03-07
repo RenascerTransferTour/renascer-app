@@ -11,7 +11,7 @@
  */
 
 import * as repos from './repositories';
-import type { Conversation, Contact, Quote, Reservation, Deal } from './data-model';
+import type { Conversation, Contact, Quote, Reservation, Deal, Channel, AiFlowPermission, AiSettings } from './data-model';
 
 export const conversationService = {
   /**
@@ -113,14 +113,23 @@ export const settingsService = {
     async getAiSettings() {
         return repos.aiSettings.get();
     },
-    async updateAiSettings(settings: any) {
+    async updateAiSettings(settings: Partial<AiSettings>) {
         return repos.aiSettings.update(settings);
     },
-     async listChannels() {
+    async listChannels() {
         return repos.channels.list();
+    },
+    async updateChannels(channels: Channel[]) {
+        return repos.channels.batchUpdate(channels);
     },
     async listPrompts() {
         return repos.aiPrompts.list();
+    },
+    async listPermissions() {
+        return repos.aiFlowPermissions.list();
+    },
+    async updatePermissions(permissions: AiFlowPermission[]) {
+        return repos.aiFlowPermissions.batchUpdate(permissions);
     }
 }
 

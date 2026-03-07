@@ -1,12 +1,26 @@
 import { NextResponse } from 'next/server';
 import { generateConversationSummary, GenerateConversationSummaryInput } from '@/ai/flows/generate-conversation-summary-flow';
+import { settingsService } from '@/lib/db/services';
 
 /**
  * API route to generate an AI-powered conversation summary.
- * This now calls the actual Genkit flow.
+ * This now calls the actual Genkit flow and checks for permissions.
  */
 export async function POST(request: Request) {
     try {
+        const settings = await settingsService.getAiSettings();
+        const permissions = await settingsService.listPermissions();
+        
+        const summaryPermission = permissions.find(p => p.flowName === 'summarization');
+
+        if (!settings.globalAiEnabled || !summaryPermission?.enabled) {
+            const reason = !settings.globalAiEnabled
+                ? "A IA está desativada globalmente."
+                : "A geração de resumo está desativada nas permissões de fluxo.";
+            
+            return NextResponse.json({ success: false, error: reason }, { status: 403 });
+        }
+
         const body: GenerateConversationSummaryInput = await request.json();
         
         if (!body.conversationHistory) {

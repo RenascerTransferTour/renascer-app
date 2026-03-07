@@ -37,6 +37,17 @@ const createOrUpdate = <T extends { id: string }>(table: T[], item: T): T => {
     }
 };
 
+// A generic function to batch update items
+const batchUpdate = <T extends { id: string }>(table: T[], items: T[]): T[] => {
+    items.forEach(item => {
+        const index = table.findIndex(i => i.id === item.id);
+        if (index !== -1) {
+            table[index] = { ...table[index], ...item };
+        }
+    });
+    return items;
+};
+
 // --- Repository Exports ---
 
 export const operators = {
@@ -53,6 +64,7 @@ export const contacts = {
 export const channels = {
     findById: (id: string) => findById(db.channels, id),
     list: () => list(db.channels),
+    batchUpdate: (items: Channel[]) => batchUpdate(db.channels, items),
 };
 
 export const leads = {
@@ -97,10 +109,15 @@ export const deals = {
 
 export const aiSettings = {
     get: () => db.aiSettings,
-    update: (settings: AiSettings) => {
+    update: (settings: Partial<AiSettings>) => {
         db.aiSettings = { ...db.aiSettings, ...settings };
         return db.aiSettings;
     }
+};
+
+export const aiFlowPermissions = {
+    list: () => list(db.aiFlowPermissions),
+    batchUpdate: (items: AiFlowPermission[]) => batchUpdate(db.aiFlowPermissions, items),
 };
 
 export const aiPrompts = {

@@ -37,9 +37,10 @@ export interface Channel {
   id: string; // UUID
   name: string;
   type: 'whatsapp' | 'instagram' | 'facebook' | 'website';
-  status: 'connected' | 'disconnected' | 'pending';
+  status: 'connected' | 'disconnected' | 'pending' | 'expired' | 'awaiting_qr';
   aiEnabled: boolean;
-  fallbackProvider?: string;
+  requiresHuman: boolean;
+  provider: 'automatic' | 'gemini' | 'openai';
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }
@@ -169,6 +170,7 @@ export interface AiSettings {
   globalAiEnabled: boolean;
   aiMode: 'off' | 'assisted' | 'partial_autonomous' | 'full_autonomous';
   requireHumanApproval: boolean;
+  isFallbackEnabled: boolean;
   fallbackHumanName: string;
   activeProvider: 'openai' | 'gemini' | 'automatic';
   fallbackProvider?: 'openai' | 'gemini';
@@ -179,7 +181,7 @@ export interface AiSettings {
 export interface AiFlowPermission {
   id: string; // UUID
   aiSettingsId: number; // Foreign Key to AiSettings
-  flowName: 'welcome' | 'qualification' | 'faq' | 'quoteCreation' | 'bookingCreation' | 'saleClosing' | 'postSale' | 'crmUpdate';
+  flowName: 'welcome' | 'qualification' | 'faq' | 'quoteCreation' | 'bookingCreation' | 'saleClosing' | 'postSale' | 'crmUpdate' | 'summarization';
   enabled: boolean;
   requiresHumanApproval: boolean;
   provider: 'automatic' | 'gemini' | 'openai';
