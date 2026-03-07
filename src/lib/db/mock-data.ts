@@ -328,6 +328,7 @@ export let originalAuditLogs: AuditLog[] = [
         entityId: 'conv-1',
         eventType: 'mensagem_recebida',
         source: 'whatsapp',
+        contactId: 'contact-1',
     },
     {
         id: 'log-ana-2',
@@ -340,6 +341,7 @@ export let originalAuditLogs: AuditLog[] = [
         eventType: 'sugestão_ia_gerada',
         notes: 'IA qualificou o lead e preparou o handoff.',
         source: 'ai_flow',
+        contactId: 'contact-1',
     },
      {
         id: 'log-ana-3',
@@ -351,7 +353,8 @@ export let originalAuditLogs: AuditLog[] = [
         eventType: 'orçamento_rascunho_criado',
         notes: 'Rascunho de orçamento para Transfer GRU gerado pela IA.',
         source: 'ai_flow',
-        after: { status: 'rascunho', summary: 'Transfer Executivo: Av. Paulista para Aeroporto GRU', priceRange: [280, 350] }
+        after: { status: 'rascunho', summary: 'Transfer Executivo: Av. Paulista para Aeroporto GRU', priceRange: [280, 350] },
+        contactId: 'contact-1',
     },
     {
         id: 'log-ana-4',
@@ -366,7 +369,8 @@ export let originalAuditLogs: AuditLog[] = [
         source: 'app',
         approvedBy: 'op-1',
         before: { status: 'rascunho' },
-        after: { status: 'enviado' }
+        after: { status: 'enviado' },
+        contactId: 'contact-1',
     }
 ];
 
@@ -458,6 +462,7 @@ const db = {
 };
 
     
+
 
 
 

@@ -245,4 +245,5 @@ export interface AuditLog {
   notes?: string;
   source: 'app' | 'whatsapp' | 'instagram' | 'facebook' | 'website' | 'ai_flow' | 'manual';
   approvedBy?: string;
+  contactId?: string; // Adicionado para facilitar a busca de logs por cliente
 }
