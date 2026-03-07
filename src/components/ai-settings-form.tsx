@@ -26,6 +26,7 @@ import {
   } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { testAiChatPrompt, TestAiChatPromptOutput } from "@/ai/flows/test-ai-chat-prompt-flow"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle } from "lucide-react"
