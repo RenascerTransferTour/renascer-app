@@ -1,5 +1,5 @@
 'use server';
-import {model, type ModelReference} from 'genkit/model';
+import {modelRef, type ModelReference} from 'genkit/model';
 import {settingsService} from '@/lib/db/services';
 
 const modelMap = {
@@ -50,5 +50,5 @@ export async function getActiveModel(): Promise<ModelReference<any>> {
     );
   }
 
-  return model(modelMap[providerToUse]);
+  return modelRef(modelMap[providerToUse]);
 }

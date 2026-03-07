@@ -8,7 +8,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {model, type ModelReference} from 'genkit/model';
+import {modelRef, type ModelReference} from 'genkit/model';
 import {z} from 'genkit';
 import {settingsService} from '@/lib/db/services';
 
@@ -146,8 +146,8 @@ const testAiChatPromptFlow = ai.defineFlow(
 
     const modelToUse =
       providerToUse === 'openai'
-        ? model('openai/gpt-4-turbo')
-        : model('googleai/gemini-2.5-flash');
+        ? modelRef('openai/gpt-4-turbo')
+        : modelRef('googleai/gemini-2.5-flash');
 
     const {output} = await prompt(input, {model: modelToUse});
 
