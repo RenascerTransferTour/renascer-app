@@ -76,6 +76,10 @@ const generateConversationSummaryFlow = ai.defineFlow(
     }
 
     const activeModel = await getActiveModel();
+    if (!activeModel) {
+        throw new Error("Nenhum provedor de IA está configurado. A geração de resumo não está disponível.");
+    }
+
     const {output} = await prompt(input, {model: activeModel});
     if (!output) {
       throw new Error('Falha ao gerar resumo: a IA não retornou uma resposta estruturada.');

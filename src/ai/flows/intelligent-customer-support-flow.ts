@@ -99,6 +99,26 @@ const intelligentCustomerSupportFlow = ai.defineFlow(
   },
   async (input) => {
     const activeModel = await getActiveModel();
+    if (!activeModel) {
+        return {
+            aiResponse: "Desculpe, nosso sistema de IA está temporariamente indisponível. Um atendente humano irá ajudá-lo em breve.",
+            escalateToHuman: true,
+            gatheredInformation: {
+                customerName: null,
+                customerPhone: null,
+                originChannel: null,
+                serviceType: null,
+                destination: null,
+                departureDate: null,
+                departureTime: null,
+                numberOfPassengers: null,
+                luggageDetails: null,
+                urgencyLevel: 'medium',
+                interestLevel: 'medium',
+                observations: 'AI provider not configured, escalating immediately.'
+            }
+        };
+    }
     const { output } = await intelligentCustomerSupportPrompt(input, { model: activeModel });
     return output!;
   }

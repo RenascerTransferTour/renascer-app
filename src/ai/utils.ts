@@ -13,9 +13,9 @@ const modelMap = {
  * 1. Use the provider defined for the specific flow (not yet implemented).
  * 2. Use the primary provider defined in the global settings.
  * 3. If primary is 'automatic' or unavailable, use a fallback (Gemini > OpenAI).
- * 4. Throws an error if no providers are configured.
+ * 4. Returns null if no providers are configured.
  */
-export async function getActiveModel(): Promise<ModelReference<any>> {
+export async function getActiveModel(): Promise<ModelReference<any> | null> {
   const settings = await settingsService.getAiSettings();
   const activeProvider = settings.activeProvider; // 'gemini', 'openai', or 'automatic'
 
@@ -45,9 +45,7 @@ export async function getActiveModel(): Promise<ModelReference<any>> {
   }
 
   if (!providerToUse) {
-    throw new Error(
-      'No AI provider is configured. Please set either GEMINI_API_KEY or OPENAI_API_KEY in your environment.'
-    );
+    return null;
   }
 
   return modelRef(modelMap[providerToUse]);
