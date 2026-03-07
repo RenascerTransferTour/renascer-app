@@ -18,6 +18,11 @@ import {
   Zap,
   Lock,
   UserCircle,
+  Loader2,
+  MessageSquare,
+  Clock,
+  XCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -60,6 +65,21 @@ const statusLabels: Record<string, string> = {
     'IA autorizada': 'IA Autorizada',
     'concluído pela IA': 'Concluído pela IA',
     'concluído por humano': 'Concluído por Humano',
+}
+
+const getStatusIcon = (status: string) => {
+    switch(status) {
+        case 'aguardando humano': return <UserCheck className="size-3.5" />;
+        case 'IA assistida':
+        case 'concluído pela IA': return <Bot className="size-3.5" />;
+        case 'IA bloqueada': return <Lock className="size-3.5" />;
+        case 'open': return <MessageSquare className="size-3.5" />;
+        case 'closed':
+        case 'concluído por humano': return <CheckCircle2 className="size-3.5" />;
+        case 'pending': return <Clock className="size-3.5" />;
+        case 'canceled': return <XCircle className="size-3.5" />;
+        default: return null;
+    }
 }
 
 type Customer = Contact & {
@@ -246,7 +266,8 @@ export default function ConversationPage() {
                     <div>
                         <div className="flex items-center gap-2">
                             <h2 className="text-lg font-semibold">{customer.fullName}</h2>
-                            <Badge className={`${getStatusBadgeClasses(conversation.status)} capitalize`}>
+                             <Badge className={cn(getStatusBadgeClasses(conversation.status), 'capitalize gap-1.5')}>
+                                {getStatusIcon(conversation.status)}
                                 {statusLabels[conversation.status] || conversation.status}
                             </Badge>
                         </div>

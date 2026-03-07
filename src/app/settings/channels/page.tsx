@@ -321,7 +321,14 @@ export default function ChannelsPage() {
                                     {channel.type === 'facebook' && <FacebookIcon className="h-6 w-6 text-blue-600"/>}
                                     {channel.type === 'website' && <Webhook className="h-6 w-6 text-slate-500"/>}
                                     <span className="font-semibold capitalize">{channel.name}</span>
-                                     <Badge variant="outline">Modo Simulado</Badge>
+                                     <Tooltip>
+                                        <TooltipTrigger>
+                                            <Badge variant="outline">Modo Simulado</Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Este canal opera com dados locais e não está conectado a uma API real.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
                                      <div className="flex items-center space-x-2">
@@ -398,7 +405,8 @@ export default function ChannelsPage() {
                                     <TableCell>{log.event}</TableCell>
                                     <TableCell>{log.date}</TableCell>
                                     <TableCell>
-                                        <Badge variant={log.status === 'Sucesso' ? 'default': 'destructive'} className={cn(getStatusBadgeClasses(log.status === 'Sucesso' ? 'connected' : 'failing'))}>
+                                        <Badge className={cn(getStatusBadgeClasses(log.status === 'Sucesso' ? 'connected' : 'failing'), 'gap-1.5')}>
+                                            {log.status === 'Sucesso' ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
                                             {log.status}
                                         </Badge>
                                     </TableCell>

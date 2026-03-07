@@ -368,14 +368,23 @@ export function AiSettingsForm() {
                                     <CardTitle className="text-lg">{p.name}</CardTitle>
                                     <CardDescription>{p.model}</CardDescription>
                                 </div>
-                                <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn(p.configured ? 'bg-green-100 text-green-800 dark:bg-green-900/50' : 'bg-muted text-muted-foreground')}>
-                                    {p.status}
-                                </Badge>
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn('gap-1.5', p.configured ? 'bg-green-100 text-green-800 dark:bg-green-900/50' : 'bg-muted text-muted-foreground')}>
+                                            {p.configured ? <CheckCircle className="size-3" /> : <HelpCircle className="size-3" />}
+                                            {p.status}
+                                        </Badge>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{p.message}</p>
+                                    </TooltipContent>
+                                </Tooltip>
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-1">
                                     <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> API Key (Placeholder)</Label>
                                     <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
+                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo é uma representação. A chave real é configurada no servidor.</p>
                                 </div>
                                 <Alert variant="default" className="text-xs">
                                      <Server className="h-4 w-4" />

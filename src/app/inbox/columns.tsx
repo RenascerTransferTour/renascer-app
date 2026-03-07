@@ -14,11 +14,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, ArrowUpDown, Bot, User } from "lucide-react"
+import { MoreHorizontal, ArrowUpDown, Bot, User, Lock, MessageSquare, Clock, XCircle, CheckCircle2, UserCheck } from "lucide-react"
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Link from "next/link"
-import { getStatusBadgeClasses } from "@/lib/utils"
+import { cn, getStatusBadgeClasses } from "@/lib/utils"
 
 type InboxItem = Conversation & { contact: Contact }
 
@@ -40,6 +40,21 @@ const statusLabels: Record<string, string> = {
     'IA autorizada': 'IA Autorizada',
     'concluído pela IA': 'Concluído pela IA',
     'concluído por humano': 'Concluído por Humano',
+}
+
+const getStatusIcon = (status: string) => {
+    switch(status) {
+        case 'aguardando humano': return <UserCheck className="size-3" />;
+        case 'IA assistida':
+        case 'concluído pela IA': return <Bot className="size-3" />;
+        case 'IA bloqueada': return <Lock className="size-3" />;
+        case 'open': return <MessageSquare className="size-3" />;
+        case 'closed':
+        case 'concluído por humano': return <CheckCircle2 className="size-3" />;
+        case 'pending': return <Clock className="size-3" />;
+        case 'canceled': return <XCircle className="size-3" />;
+        default: return null;
+    }
 }
 
 
@@ -119,7 +134,10 @@ export const columns: ColumnDef<InboxItem>[] = [
     cell: ({ row }) => {
         const status = row.getValue("status") as any;
         return (
-            <Badge className={`${getStatusBadgeClasses(status)} capitalize`}>{statusLabels[status] || status}</Badge>
+            <Badge className={cn(getStatusBadgeClasses(status), 'capitalize gap-1.5')}>
+                {getStatusIcon(status)}
+                <span>{statusLabels[status] || status}</span>
+            </Badge>
         )
     }
   },
