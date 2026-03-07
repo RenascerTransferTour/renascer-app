@@ -18,10 +18,10 @@ import {
   Settings,
   HelpCircle,
   GanttChartSquare,
+  Car,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Logo } from '@/components/icons';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const navItems = [
@@ -50,12 +50,19 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="h-14 items-center justify-center p-2 group-data-[collapsible=icon]:h-10 group-data-[collapsible=icon]:justify-center">
-        <Link href="/" className="flex items-center gap-2">
-          <Logo className="size-6 text-sidebar-foreground" />
-          <span className="text-lg font-semibold text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-            Renascer
-          </span>
+      <SidebarHeader className="h-16 items-center justify-center p-2 group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:justify-center">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
+            <Car className="h-5 w-5 text-sidebar-primary-foreground" />
+          </div>
+          <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
+            <span className="text-base font-semibold leading-none text-sidebar-foreground">
+              Renascer Tour
+            </span>
+            <span className="text-xs leading-none text-sidebar-foreground/70">
+              Central de Atendimento
+            </span>
+          </div>
         </Link>
       </SidebarHeader>
 
@@ -95,7 +102,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
              <SidebarMenuButton asChild size="lg" tooltip="Meu Perfil">
                 <Link href="#">
-                    <Avatar className="size-8 group-data-[collapsible=icon]:size-6">
+                    <Avatar className="size-8 group-data-[collapsible=icon]:size-7">
                         <AvatarImage src="https://picsum.photos/seed/99/100/100" alt="Admin" data-ai-hint="person avatar"/>
                         <AvatarFallback>A</AvatarFallback>
                     </Avatar>

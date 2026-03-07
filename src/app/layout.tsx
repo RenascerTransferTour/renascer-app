@@ -6,8 +6,8 @@ import { AppHeader } from '@/components/layout/header';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Central de Atendimento IA Renascer',
-  description: 'Sistema de Atendimento ao Cliente com Inteligência Artificial',
+  title: 'Renascer Transfer Tour - Central de Atendimento',
+  description: 'Plataforma de gestão de atendimentos, orçamentos e reservas para serviços de transfer e turismo.',
 };
 
 export default function RootLayout({

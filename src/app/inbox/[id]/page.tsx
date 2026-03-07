@@ -11,6 +11,12 @@ import {
   LogOut,
   FileText,
   Bookmark,
+  Phone,
+  Mail,
+  MoreVertical,
+  Waypoints,
+  Star,
+  Zap,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,6 +26,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,6 +45,7 @@ import {
   } from "@/components/ui/dialog"
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
   
 
 export default function ConversationPage() {
@@ -78,6 +86,7 @@ export default function ConversationPage() {
   
   const handleGenerateSummary = async () => {
     setIsGeneratingSummary(true);
+    setSummary('');
     try {
         const convHistory = messages.map(m => ({ role: m.role === 'user' ? 'user' : (m.role === 'agent' ? 'agent' : 'AI'), message: m.content }));
         const result = await generateConversationSummary({ conversationHistory: convHistory });
@@ -95,144 +104,173 @@ export default function ConversationPage() {
   };
 
   return (
-    <div className="grid h-[calc(100vh-8rem)] grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
-      <div className="md:col-span-2 lg:col-span-3 flex flex-col h-full bg-card border rounded-lg">
-        <div className="flex items-center justify-between p-4 border-b">
-          <div>
-            <h2 className="text-lg font-semibold">{customer.name}</h2>
-            <p className="text-sm text-muted-foreground">
-              em{' '}
-              <span className="font-medium text-primary">
-                {conversation.channel}
-              </span>
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Dialog>
-                <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" onClick={handleGenerateSummary}>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Gerar Resumo
-                    </Button>
-                </DialogTrigger>
-                <DialogContent>
-                    <DialogHeader>
-                    <DialogTitle>Resumo da Conversa</DialogTitle>
-                    <DialogDescription>
-                        Este é um resumo gerado por IA dos pontos-chave da conversa.
-                    </DialogDescription>
-                    </DialogHeader>
-                    {isGeneratingSummary ? (
-                        <div className="space-y-2">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-3/4" />
-                        </div>
-                    ) : (
-                        <p className="text-sm text-muted-foreground">{summary || "Nenhum resumo gerado ainda."}</p>
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            {isAiActive ? (
-                <Button size="sm" onClick={() => setIsAiActive(false)}>
-                    <UserCheck className="mr-2 h-4 w-4" />
-                    Assumir Atendimento
-                </Button>
-            ) : (
-                <Button size="sm" variant="secondary" onClick={() => setIsAiActive(true)}>
-                    <Bot className="mr-2 h-4 w-4" />
-                    Devolver para IA
-                </Button>
-            )}
-          </div>
-        </div>
-        <ScrollArea className="flex-1 p-4">
-          <div className="space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={cn(
-                  'flex items-end gap-2',
-                  message.role === 'user' ? 'justify-start' : 'justify-end'
-                )}
-              >
-                {message.role === 'user' && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={customer.avatar} data-ai-hint="person avatar" />
-                    <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                )}
-                <div
-                  className={cn(
-                    'max-w-xs rounded-lg p-3 md:max-w-md',
-                    message.role === 'user'
-                      ? 'bg-muted'
-                      : 'bg-primary text-primary-foreground'
-                  )}
-                >
-                  <p className="text-sm">{message.content}</p>
+    <div className="grid h-[calc(100vh-8rem)] grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="md:col-span-2 lg:col-span-3 flex flex-col h-full">
+        <Card className='flex flex-col h-full'>
+            <CardHeader className="flex flex-row items-center justify-between border-b">
+                <div className='flex items-center gap-3'>
+                    <Avatar className="h-10 w-10 border">
+                        <AvatarImage src={customer.avatar} data-ai-hint="person avatar" />
+                        <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <h2 className="text-lg font-semibold">{customer.name}</h2>
+                        <p className="text-sm text-muted-foreground">
+                        via{' '}
+                        <span className="font-medium text-primary">
+                            {conversation.channel}
+                        </span>
+                        </p>
+                    </div>
                 </div>
-                {message.role !== 'user' && (
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback>
-                      {message.role === 'ai' ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
-                    </AvatarFallback>
-                  </Avatar>
+            <div className="flex items-center gap-2">
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" onClick={handleGenerateSummary}>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Gerar Resumo
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                        <DialogTitle>Resumo da Conversa</DialogTitle>
+                        <DialogDescription>
+                            Este é um resumo gerado por IA dos pontos-chave da conversa.
+                        </DialogDescription>
+                        </DialogHeader>
+                        {isGeneratingSummary ? (
+                            <div className="space-y-2 py-4">
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-full" />
+                                <Skeleton className="h-4 w-3/4" />
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">{summary || "Clique em 'Gerar Resumo' para começar."}</p>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
+                {isAiActive ? (
+                    <Button size="sm" onClick={() => setIsAiActive(false)}>
+                        <UserCheck className="mr-2 h-4 w-4" />
+                        Assumir Atendimento
+                    </Button>
+                ) : (
+                    <Button size="sm" variant="secondary" onClick={() => setIsAiActive(true)}>
+                        <Bot className="mr-2 h-4 w-4" />
+                        Devolver para IA
+                    </Button>
                 )}
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
-        <div className="p-4 border-t">
-          <div className="relative">
-            <Input
-              placeholder="Digite sua mensagem..."
-              className="pr-12"
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-            />
-            <Button
-              size="icon"
-              className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
-              onClick={handleSendMessage}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+            </div>
+            </CardHeader>
+            <ScrollArea className="flex-1 p-4">
+            <div className="space-y-6">
+                {messages.map((message) => (
+                <div
+                    key={message.id}
+                    className={cn(
+                    'flex items-end gap-2',
+                    message.role === 'user' ? 'justify-start' : 'justify-end'
+                    )}
+                >
+                    {message.role === 'user' && (
+                    <Avatar className="h-8 w-8 border">
+                        <AvatarImage src={customer.avatar} data-ai-hint="person avatar" />
+                        <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    )}
+                    <div
+                    className={cn(
+                        'max-w-md rounded-lg p-3',
+                        message.role === 'user'
+                        ? 'bg-muted rounded-bl-none'
+                        : 'bg-primary text-primary-foreground rounded-br-none'
+                    )}
+                    >
+                    <p className="text-sm">{message.content}</p>
+                    </div>
+                    {message.role !== 'user' && (
+                    <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                        {message.role === 'ai' ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                        </AvatarFallback>
+                    </Avatar>
+                    )}
+                </div>
+                ))}
+            </div>
+            </ScrollArea>
+            <CardFooter className='p-4 border-t'>
+            <div className="relative w-full">
+                <Input
+                placeholder={isAiActive ? "A IA está ativa. Para enviar uma mensagem, assuma o atendimento." : "Digite sua mensagem..."}
+                className="pr-12"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                disabled={isAiActive}
+                />
+                <Button
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                onClick={handleSendMessage}
+                disabled={isAiActive}
+                >
+                <Send className="h-4 w-4" />
+                </Button>
+            </div>
+            </CardFooter>
+        </Card>
       </div>
       <div className="hidden md:block h-full">
-        <Card className="h-full">
+        <Card className="h-full flex flex-col">
           <CardHeader>
             <CardTitle>Detalhes do Cliente</CardTitle>
-            <CardDescription>{customer.email}</CardDescription>
+            <CardDescription>Informações e histórico de {customer.name}.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4 text-sm">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Telefone</span>
-              <span>{customer.phone}</span>
+          <Separator />
+          <CardContent className="py-4 space-y-4 text-sm flex-1">
+            <div className='space-y-1'>
+                <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span className='text-muted-foreground'>Telefone:</span>
+                    <span className='font-medium ml-auto'>{customer.phone}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className='text-muted-foreground'>Email:</span>
+                    <span className='font-medium ml-auto'>{customer.email}</span>
+                </div>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Canal</span>
-              <span>{customer.originChannel}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Interesse</span>
-              <span>{customer.interestLevel}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Urgência</span>
-              <span>{customer.urgency}</span>
+            <Separator/>
+            <div className='space-y-1'>
+                <div className="flex items-center gap-2">
+                    <Waypoints className="h-4 w-4 text-muted-foreground" />
+                    <span className='text-muted-foreground'>Canal de Origem:</span>
+                    <Badge variant="outline" className='ml-auto'>{customer.originChannel}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-muted-foreground" />
+                    <span className='text-muted-foreground'>Nível de Interesse:</span>
+                    <Badge variant={customer.interestLevel === 'high' ? 'default' : 'secondary'} className='ml-auto capitalize'>{customer.interestLevel}</Badge>
+                </div>
+                <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-muted-foreground" />
+                    <span className='text-muted-foreground'>Urgência:</span>
+                    <Badge variant={customer.urgency === 'high' ? 'destructive' : 'outline'} className='ml-auto capitalize'>{customer.urgency}</Badge>
+                </div>
             </div>
             <Separator />
             <div className="space-y-2">
-                <Button className="w-full" variant="outline"><FileText className="mr-2 h-4 w-4"/> Criar Orçamento</Button>
-                <Button className="w-full" variant="outline"><Bookmark className="mr-2 h-4 w-4"/> Criar Reserva</Button>
-                <Button className="w-full" variant="destructive"><LogOut className="mr-2 h-4 w-4"/> Encerrar</Button>
+                <p className='text-xs font-semibold text-muted-foreground uppercase'>Ações Rápidas</p>
+                <Button className="w-full justify-start" variant="ghost"><FileText className="mr-2 h-4 w-4"/> Criar Orçamento</Button>
+                <Button className="w-full justify-start" variant="ghost"><Bookmark className="mr-2 h-4 w-4"/> Criar Reserva</Button>
             </div>
           </CardContent>
+          <Separator />
+          <CardFooter className='p-2'>
+             <Button className="w-full" variant="destructive"><LogOut className="mr-2 h-4 w-4"/> Encerrar Atendimento</Button>
+          </CardFooter>
         </Card>
       </div>
     </div>

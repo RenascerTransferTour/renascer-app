@@ -8,7 +8,7 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard Operacional</h1>
         <p className="text-muted-foreground">
-          Visão geral das métricas e atividades da sua operação.
+          Visão geral das métricas e atividades da Renascer Transfer Tour.
         </p>
       </div>
       

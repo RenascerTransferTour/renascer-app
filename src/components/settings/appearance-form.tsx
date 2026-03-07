@@ -12,7 +12,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import {
   Select,
   SelectContent,
@@ -22,16 +21,16 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import {
-  Palette,
   Image as ImageIcon,
-  Smartphone,
-  MessageSquare,
-  Sidebar as SidebarIcon,
   Sun,
   Moon,
   Sparkles,
+  Car,
+  LayoutDashboard,
+  MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { Separator } from '../ui/separator'
 
 const ColorPicker = ({ label, value, onChange }: { label: string, value: string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) => (
   <div className="space-y-2">
@@ -64,7 +63,7 @@ const FileUpload = ({ label, description }: { label: string, description: string
         <div className="flex flex-col items-center justify-center pt-5 pb-6">
           <ImageIcon className="w-8 h-8 mb-4 text-muted-foreground" />
           <p className="mb-2 text-sm text-muted-foreground">
-            <span className="font-semibold">Clique para enviar</span> ou arraste e solte
+            <span className="font-semibold">Clique para enviar</span> ou arraste
           </p>
           <p className="text-xs text-muted-foreground">{description}</p>
         </div>
@@ -78,8 +77,8 @@ export function AppearanceForm() {
     const { toast } = useToast()
 
     const defaultState = {
-        companyName: 'Renascer',
-        slogan: 'Inteligência em Atendimento',
+        companyName: 'Renascer Transfer Tour',
+        slogan: 'Conforto, segurança, pontualidade e atendimento 24h',
         primaryColor: '#4A4270',
         secondaryColor: '#FFFFFF',
         accentColor: '#3C72DD',
@@ -188,37 +187,9 @@ export function AppearanceForm() {
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="md:col-span-2">
-                        <FileUpload label="Imagem de Fundo do Login" description="JPG, PNG (recomendado: 1920x1080px)"/>
-                    </div>
                 </CardContent>
-            </Card>
-            
-            <Card>
-                <CardHeader>
-                    <CardTitle>Assinatura de Mensagem</CardTitle>
-                    <CardDescription>
-                        Visualize como sua marca aparecerá nas mensagens automáticas.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="rounded-lg bg-muted p-4 space-y-4">
-                        <div className="flex items-start gap-3">
-                            <div className="rounded-full flex items-center justify-center size-10" style={{ backgroundColor: settings.primaryColor }}>
-                                <Sparkles className="size-5" style={{ color: settings.secondaryColor }} />
-                            </div>
-                            <div>
-                                <p className="font-bold" style={{ color: settings.primaryColor }}>{settings.companyName}</p>
-                                <div className="mt-1 text-sm text-foreground bg-card p-3 rounded-lg rounded-tl-none shadow">
-                                    Olá! Esta é uma mensagem de exemplo para mostrar como sua assinatura aparecerá.
-                                    <p className="text-xs text-muted-foreground mt-2">- {settings.slogan}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </CardContent>
-                <CardFooter className="justify-end gap-2">
-                    <Button variant="ghost" onClick={handleReset}>Redefinir Padrão</Button>
+                 <CardFooter className="justify-end gap-2">
+                    <Button variant="ghost" onClick={handleReset}>Redefinir</Button>
                     <Button onClick={handleSave}>Salvar Alterações</Button>
                 </CardFooter>
             </Card>
@@ -227,48 +198,89 @@ export function AppearanceForm() {
             <Card className="sticky top-20">
                 <CardHeader>
                     <CardTitle>Pré-visualização</CardTitle>
-                    <CardDescription>Veja como as alterações aparecerão.</CardDescription>
+                    <CardDescription>Veja suas alterações em tempo real.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div
                         className={cn(
-                            'w-full aspect-[9/16] rounded-lg border-4 border-foreground/50 overflow-hidden shadow-lg transition-colors',
-                             settings.theme === 'dark' ? 'dark' : ''
+                            'w-full rounded-lg border bg-background overflow-hidden shadow-lg transition-colors',
+                             settings.theme === 'dark' ? 'dark bg-zinc-900' : 'bg-zinc-100'
                         )}
                         style={{
                             backgroundColor: settings.backgroundColor,
                         }}
                     >
-                         <div className="flex h-full flex-col bg-transparent">
-                            {/* Header */}
-                            <div className="flex items-center justify-between p-3 border-b" style={{backgroundColor: settings.secondaryColor, borderColor: 'hsl(var(--border))'}}>
-                                <div className="flex items-center gap-2">
-                                    <div className="p-1.5 rounded" style={{backgroundColor: settings.primaryColor}}>
-                                        <SidebarIcon className="size-4" style={{color: settings.theme === 'light' ? 'white' : 'black'}}/>
+                         <div className="flex h-full">
+                            {/* Sidebar Preview */}
+                            <div className="w-16 p-2 flex flex-col items-center gap-2" style={{ backgroundColor: settings.primaryColor }}>
+                                <div className="p-2 rounded-md" style={{ backgroundColor: settings.secondaryColor}}>
+                                    <Car className="size-5" style={{ color: settings.primaryColor }}/>
+                                </div>
+                                <div className="mt-4 space-y-2">
+                                    <div className="p-2 rounded-md" style={{backgroundColor: settings.accentColor}}>
+                                        <LayoutDashboard className="size-5" style={{ color: settings.theme === 'light' ? 'white' : 'black' }}/>
                                     </div>
-                                    <p className="text-sm font-bold" style={{color: settings.primaryColor}}>{settings.companyName}</p>
-                                </div>
-                                <div className="size-6 rounded-full bg-muted" />
-                            </div>
-                            {/* Content */}
-                            <div className="p-4 flex-1">
-                                <h2 className="font-bold text-lg text-foreground">Dashboard</h2>
-                                <div className="mt-4 p-3 rounded-lg" style={{backgroundColor: settings.secondaryColor}}>
-                                    <p className="text-sm font-semibold text-card-foreground">Novo Lead!</p>
-                                    <p className="text-xs text-muted-foreground mt-1">Um novo lead acaba de chegar via WhatsApp.</p>
-                                </div>
-                                <div className="mt-3 flex gap-2">
-                                    <Button size="sm" className="flex-1" style={{ backgroundColor: settings.primaryColor, color: settings.theme === 'light' ? 'white' : 'black'}}>Ver</Button>
-                                    <Button size="sm" variant="outline" className="flex-1" style={{ borderColor: settings.accentColor, color: settings.accentColor}}>Ignorar</Button>
+                                    <div className="p-2 rounded-md bg-transparent">
+                                         <MessageSquare className="size-5" style={{ color: settings.secondaryColor }} />
+                                    </div>
                                 </div>
                             </div>
-                            {/* Nav */}
-                            <div className="flex justify-around p-2 border-t" style={{backgroundColor: settings.secondaryColor, borderColor: 'hsl(var(--border))'}}>
-                                <Smartphone className="size-5" style={{color: settings.accentColor}} />
-                                <MessageSquare className="size-5 text-muted-foreground" />
-                                <SidebarIcon className="size-5 text-muted-foreground" />
+                            {/* Main content preview */}
+                            <div className="flex-1">
+                                {/* Header Preview */}
+                                <div className="p-3 border-b flex justify-between items-center" style={{ backgroundColor: settings.secondaryColor, borderColor: 'rgba(0,0,0,0.1)' }}>
+                                    <p className="text-sm font-bold" style={{ color: settings.primaryColor}}>{settings.companyName}</p>
+                                    <div className="size-6 rounded-full bg-muted" />
+                                </div>
+
+                                {/* Dashboard Card Preview */}
+                                <div className="p-4">
+                                    <div className="p-3 rounded-lg shadow-sm" style={{ backgroundColor: settings.secondaryColor }}>
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-xs font-semibold text-card-foreground">Novos Contatos</p>
+                                            <Sparkles className="size-4" style={{color: settings.accentColor}}/>
+                                        </div>
+                                        <p className="text-xl font-bold text-card-foreground mt-1">12</p>
+                                    </div>
+                                </div>
+                                
+                                <Separator className='my-2'/>
+
+                                 {/* Conversation Preview */}
+                                <div className='p-4'>
+                                    <div className="flex items-start gap-2">
+                                        <div className="size-7 rounded-full bg-muted flex-shrink-0" />
+                                        <div className="p-2 rounded-lg max-w-[150px]" style={{backgroundColor: settings.primaryColor}}>
+                                            <p className="text-xs" style={{color: settings.secondaryColor}}>Olá! Gostaria de um orçamento.</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-start justify-end gap-2 mt-2">
+                                        <div className="p-2 rounded-lg bg-muted max-w-[150px]">
+                                            <p className="text-xs text-foreground">Claro! Para qual serviço?</p>
+                                        </div>
+                                        <div className="size-7 rounded-full bg-muted flex-shrink-0" />
+                                    </div>
+                                </div>
+
                             </div>
                          </div>
+                    </div>
+                    <p className='text-xs text-muted-foreground mt-4'>
+                        Pré-visualização da assinatura de mensagem automática:
+                    </p>
+                    <div className="rounded-lg bg-muted p-4 mt-2">
+                        <div className="flex items-start gap-3">
+                            <div className="rounded-full flex items-center justify-center size-10" style={{ backgroundColor: settings.primaryColor }}>
+                                <Sparkles className="size-5" style={{ color: settings.secondaryColor }} />
+                            </div>
+                            <div>
+                                <p className="font-bold" style={{ color: settings.primaryColor }}>{settings.companyName}</p>
+                                <div className="mt-1 text-sm text-foreground bg-card p-3 rounded-lg rounded-tl-none shadow">
+                                    Olá! Esta é uma mensagem automática. Em breve um de nossos especialistas irá te atender.
+                                    <p className="text-xs text-muted-foreground mt-2">- {settings.slogan}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

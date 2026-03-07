@@ -11,17 +11,17 @@ import { customers } from '@/lib/data';
 const activities = [
   {
     customer: customers[0],
-    action: 'enviou um orçamento de R$220.',
+    action: 'pediu um orçamento de transfer para GRU.',
     time: '5 minutos atrás',
   },
   {
     customer: customers[2],
-    action: 'confirmou a reserva #B001.',
+    action: 'aprovou o orçamento para evento corporativo.',
     time: '1 hora atrás',
   },
   {
     customer: customers[1],
-    action: 'foi transferido para um atendente.',
+    action: 'foi transferido para um atendente humano.',
     time: '3 horas atrás',
   },
   {
@@ -29,12 +29,12 @@ const activities = [
         name: 'Novo Lead',
         avatar: 'https://picsum.photos/seed/10/100/100'
     },
-    action: 'chegou via Instagram.',
+    action: 'solicitou uma viagem para Campos do Jordão via Instagram.',
     time: '5 horas atrás',
   },
   {
     customer: customers[3],
-    action: 'teve o atendimento encerrado.',
+    action: 'teve o atendimento sobre turismo encerrado.',
     time: '1 dia atrás',
   },
 ];
@@ -44,12 +44,12 @@ export function RecentActivities() {
     <Card>
       <CardHeader>
         <CardTitle>Atividades Recentes</CardTitle>
-        <CardDescription>Você tem 3 atendimentos pendentes.</CardDescription>
+        <CardDescription>Últimas interações na plataforma.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {activities.map((activity, index) => (
           <div className="flex items-start gap-4" key={index}>
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-9 w-9 border">
               <AvatarImage src={activity.customer.avatar} alt="Avatar" data-ai-hint="person avatar"/>
               <AvatarFallback>{activity.customer.name.charAt(0)}</AvatarFallback>
             </Avatar>
