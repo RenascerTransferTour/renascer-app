@@ -29,6 +29,9 @@ export interface Contact {
   language: string; // e.g., 'pt-BR'
   isInternal: boolean;
   notes?: string;
+  originChannel?: string;
+  urgency?: 'low' | 'medium' | 'high';
+  interestLevel?: 'low' | 'medium' | 'high';
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }
@@ -175,7 +178,7 @@ export interface AiSettings {
   isFallbackEnabled: boolean;
   fallbackHumanName: string;
   activeProvider: 'openai' | 'gemini' | 'automatic';
-  fallbackProvider?: 'openai' | 'gemini';
+  fallbackProvider: 'openai' | 'gemini';
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }
