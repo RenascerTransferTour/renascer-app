@@ -37,10 +37,12 @@ export interface Channel {
   id: string; // UUID
   name: string;
   type: 'whatsapp' | 'instagram' | 'facebook' | 'website';
-  status: 'connected' | 'disconnected' | 'pending' | 'expired' | 'awaiting_qr';
+  status: 'connected' | 'disconnected' | 'pending' | 'expired' | 'awaiting_qr' | 'failing';
   aiEnabled: boolean;
   requiresHuman: boolean;
   provider: 'automatic' | 'gemini' | 'openai';
+  lastChecked?: string; // ISO 8601
+  lastError?: string;
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }

@@ -193,3 +193,12 @@ export const leadService = {
         return repos.leads.createOrUpdate(lead);
     }
 }
+
+export const systemService = {
+    async resetOperationalData() {
+        return repos.system.resetOperationalData();
+    },
+    async resetAllData() {
+        return repos.system.resetAllData();
+    }
+}

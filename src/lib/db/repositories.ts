@@ -160,3 +160,32 @@ export const aiPrompts = {
 export const knowledgeBase = {
     list: () => list(db.knowledgeBaseArticles),
 };
+
+// --- System-wide Operations ---
+const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
+
+export const system = {
+    resetOperationalData: () => {
+        db.conversations = deepClone(db.originalConversations);
+        db.messages = deepClone(db.originalMessages);
+        db.leads = deepClone(db.originalLeads);
+        db.quotes = deepClone(db.originalQuotes);
+        db.reservations = deepClone(db.originalReservations);
+        db.deals = deepClone(db.originalDeals);
+        db.calendarEvents = deepClone(db.originalCalendarEvents);
+        db.auditLogs = [];
+        return { success: true, message: "Operational data has been reset." };
+    },
+    resetAllData: () => {
+        // Resets operational data
+        system.resetOperationalData();
+        
+        // Also resets settings data
+        db.aiSettings = deepClone(db.originalAiSettings);
+        db.aiFlowPermissions = deepClone(db.originalAiFlowPermissions);
+        db.aiPrompts = deepClone(db.originalAiPrompts);
+        db.channels = deepClone(db.originalChannels);
+
+        return { success: true, message: "All local mock data has been reset to defaults." };
+    }
+}

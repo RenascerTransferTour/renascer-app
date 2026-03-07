@@ -14,13 +14,15 @@ import type {
 
 const now = new Date();
 
-export let operators: Operator[] = [
+// --- Seed Data (immutable originals) ---
+
+export const originalOperators: Operator[] = [
     { id: 'op-1', fullName: 'Claudia', email: 'claudia@renascer.ai', role: 'admin', active: true, avatar: 'https://picsum.photos/seed/99/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'op-2', fullName: 'Carlos', email: 'carlos@renascer.ai', role: 'agent', active: true, avatar: 'https://picsum.photos/seed/98/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'IA', fullName: 'Assistente IA', email: 'ia@renascer.ai', role: 'agent', active: true, avatar: '', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
 ];
 
-export let contacts: Contact[] = [
+export const originalContacts: Contact[] = [
   {
     id: 'contact-1',
     fullName: 'Ana Silva',
@@ -67,16 +69,16 @@ export let contacts: Contact[] = [
   },
 ];
 
-export let channels: Channel[] = [
-    { id: 'channel-wa', name: 'WhatsApp', type: 'whatsapp', status: 'connected', aiEnabled: true, requiresHuman: false, provider: 'automatic', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
-    { id: 'channel-ig', name: 'Instagram', type: 'instagram', status: 'disconnected', aiEnabled: false, requiresHuman: true, provider: 'automatic', createdAt: subDays(now, 30).toISOString(), updatedAt: subDays(now, 1).toISOString() },
-    { id: 'channel-fb', name: 'Facebook', type: 'facebook', status: 'connected', aiEnabled: true, requiresHuman: true, provider: 'automatic', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
-    { id: 'channel-web', name: 'Website', type: 'website', status: 'connected', aiEnabled: true, requiresHuman: false, provider: 'gemini', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+export const originalChannels: Channel[] = [
+    { id: 'channel-wa', name: 'WhatsApp', type: 'whatsapp', status: 'connected', aiEnabled: true, requiresHuman: false, provider: 'automatic', lastChecked: now.toISOString(), createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+    { id: 'channel-ig', name: 'Instagram', type: 'instagram', status: 'disconnected', aiEnabled: false, requiresHuman: true, provider: 'automatic', lastChecked: subDays(now, 1).toISOString(), lastError: 'Token de acesso inválido ou expirado.', createdAt: subDays(now, 30).toISOString(), updatedAt: subDays(now, 1).toISOString() },
+    { id: 'channel-fb', name: 'Facebook', type: 'facebook', status: 'connected', aiEnabled: true, requiresHuman: true, provider: 'automatic', lastChecked: now.toISOString(), createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+    { id: 'channel-web', name: 'Website', type: 'website', status: 'connected', aiEnabled: true, requiresHuman: false, provider: 'gemini', lastChecked: now.toISOString(), createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
 ];
 
-export let leads: Lead[] = []; // Leads can be derived or created from conversations
+export const originalLeads: Lead[] = [];
 
-export let messages: Message[] = [
+export const originalMessages: Message[] = [
     { id: 'msg-1-1', conversationId: 'conv-1', senderType: 'user', content: 'Olá, gostaria de um orçamento para um transfer para o aeroporto de Guarulhos.', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
     { id: 'msg-1-2', conversationId: 'conv-1', senderType: 'ai', authorName: "Assistente IA", content: 'Olá, Ana! Seja bem-vinda à Renascer. Para qual data e horário você precisa do transfer? E qual o local de partida?', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
     { id: 'msg-1-3', conversationId: 'conv-1', senderType: 'user', content: 'Seria para o dia 28, às 15h. Partindo da Av. Paulista.', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
@@ -91,7 +93,7 @@ export let messages: Message[] = [
     { id: 'msg-4-2', conversationId: 'conv-4', senderType: 'ai', authorName: "Assistente IA", content: 'Olá! Nosso e-mail para contato é contato@renascertour.com.br. Em que podemos ajudar?', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 10).toISOString() },
 ];
 
-export let conversations: Conversation[] = [
+export const originalConversations: Conversation[] = [
   {
     id: 'conv-1',
     contactId: 'contact-1',
@@ -182,7 +184,7 @@ export let conversations: Conversation[] = [
   },
 ];
 
-export let quotes: Quote[] = [
+export const originalQuotes: Quote[] = [
   { id: 'quote-1', leadId: 'lead-1', contactId: 'contact-1', conversationId: 'conv-1', status: 'enviado', summary: 'Transfer Executivo: Av. Paulista para Aeroporto GRU', priceRange: [280, 350], createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), approvedByAi: false, ownerId: 'op-1' },
   { id: 'quote-2', leadId: 'lead-2', contactId: 'contact-2', conversationId: 'conv-2', status: 'rascunho', summary: 'Viagem privativa: RJ para Campos do Jordão (2 pessoas)', priceRange: [1800, 2200], createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString(), approvedByAi: false, ownerId: 'op-1' },
   { id: 'quote-3', leadId: 'lead-3', contactId: 'contact-3', conversationId: 'conv-3', status: 'aprovado', summary: 'Transporte Corporativo: Van para diretoria (12 pessoas)', priceRange: [1200, 1500], finalValue: 1450, createdAt: subDays(now, 1).toISOString(), updatedAt: now.toISOString(), approvedByAi: false, approvedByHumanId: 'op-1', ownerId: 'op-1' },
@@ -192,7 +194,7 @@ export let quotes: Quote[] = [
   { id: 'quote-7', leadId: 'lead-7', contactId: 'contact-1', conversationId: 'conv-1', status: 'aguardando aprovação', summary: 'Transfer GRU (aguardando cliente aprovar o orçamento)', priceRange: [280, 350], createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), approvedByAi: false, ownerId: 'op-1' },
 ];
 
-export let reservations: Reservation[] = [
+export const originalReservations: Reservation[] = [
   { id: 'res-1', leadId: 'lead-3', quoteId: 'quote-3', contactId: 'contact-3', conversationId: 'conv-3', service: 'Transfer', scheduledDate: addDays(now, 15).toISOString(), scheduledTime: '09:00', status: 'confirmada', details: 'Van executiva para evento no WTC. Aguardando no lobby principal.', reservedBy: 'human', confirmationMode: 'manual', createdAt: now.toISOString(), updatedAt: now.toISOString() },
   { id: 'res-2', leadId: 'lead-1', quoteId: 'quote-1', contactId: 'contact-1', conversationId: 'conv-1', service: 'Transfer', scheduledDate: addDays(now, 25).toISOString(), scheduledTime: '15:00', status: 'pendente', details: 'Transfer para GRU (Terminal 3), aguardando pagamento.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString() },
   { id: 'res-3', leadId: 'lead-2', quoteId: 'quote-2', contactId: 'contact-2', conversationId: 'conv-2', service: 'Tour', scheduledDate: subDays(now, 2).toISOString(), scheduledTime: '10:00', status: 'concluído por humano', details: 'Viagem para Campos do Jordão, motorista bilíngue solicitado.', reservedBy: 'human', confirmationMode: 'manual', createdAt: subDays(now, 3).toISOString(), updatedAt: subDays(now, 2).toISOString() },
@@ -202,7 +204,7 @@ export let reservations: Reservation[] = [
   { id: 'res-7', leadId: 'lead-8', quoteId: 'quote-8', contactId: 'contact-1', conversationId: 'conv-1', service: 'Tour', scheduledDate: addDays(now, 3).toISOString(), scheduledTime: '11:00', status: 'concluído pela IA', details: 'Tour no centro histórico, concluído autonomamente.', reservedBy: 'ai', confirmationMode: 'automatic', createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString() },
 ];
 
-export let calendarEvents: CalendarEvent[] = [
+export const originalCalendarEvents: CalendarEvent[] = [
   { id: 'ce-1', reservationId: 'res-1', title: 'Pickup Evento WTC (Empresa S.A)', eventType: 'Pickup', start: setMinutes(setHours(addDays(now, 15), 9), 0).toISOString(), end: setMinutes(setHours(addDays(now, 15), 18), 0).toISOString(), assignedTeamMemberId: 'op-2', status: 'confirmada', createdAt: now.toISOString(), updatedAt: now.toISOString() },
   { id: 'ce-2', reservationId: 'res-3', title: 'Viagem Campos do Jordão (B. Costa)', eventType: 'Tour', start: setMinutes(setHours(subDays(now, 2), 10), 0).toISOString(), end: setMinutes(setHours(addDays(subDays(now, 2), 2), 16), 0).toISOString(), assignedTeamMemberId: 'op-1', status: 'concluída', createdAt: subDays(now, 3).toISOString(), updatedAt: subDays(now, 2).toISOString() },
   { id: 'ce-3', reservationId: 'res-2', title: 'Transfer Ana Silva (GRU)', eventType: 'Transfer', start: setMinutes(setHours(addDays(now, 25), 15), 0).toISOString(), end: setMinutes(setHours(addDays(now, 25), 16), 30).toISOString(), assignedTeamMemberId: 'op-1', status: 'pendente', createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString() },
@@ -210,7 +212,7 @@ export let calendarEvents: CalendarEvent[] = [
   { id: 'ce-5', reservationId: 'res-4', title: 'Viagem Angra (Cancelado)', eventType: 'Tour', start: setMinutes(setHours(addDays(now, 50), 9), 0).toISOString(), end: setMinutes(setHours(addDays(now, 52), 18), 0).toISOString(), status: 'cancelada', createdAt: subDays(now, 6).toISOString(), updatedAt: subDays(now, 3).toISOString() }
 ];
 
-export let deals: Deal[] = [
+export const originalDeals: Deal[] = [
   { id: 'deal-1', leadId: 'lead-1', contactId: 'contact-1', title: 'Transfer GRU - Ana Silva', pipelineStage: 'quote-sent', estimatedValue: 320, createdAt: subDays(now, 2).toISOString(), updatedAt: subDays(now, 2).toISOString(), ownerId: 'op-1', status: 'open' },
   { id: 'deal-2', leadId: 'lead-2', contactId: 'contact-2', title: 'Viagem Campos do Jordão - B. Costa', pipelineStage: 'negotiation', estimatedValue: 2000, createdAt: subDays(now, 5).toISOString(), updatedAt: subDays(now, 5).toISOString(), ownerId: 'op-1', status: 'open' },
   { id: 'deal-3', leadId: 'lead-3', contactId: 'contact-3', title: 'Contrato Corporativo - Empresa S.A.', pipelineStage: 'closed-won', estimatedValue: 15000, closedValue: 14500, createdAt: subDays(now, 1).toISOString(), updatedAt: now.toISOString(), ownerId: 'op-1', status: 'won' },
@@ -221,7 +223,7 @@ export let deals: Deal[] = [
   { id: 'deal-8', leadId: 'lead-8', contactId: 'contact-1', title: 'Transfer para evento (Aguardando Fechamento)', pipelineStage: 'aguardando fechamento', estimatedValue: 700, createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), ownerId: 'op-1', status: 'open' },
 ];
 
-export let knowledgeBaseArticles: KnowledgeBaseArticle[] = [
+export const originalKnowledgeBaseArticles: KnowledgeBaseArticle[] = [
     { id: 'kb-1', category: 'Services', title: 'Tipos de Transfer', content: 'Oferecemos transfer executivo com sedans, SUVs e vans. Para grupos, dispomos de vans e micro-ônibus. A opção VIP inclui veículos de luxo e motoristas bilíngues.', language: 'pt-BR', active: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'kb-2', category: 'Policies', title: 'Política de Cancelamento', content: 'Cancelamentos com até 48h de antecedência para transfers e 7 dias para viagens longas têm reembolso integral. Fora desse prazo, há uma taxa de 30%.', language: 'pt-BR', active: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'kb-3', category: 'Destinations', title: 'Principais Destinos e Viagens', content: 'Atendemos todos os aeroportos de SP, Campos do Jordão, Litoral Norte, e viagens para todo o sudeste. Oferecemos pacotes de turismo para as principais cidades históricas de MG.', language: 'pt-BR', active: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
@@ -230,7 +232,7 @@ export let knowledgeBaseArticles: KnowledgeBaseArticle[] = [
 ];
 
 
-export let aiSettings: AiSettings = {
+export const originalAiSettings: AiSettings = {
     id: 1,
     globalAiEnabled: true,
     aiMode: 'assisted',
@@ -243,7 +245,7 @@ export let aiSettings: AiSettings = {
     updatedAt: now.toISOString(),
 };
 
-export let aiFlowPermissions: AiFlowPermission[] = [
+export const originalAiFlowPermissions: AiFlowPermission[] = [
     { id: 'flow-1', aiSettingsId: 1, flowName: 'welcome', enabled: true, requiresHumanApproval: false, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'flow-2', aiSettingsId: 1, flowName: 'qualification', enabled: true, requiresHumanApproval: false, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'flow-3', aiSettingsId: 1, flowName: 'faq', enabled: true, requiresHumanApproval: false, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
@@ -255,12 +257,12 @@ export let aiFlowPermissions: AiFlowPermission[] = [
     { id: 'flow-9', aiSettingsId: 1, flowName: 'summarization', enabled: true, requiresHumanApproval: false, provider: 'automatic', createdAt: now.toISOString(), updatedAt: now.toISOString() },
 ];
 
-export let aiProviderConfigs: AiProviderConfig[] = [
+export const originalAiProviderConfigs: AiProviderConfig[] = [
     { id: 'prov-1', providerName: 'gemini', keyLabel: 'GEMINI_API_KEY', modelName: 'gemini-2.5-flash', enabled: true, isPrimary: true, createdAt: now.toISOString(), updatedAt: now.toISOString() },
     { id: 'prov-2', providerName: 'openai', keyLabel: 'OPENAI_API_KEY', modelName: 'gpt-4-turbo', enabled: true, isPrimary: false, createdAt: now.toISOString(), updatedAt: now.toISOString() },
 ];
 
-export let aiPrompts: AiPrompt[] = [
+export const originalAiPrompts: AiPrompt[] = [
     { 
         id: 'prompt-draft-1', 
         versionName: 'v4 - Draft for testing', 
@@ -313,4 +315,23 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
     }
 ];
 
-export let auditLogs: AuditLog[] = [];
+// --- Mutable State (the "database") ---
+// Deep clone the original data to create a mutable state
+const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
+
+export let operators: Operator[] = deepClone(originalOperators);
+export let contacts: Contact[] = deepClone(originalContacts);
+export let channels: Channel[] = deepClone(originalChannels);
+export let leads: Lead[] = deepClone(originalLeads);
+export let messages: Message[] = deepClone(originalMessages);
+export let conversations: Conversation[] = deepClone(originalConversations);
+export let quotes: Quote[] = deepClone(originalQuotes);
+export let reservations: Reservation[] = deepClone(originalReservations);
+export let calendarEvents: CalendarEvent[] = deepClone(originalCalendarEvents);
+export let deals: Deal[] = deepClone(originalDeals);
+export let knowledgeBaseArticles: KnowledgeBaseArticle[] = deepClone(originalKnowledgeBaseArticles);
+export let aiSettings: AiSettings = deepClone(originalAiSettings);
+export let aiFlowPermissions: AiFlowPermission[] = deepClone(originalAiFlowPermissions);
+export let aiProviderConfigs: AiProviderConfig[] = deepClone(originalAiProviderConfigs);
+export let aiPrompts: AiPrompt[] = deepClone(originalAiPrompts);
+export let auditLogs: any[] = [];
