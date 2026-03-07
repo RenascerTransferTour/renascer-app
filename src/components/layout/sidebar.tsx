@@ -35,7 +35,7 @@ const navItems = [
 ];
 
 const settingsNav = {
-  href: '/settings/ai',
+  href: '/settings',
   icon: Settings,
   label: 'Configurações',
 };

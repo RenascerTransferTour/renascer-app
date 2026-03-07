@@ -33,7 +33,8 @@ const breadcrumbNameMap: { [key: string]: string } = {
   '/pipeline': 'Pipeline de Vendas',
   '/kb': 'Base de Conhecimento',
   '/settings': 'Configurações',
-  '/settings/ai': 'Configuração da IA',
+  '/settings/ai': 'Controle da IA',
+  '/settings/appearance': 'Aparência e Marca',
 };
 
 export function AppHeader() {
