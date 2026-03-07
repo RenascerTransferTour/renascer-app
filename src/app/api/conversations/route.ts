@@ -1,15 +1,16 @@
 import { NextResponse } from 'next/server';
+import { conversationService } from '@/lib/db/services';
 
 /**
  * API route to list conversations.
- * In a real application, this would fetch data from a service layer
- * that interacts with a database.
+ * This now uses the service layer to fetch data.
  */
 export async function GET() {
-  // Placeholder: In the future, this will call `conversationService.listConversations()`
-  const mockConversations = [
-    { id: 'conv-1', status: 'pending_human', last_message_at: new Date().toISOString() },
-    { id: 'conv-2', status: 'open', last_message_at: new Date().toISOString() },
-  ];
-  return NextResponse.json(mockConversations);
+  try {
+    const conversations = await conversationService.listConversations();
+    return NextResponse.json(conversations);
+  } catch (error) {
+    console.error('API Error fetching conversations:', error);
+    return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 });
+  }
 }

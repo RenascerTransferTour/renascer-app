@@ -1,11 +1,14 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { calendarEvents } from "@/lib/data"
-import { format } from "date-fns"
+import { format, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { ChevronLeft, ChevronRight, Circle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
+import type { CalendarEvent } from '@/lib/db/data-model';
 
 const getEventStyle = (status: string) => {
     switch (status) {
@@ -23,22 +26,52 @@ const getEventStyle = (status: string) => {
 };
 
 const daysOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-// A simple way to create a calendar view for the current month
-const today = new Date();
-const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-const startingDayOfWeek = firstDayOfMonth.getDay();
-const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
 
-const calendarDays = Array.from({ length: 35 }, (_, i) => {
-  const day = i - startingDayOfWeek + 1;
-  const date = new Date(today.getFullYear(), today.getMonth(), day);
-  const events = calendarEvents.filter(e => format(e.start, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
-  const isCurrentMonth = i >= startingDayOfWeek && i < startingDayOfWeek + daysInMonth;
-  return { day, date, events, isCurrentMonth };
-});
+const getCalendarGrid = (date: Date, events: CalendarEvent[]) => {
+    const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+    const startingDayOfWeek = firstDayOfMonth.getDay();
+    const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+
+    return Array.from({ length: 35 }, (_, i) => {
+        const day = i - startingDayOfWeek + 1;
+        const currentDate = new Date(date.getFullYear(), date.getMonth(), day);
+        const dateStr = format(currentDate, 'yyyy-MM-dd');
+        
+        const dayEvents = events.filter(e => format(parseISO(e.start), 'yyyy-MM-dd') === dateStr);
+        const isCurrentMonth = i >= startingDayOfWeek && i < startingDayOfWeek + daysInMonth;
+        
+        return { day, date: currentDate, events: dayEvents, isCurrentMonth };
+    });
+};
 
 
 export default function CalendarPage() {
+    const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    useEffect(() => {
+        const fetchEvents = async () => {
+            setLoading(true);
+            try {
+                const res = await fetch('/api/calendar');
+                const data = await res.json();
+                setCalendarEvents(data);
+            } catch (error) {
+                console.error("Failed to fetch calendar events", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchEvents();
+    }, []);
+
+    const calendarDays = getCalendarGrid(currentDate, calendarEvents);
+
+    const handleMonthChange = (offset: number) => {
+        setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
+    }
+
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
@@ -49,9 +82,9 @@ export default function CalendarPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon"><ChevronLeft className="h-4 w-4"/></Button>
-            <span className="font-semibold text-lg">{format(new Date(), 'MMMM yyyy', {locale: ptBR})}</span>
-            <Button variant="outline" size="icon"><ChevronRight className="h-4 w-4"/></Button>
+            <Button variant="outline" size="icon" onClick={() => handleMonthChange(-1)}><ChevronLeft className="h-4 w-4"/></Button>
+            <span className="font-semibold text-lg capitalize">{format(currentDate, 'MMMM yyyy', {locale: ptBR})}</span>
+            <Button variant="outline" size="icon" onClick={() => handleMonthChange(1)}><ChevronRight className="h-4 w-4"/></Button>
         </div>
       </div>
       <Card>
@@ -77,7 +110,7 @@ export default function CalendarPage() {
                   {events.map(event => (
                     <div key={event.id} className={cn('text-xs rounded-md p-1.5 cursor-pointer hover:opacity-80 transition-opacity border-l-4', getEventStyle(event.status))}>
                       <p className="font-semibold">{event.title}</p>
-                      <p className="text-white/80">{event.type}</p>
+                      <p className="text-white/80">{event.eventType}</p>
                     </div>
                   ))}
                 </div>

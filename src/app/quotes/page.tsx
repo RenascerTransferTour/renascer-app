@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import {
     Table,
     TableBody,
@@ -8,13 +11,34 @@ import {
   } from "@/components/ui/table"
   import { Badge } from "@/components/ui/badge"
   import { Button } from "@/components/ui/button"
-  import { quotes, customers } from "@/lib/data"
   import { format, parseISO } from 'date-fns';
   import { ptBR } from 'date-fns/locale';
   import { PlusCircle } from "lucide-react"
   import { getStatusBadgeClasses } from "@/lib/utils"
+  import type { Quote, Contact } from '@/lib/db/data-model';
+  import { Skeleton } from '@/components/ui/skeleton';
+
+  type QuoteWithContact = Quote & { contact?: Contact, ownerName?: string };
 
   export default function QuotesPage() {
+    const [quotes, setQuotes] = useState<QuoteWithContact[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchQuotes = async () => {
+            try {
+                const res = await fetch('/api/quotes');
+                const data = await res.json();
+                setQuotes(data);
+            } catch (error) {
+                console.error("Failed to fetch quotes", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchQuotes();
+    }, []);
+
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
@@ -44,24 +68,35 @@ import {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {quotes.map((quote) => {
-                const customer = customers.find(c => c.id === quote.customerId);
-                return (
-                    <TableRow key={quote.id}>
-                    <TableCell className="font-medium">{customer?.name || 'N/A'}</TableCell>
-                    <TableCell>{quote.summary}</TableCell>
-                    <TableCell>{`R$ ${quote.priceRange[0]} - R$ ${quote.priceRange[1]}`}</TableCell>
-                    <TableCell>
-                        <Badge className={`${getStatusBadgeClasses(quote.status)} capitalize`}>{quote.status.replace('-', ' ')}</Badge>
-                    </TableCell>
-                    <TableCell>
-                        <Badge variant="outline">Claudia</Badge>
-                    </TableCell>
-                    <TableCell>{format(parseISO(quote.createdAt), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
-                    <TableCell>{format(parseISO(quote.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</TableCell>
-                    </TableRow>
-                )
-                })}
+                {loading ? (
+                     Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                        </TableRow>
+                    ))
+                ) : (
+                    quotes.map((quote) => (
+                        <TableRow key={quote.id}>
+                        <TableCell className="font-medium">{quote.contact?.fullName || 'N/A'}</TableCell>
+                        <TableCell>{quote.summary}</TableCell>
+                        <TableCell>{`R$ ${quote.priceRange[0]} - R$ ${quote.priceRange[1]}`}</TableCell>
+                        <TableCell>
+                            <Badge className={`${getStatusBadgeClasses(quote.status)} capitalize`}>{quote.status.replace('-', ' ')}</Badge>
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant="outline">Claudia</Badge>
+                        </TableCell>
+                        <TableCell>{format(parseISO(quote.createdAt), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                        <TableCell>{format(parseISO(quote.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</TableCell>
+                        </TableRow>
+                    ))
+                )}
             </TableBody>
             </Table>
         </div>

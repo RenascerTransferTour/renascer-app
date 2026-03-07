@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import {
     Table,
     TableBody,
@@ -8,13 +11,34 @@ import {
   } from "@/components/ui/table"
   import { Badge } from "@/components/ui/badge"
   import { Button } from "@/components/ui/button"
-  import { bookings, customers } from "@/lib/data"
   import { format, parseISO } from 'date-fns';
   import { ptBR } from 'date-fns/locale';
   import { PlusCircle } from "lucide-react"
   import { getStatusBadgeClasses } from "@/lib/utils"
-  
+  import type { Reservation, Contact } from '@/lib/db/data-model';
+  import { Skeleton } from '@/components/ui/skeleton';
+
+  type ReservationWithContact = Reservation & { contact?: Contact };
+
   export default function BookingsPage() {
+    const [bookings, setBookings] = useState<ReservationWithContact[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchBookings = async () => {
+            try {
+                const res = await fetch('/api/reservations');
+                const data = await res.json();
+                setBookings(data);
+            } catch (error) {
+                console.error("Failed to fetch bookings", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchBookings();
+    }, []);
+
     return (
       <div className="space-y-8">
         <div className="flex items-center justify-between">
@@ -42,20 +66,29 @@ import {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {bookings.map((booking) => {
-                const customer = customers.find(c => c.id === booking.customerId);
-                return (
-                    <TableRow key={booking.id}>
-                    <TableCell className="font-medium">{customer?.name || 'N/A'}</TableCell>
-                    <TableCell>{booking.service}</TableCell>
-                    <TableCell>{format(parseISO(booking.date), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
-                    <TableCell>
-                        <Badge className={`${getStatusBadgeClasses(booking.status)} capitalize`}>{booking.status}</Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[300px] truncate">{booking.details}</TableCell>
-                    </TableRow>
-                )
-                })}
+                {loading ? (
+                    Array.from({ length: 5 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                            <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                        </TableRow>
+                    ))
+                ) : (
+                    bookings.map((booking) => (
+                        <TableRow key={booking.id}>
+                        <TableCell className="font-medium">{booking.contact?.fullName || 'N/A'}</TableCell>
+                        <TableCell>{booking.service}</TableCell>
+                        <TableCell>{format(parseISO(booking.scheduledDate), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
+                        <TableCell>
+                            <Badge className={`${getStatusBadgeClasses(booking.status)} capitalize`}>{booking.status.replace('-', ' ')}</Badge>
+                        </TableCell>
+                        <TableCell className="max-w-[300px] truncate">{booking.details}</TableCell>
+                        </TableRow>
+                    ))
+                )}
             </TableBody>
             </Table>
         </div>

@@ -1,3 +1,6 @@
+// This component still uses static data as a placeholder for a real-time activity feed.
+// In a real application, this would be powered by a WebSocket or server-sent events.
+
 import {
   Card,
   CardContent,
@@ -6,34 +9,34 @@ import {
   CardDescription
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { customers } from '@/lib/data';
+import { contacts } from '@/lib/db/mock-data';
 
 const activities = [
   {
-    customer: customers[0],
+    contact: contacts[0],
     action: 'pediu um orçamento de transfer para GRU.',
     time: '5 minutos atrás',
   },
   {
-    customer: customers[2],
+    contact: contacts[2],
     action: 'aprovou o orçamento para evento corporativo.',
     time: '1 hora atrás',
   },
   {
-    customer: customers[1],
+    contact: contacts[1],
     action: 'foi transferido para um atendente humano.',
     time: '3 horas atrás',
   },
   {
-    customer: {
-        name: 'Novo Lead',
+    contact: {
+        fullName: 'Novo Lead',
         avatar: 'https://picsum.photos/seed/10/100/100'
     },
     action: 'solicitou uma viagem para Campos do Jordão via Instagram.',
     time: '5 horas atrás',
   },
   {
-    customer: customers[3],
+    contact: contacts[3],
     action: 'teve o atendimento sobre turismo encerrado.',
     time: '1 dia atrás',
   },
@@ -50,12 +53,12 @@ export function RecentActivities() {
         {activities.map((activity, index) => (
           <div className="flex items-start gap-4" key={index}>
             <Avatar className="h-9 w-9 border">
-              <AvatarImage src={activity.customer.avatar} alt="Avatar" data-ai-hint="person avatar"/>
-              <AvatarFallback>{activity.customer.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={activity.contact.avatar} alt="Avatar" data-ai-hint="person avatar"/>
+              <AvatarFallback>{activity.contact.fullName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="grid gap-1">
               <p className="text-sm font-medium leading-none">
-                {activity.customer.name}
+                {activity.contact.fullName}
               </p>
               <p className="text-sm text-muted-foreground">
                 {activity.action}

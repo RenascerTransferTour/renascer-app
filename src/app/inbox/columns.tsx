@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import type { Conversation, Customer } from "@/lib/types"
+import type { Conversation, Contact } from "@/lib/db/data-model"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -20,7 +20,7 @@ import { ptBR } from 'date-fns/locale';
 import Link from "next/link"
 import { getStatusBadgeClasses } from "@/lib/utils"
 
-type InboxItem = Conversation & { customer: Customer | undefined }
+type InboxItem = Conversation & { contact: Contact }
 
 const priorityLabels: Record<string, string> = {
     high: 'Alta',
@@ -64,25 +64,28 @@ export const columns: ColumnDef<InboxItem>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "customer",
+    accessorKey: "contact",
     header: "Cliente",
     cell: ({ row }) => {
-      const customer = row.original.customer;
+      const contact = row.original.contact;
       return (
         <Link href={`/inbox/${row.original.id}`}>
           <div className="flex items-center gap-3 group">
             <Avatar>
-              <AvatarImage src={customer?.avatar} data-ai-hint="person avatar"/>
-              <AvatarFallback>{customer?.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src={contact?.avatar} data-ai-hint="person avatar"/>
+              <AvatarFallback>{contact?.fullName.charAt(0)}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
-              <span className="font-medium group-hover:underline">{customer?.name}</span>
-              <span className="text-xs text-muted-foreground">{customer?.phone}</span>
+              <span className="font-medium group-hover:underline">{contact?.fullName}</span>
+              <span className="text-xs text-muted-foreground">{contact?.phone}</span>
             </div>
           </div>
         </Link>
       )
-    }
+    },
+    filterFn: (row, id, value) => {
+        return row.original.contact.fullName.toLowerCase().includes(value.toLowerCase());
+    },
   },
   {
     accessorKey: "lastMessage",
@@ -98,9 +101,17 @@ export const columns: ColumnDef<InboxItem>[] = [
     }
   },
   {
-    accessorKey: "channel",
+    accessorKey: "channelId",
     header: "Canal",
-    cell: ({ row }) => <Badge variant="outline" className="font-normal">{row.getValue("channel")}</Badge>,
+    cell: ({ row }) => {
+        const channelId = row.getValue("channelId") as string;
+        // This is a simplification. In a real app, you'd fetch channel names.
+        const channelName = channelId.replace('channel-', '');
+        return <Badge variant="outline" className="font-normal capitalize">{channelName}</Badge>
+    },
+    filterFn: (row, id, value) => {
+        return row.original.channelId.includes(value);
+    }
   },
   {
     accessorKey: "status",
@@ -127,7 +138,9 @@ export const columns: ColumnDef<InboxItem>[] = [
     header: "Atendente",
     cell: ({ row }) => {
       const isAiActive: boolean = row.original.isAiActive;
-      const agent = row.original.humanAgent;
+      const humanOwnerId = row.original.humanOwnerId;
+      // In a real app, you'd fetch operator names
+      const agent = humanOwnerId === 'op-1' ? 'Claudia' : (humanOwnerId === 'op-2' ? 'Carlos' : null);
       const attendant = isAiActive ? 'IA' : (agent || 'Humano');
       const badgeClass = isAiActive ? getStatusBadgeClasses('IA assistida') : getStatusBadgeClasses('humano');
       

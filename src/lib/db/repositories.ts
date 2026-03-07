@@ -1,0 +1,115 @@
+/**
+ * @fileoverview Mock Repository Layer
+ * 
+ * This file simulates a database repository layer. In a real application,
+ * this is where you would place your database query logic (e.g., using an ORM like
+ * Firebase Data Connect, Prisma, or Drizzle).
+ * 
+ * For now, it provides functions to perform CRUD operations on in-memory
+ * data, which is seeded from `mock-data.ts`.
+ */
+
+import * as db from './mock-data';
+import type { 
+    Operator, Contact, Channel, Lead, Conversation, Message, Quote, Reservation, CalendarEvent, Deal, 
+    AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, KnowledgeBaseArticle, AuditLog 
+} from './data-model';
+
+// A generic function to find an item by ID from any mock table
+const findById = <T extends { id: string }>(table: T[], id: string): T | undefined => {
+    return table.find(item => item.id === id);
+};
+
+// A generic function to list all items from any mock table
+const list = <T>(table: T[]): T[] => {
+    return table;
+};
+
+// A generic function to create or update an item in any mock table
+const createOrUpdate = <T extends { id: string }>(table: T[], item: T): T => {
+    const index = table.findIndex(i => i.id === item.id);
+    if (index !== -1) {
+        table[index] = { ...table[index], ...item };
+        return table[index];
+    } else {
+        table.push(item);
+        return item;
+    }
+};
+
+// --- Repository Exports ---
+
+export const operators = {
+    findById: (id: string) => findById(db.operators, id),
+    list: () => list(db.operators),
+    findByEmail: (email: string) => db.operators.find(o => o.email === email),
+};
+
+export const contacts = {
+    findById: (id: string) => findById(db.contacts, id),
+    list: () => list(db.contacts),
+};
+
+export const channels = {
+    findById: (id: string) => findById(db.channels, id),
+    list: () => list(db.channels),
+};
+
+export const leads = {
+    findById: (id: string) => findById(db.leads, id),
+    list: () => list(db.leads),
+    createOrUpdate: (item: Lead) => createOrUpdate(db.leads, item),
+};
+
+export const conversations = {
+    findById: (id: string) => findById(db.conversations, id),
+    list: () => list(db.conversations),
+};
+
+export const messages = {
+    findByConversationId: (conversationId: string) => db.messages.filter(m => m.conversationId === conversationId),
+    list: () => list(db.messages),
+    create: (item: Message) => createOrUpdate(db.messages, item),
+};
+
+export const quotes = {
+    findById: (id: string) => findById(db.quotes, id),
+    list: () => list(db.quotes),
+    createOrUpdate: (item: Quote) => createOrUpdate(db.quotes, item),
+};
+
+export const reservations = {
+    findById: (id: string) => findById(db.reservations, id),
+    list: () => list(db.reservations),
+    createOrUpdate: (item: Reservation) => createOrUpdate(db.reservations, item),
+};
+
+export const calendarEvents = {
+    findById: (id: string) => findById(db.calendarEvents, id),
+    list: () => list(db.calendarEvents),
+};
+
+export const deals = {
+    findById: (id: string) => findById(db.deals, id),
+    list: () => list(db.deals),
+    createOrUpdate: (item: Deal) => createOrUpdate(db.deals, item),
+};
+
+export const aiSettings = {
+    get: () => db.aiSettings,
+    update: (settings: AiSettings) => {
+        db.aiSettings = { ...db.aiSettings, ...settings };
+        return db.aiSettings;
+    }
+};
+
+export const aiPrompts = {
+    list: () => list(db.aiPrompts),
+    findPublished: () => db.aiPrompts.find(p => p.status === 'published'),
+    findDraft: () => db.aiPrompts.find(p => p.status === 'draft'),
+    update: (prompt: AiPrompt) => createOrUpdate(db.aiPrompts, prompt),
+};
+
+export const knowledgeBase = {
+    list: () => list(db.knowledgeBaseArticles),
+};

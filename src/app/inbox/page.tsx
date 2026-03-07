@@ -1,15 +1,30 @@
-import { conversations, customers } from "@/lib/data"
-import type { Conversation, Customer } from "@/lib/types"
+'use client';
+
+import { useEffect, useState } from 'react';
+import type { Conversation as InboxItem } from "@/lib/types"
 import { DataTable } from "./data-table"
 import { columns } from "./columns"
-
-type InboxItem = Conversation & { customer: Customer | undefined }
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function InboxPage() {
-  const data: InboxItem[] = conversations.map(conv => ({
-    ...conv,
-    customer: customers.find(c => c.id === conv.customerId)
-  }))
+  const [data, setData] = useState<InboxItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchConversations = async () => {
+        try {
+            const res = await fetch('/api/conversations');
+            const conversations = await res.json();
+            setData(conversations);
+        } catch (error) {
+            console.error("Failed to fetch conversations:", error);
+            // Handle error state in UI
+        } finally {
+            setLoading(false);
+        }
+    }
+    fetchConversations();
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -19,7 +34,23 @@ export default function InboxPage() {
           Gerencie todas as suas conversas em um único lugar.
         </p>
       </div>
-      <DataTable columns={columns} data={data} />
+      {loading ? (
+        <div className="space-y-4">
+            <div className="flex items-center gap-2">
+                <Skeleton className="h-10 w-sm" />
+                <Skeleton className="h-10 w-[180px]" />
+                <Skeleton className="h-10 w-[180px]" />
+            </div>
+            <div className="border rounded-md">
+                <Skeleton className="h-12 w-full" />
+                {Array.from({ length: 10 }).map((_, i) => (
+                    <Skeleton key={i} className="h-16 w-full border-t" />
+                ))}
+            </div>
+        </div>
+      ) : (
+        <DataTable columns={columns} data={data} />
+      )}
     </div>
   )
 }

@@ -29,7 +29,6 @@ import {
     SelectTrigger,
     SelectValue,
   } from "@/components/ui/select"
-import { Filter } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -44,6 +43,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   )
+  const [rowSelection, setRowSelection] = React.useState({})
 
   const table = useReactTable({
     data,
@@ -54,9 +54,11 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
     state: {
       sorting,
       columnFilters,
+      rowSelection,
     },
   })
 
@@ -65,22 +67,22 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center py-4 gap-2">
             <Input
             placeholder="Filtrar por nome do cliente..."
-            value={(table.getColumn("customer")?.getFilterValue() as string) ?? ""}
+            value={(table.getColumn("contact")?.getFilterValue() as string) ?? ""}
             onChange={(event) =>
-                table.getColumn("customer")?.setFilterValue(event.target.value)
+                table.getColumn("contact")?.setFilterValue(event.target.value)
             }
             className="max-w-sm"
             />
-            <Select onValueChange={(value) => table.getColumn("channel")?.setFilterValue(value === "all" ? "" : value)}>
+            <Select onValueChange={(value) => table.getColumn("channelId")?.setFilterValue(value === "all" ? "" : `channel-${value}`)}>
                 <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Canal" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">Todos Canais</SelectItem>
-                    <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                    <SelectItem value="Instagram">Instagram</SelectItem>
-                    <SelectItem value="Facebook">Facebook</SelectItem>
-                    <SelectItem value="Website">Website</SelectItem>
+                    <SelectItem value="wa">WhatsApp</SelectItem>
+                    <SelectItem value="ig">Instagram</SelectItem>
+                    <SelectItem value="fb">Facebook</SelectItem>
+                    <SelectItem value="web">Website</SelectItem>
                 </SelectContent>
             </Select>
             <Select onValueChange={(value) => table.getColumn("status")?.setFilterValue(value === "all" ? "" : value)}>
@@ -126,7 +128,6 @@ export function DataTable<TData, TValue>({
                 <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="cursor-pointer"
                 >
                     {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
