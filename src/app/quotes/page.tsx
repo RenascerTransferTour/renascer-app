@@ -30,11 +30,11 @@ import {
         );
     }
 
-    const statusText = quote.status.replace('-', ' ');
     if (quote.status === 'aguardando aprovação') {
         return <Badge className={cn(getStatusBadgeClasses(quote.status), 'capitalize')}>Aguardando aprovação da Cláudia</Badge>;
     }
     
+    const statusText = quote.status.replace('-', ' ');
     return <Badge className={cn(getStatusBadgeClasses(quote.status), 'capitalize')}>{statusText}</Badge>;
 };
 

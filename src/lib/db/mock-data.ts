@@ -9,7 +9,7 @@
 import { subDays, addDays, setHours, setMinutes, subMinutes } from 'date-fns';
 import type { 
     Operator, Contact, Channel, Lead, Conversation, Message, Quote, Reservation, CalendarEvent, Deal, 
-    AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, KnowledgeBaseArticle, AuditLog
+    AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, AuditLog
 } from './data-model';
 
 const now = new Date();
@@ -191,7 +191,7 @@ export const originalQuotes: Quote[] = [
   { id: 'quote-4', leadId: 'lead-4', contactId: 'contact-4', conversationId: 'conv-6', status: 'não confirmado', summary: 'Transfer Aeroporto Congonhas (aguardando voo)', priceRange: [180, 220], createdAt: subDays(now, 4).toISOString(), updatedAt: subDays(now, 4).toISOString(), approvedByAi: false, ownerId: 'op-1' },
   { id: 'quote-5', leadId: 'lead-5', contactId: 'contact-2', conversationId: 'conv-5', status: 'cancelado', summary: 'Viagem para Angra dos Reis (cancelado pelo cliente)', priceRange: [2500, 3000], createdAt: subDays(now, 6).toISOString(), updatedAt: subDays(now, 3).toISOString(), approvedByAi: false, ownerId: 'op-1' },
   { id: 'quote-6', leadId: 'lead-6', contactId: 'contact-1', conversationId: 'conv-1', status: 'perdido', summary: 'Aluguel de van para evento (cliente optou por outro)', priceRange: [900, 1100], createdAt: subDays(now, 8).toISOString(), updatedAt: subDays(now, 7).toISOString(), approvedByAi: false, ownerId: 'op-1' },
-  { id: 'quote-7', leadId: 'lead-7', contactId: 'contact-1', conversationId: 'conv-1', status: 'aguardando aprovação', summary: 'Transfer GRU (aguardando cliente aprovar)', priceRange: [280, 350], createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), approvedByAi: true, ownerId: 'IA' },
+  { id: 'quote-7', leadId: 'lead-7', contactId: 'contact-1', conversationId: 'conv-1', status: 'aguardando aprovação', summary: 'Transfer GRU (Aguardando cliente aprovar)', priceRange: [280, 350], createdAt: subDays(now, 1).toISOString(), updatedAt: subDays(now, 1).toISOString(), approvedByAi: true, ownerId: 'IA' },
 ];
 
 export const originalReservations: Reservation[] = [
