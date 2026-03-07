@@ -92,6 +92,7 @@ export function DataTable<TData, TValue>({
                     <SelectItem value="open">Aberto</SelectItem>
                     <SelectItem value="pending">Pendente</SelectItem>
                     <SelectItem value="aguardando humano">Aguardando Humano</SelectItem>
+                    <SelectItem value="IA assistida">IA Assistida</SelectItem>
                     <SelectItem value="unconfirmed">Não Confirmado</SelectItem>
                     <SelectItem value="canceled">Cancelado</SelectItem>
                     <SelectItem value="closed">Fechado</SelectItem>

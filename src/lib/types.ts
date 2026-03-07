@@ -30,7 +30,7 @@ export type Conversation = {
   id: string;
   customerId: string;
   channel: 'WhatsApp' | 'Instagram' | 'Facebook' | 'Website';
-  status: 'open' | 'closed' | 'pending' | 'unconfirmed' | 'canceled' | 'aguardando humano';
+  status: 'open' | 'closed' | 'pending' | 'unconfirmed' | 'canceled' | 'aguardando humano' | 'IA bloqueada' | 'IA assistida' | 'IA autorizada' | 'concluído pela IA' | 'concluído por humano';
   priority: 'low' | 'medium' | 'high';
   isAiActive: boolean;
   lastMessage: string;
@@ -56,7 +56,7 @@ export type Booking = {
   quoteId: string;
   service: 'Pickup' | 'Transfer' | 'Tour';
   date: string;
-  status: 'pendente' | 'não confirmado' | 'confirmada' | 'reagendada' | 'concluída' | 'cancelada';
+  status: 'pendente' | 'não confirmado' | 'confirmada' | 'reagendada' | 'concluída' | 'cancelada' | 'concluído pela IA' | 'concluído por humano';
   details: string;
   createdAt: string;
 };

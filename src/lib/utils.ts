@@ -14,6 +14,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'closed-won':
     case 'concluída':
     case 'ativo':
+    case 'ia autorizada':
       return 'border-transparent bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300';
     // Yellow / Amber
     case 'não confirmado':
@@ -27,12 +28,14 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'cancelado':
     case 'perdido':
     case 'closed-lost':
+    case 'ia bloqueada':
       return 'border-transparent bg-destructive/10 text-destructive dark:bg-destructive/20';
     // Blue / Info
     case 'em andamento':
     case 'open':
     case 'qualified':
     case 'new-lead':
+    case 'ia assistida':
       return 'border-transparent bg-blue-100 text-blue-800 dark:bg-blue-800/30 dark:text-blue-300';
     // Orange / Warning
     case 'aguardando humano':
@@ -42,6 +45,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     // Purple / Special
     case 'enviado':
     case 'quote-sent':
+    case 'concluído pela ia':
       return 'border-transparent bg-purple-100 text-purple-800 dark:bg-purple-800/30 dark:text-purple-300';
     // Cyan / Rescheduled
     case 'reagendada':
@@ -49,6 +53,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     // Gray / Neutral
     case 'closed':
     case 'rascunho':
+    case 'concluído por humano':
     default:
       return 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80';
   }

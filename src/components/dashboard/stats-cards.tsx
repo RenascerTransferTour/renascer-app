@@ -10,12 +10,13 @@ import {
   FileText,
   Bookmark,
   DollarSign,
-  Clock,
+  Bot,
   ThumbsUp,
   TrendingUp,
   Ban,
   FileQuestion,
   UserCheck,
+  Lock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { conversations, quotes, bookings } from '@/lib/data';
@@ -23,7 +24,9 @@ import { conversations, quotes, bookings } from '@/lib/data';
 export function StatsCards() {
   const awaitingHuman = conversations.filter(c => c.status === 'aguardando humano').length;
   const unconfirmedBookings = bookings.filter(b => b.status === 'não confirmado').length;
-  const canceledQuotes = quotes.filter(q => q.status === 'cancelado').length;
+  const canceledBookings = bookings.filter(q => q.status === 'cancelada').length;
+  const concludedByAI = bookings.filter(q => q.status === 'concluído pela IA').length;
+
 
   const stats = [
     {
@@ -35,7 +38,7 @@ export function StatsCards() {
     },
     {
       title: 'Atendimentos Ativos',
-      value: conversations.filter(c => c.status === 'open' || c.status === 'pending').length,
+      value: conversations.filter(c => ['open', 'pending', 'IA assistida'].includes(c.status)).length,
       icon: MessageCircle,
       change: '3 urgentes',
       changeColor: 'text-orange-500 font-semibold'
@@ -65,22 +68,21 @@ export function StatsCards() {
       title: 'Aguardando Claudia',
       value: awaitingHuman,
       icon: UserCheck,
-      change: 'Para criar orçamentos',
+      change: 'Para aprovações',
       changeColor: 'text-orange-500',
     },
     {
-      title: 'Reservas Não Confirmadas',
-      value: unconfirmedBookings,
-      icon: FileQuestion,
-      change: 'Aguardando cliente',
-      changeColor: 'text-yellow-600 dark:text-yellow-400',
+      title: 'Concluído pela IA',
+      value: concludedByAI,
+      icon: Bot,
+      change: 'Ações autônomas',
+      changeColor: 'text-purple-600',
     },
     {
-      title: 'Orçamentos Cancelados (Mês)',
-      value: canceledQuotes,
-      icon: Ban,
-      change: '-5%',
-      description: 'em relação ao mês passado',
+      title: 'Ações Bloqueadas',
+      value: '2',
+      icon: Lock,
+      change: 'Requerem autorização',
       changeColor: 'text-destructive',
     },
   ];

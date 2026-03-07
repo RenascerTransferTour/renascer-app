@@ -48,7 +48,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
   
 const statusLabels: Record<string, string> = {
     open: 'Aberto',
@@ -57,6 +57,11 @@ const statusLabels: Record<string, string> = {
     unconfirmed: 'Não Confirmado',
     canceled: 'Cancelado',
     'aguardando humano': 'Aguardando Humano',
+    'IA assistida': 'IA Assistida',
+    'IA bloqueada': 'IA Bloqueada',
+    'IA autorizada': 'IA Autorizada',
+    'concluído pela IA': 'Concluído pela IA',
+    'concluído por humano': 'Concluído por Humano',
 }
 
 export default function ConversationPage() {
@@ -79,6 +84,9 @@ export default function ConversationPage() {
   if (!conversation || !customer) {
     return <div>Conversa não encontrada.</div>;
   }
+  
+  // Mock permissions based on AI settings (IA Assistida mode by default)
+  const aiPermissions = { canCreateQuote: false, canCreateBooking: false }; 
 
   const handleSendMessage = () => {
     if (newMessage.trim() === '') return;
@@ -116,9 +124,9 @@ export default function ConversationPage() {
   
   const urgencyClasses = getStatusBadgeClasses(customer.urgency === 'high' ? 'cancelado' : (customer.urgency === 'medium' ? 'não confirmado' : 'concluída'));
   const interestClasses = getStatusBadgeClasses(customer.interestLevel === 'high' ? 'confirmada' : (customer.interestLevel === 'medium' ? 'pendente' : 'rascunho'));
-  const aiPermissions = { canCreateQuote: false, canCreateBooking: false }; // Mock permissions
 
   return (
+    <TooltipProvider>
     <div className="grid h-[calc(100vh-8rem)] grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
       <div className="md:col-span-2 lg:col-span-3 flex flex-col h-full">
         <Card className='flex flex-col h-full'>
@@ -301,7 +309,7 @@ export default function ConversationPage() {
                             {!aiPermissions.canCreateQuote && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
                         </Button>
                     </TooltipTrigger>
-                    {!aiPermissions.canCreateQuote && <TooltipContent>Requer aprovação de {conversation.humanAgent || 'um humano'}</TooltipContent>}
+                    {!aiPermissions.canCreateQuote && <TooltipContent>A IA não tem permissão para criar orçamentos. Requer aprovação de {conversation.humanAgent || 'um humano'}.</TooltipContent>}
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger className='w-full'>
@@ -310,7 +318,7 @@ export default function ConversationPage() {
                             {!aiPermissions.canCreateBooking && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
                         </Button>
                     </TooltipTrigger>
-                    {!aiPermissions.canCreateBooking && <TooltipContent>Requer aprovação de {conversation.humanAgent || 'um humano'}</TooltipContent>}
+                    {!aiPermissions.canCreateBooking && <TooltipContent>A IA não tem permissão para criar reservas. Requer aprovação de {conversation.humanAgent || 'um humano'}.</TooltipContent>}
                 </Tooltip>
             </div>
           </CardContent>
@@ -321,5 +329,6 @@ export default function ConversationPage() {
         </Card>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

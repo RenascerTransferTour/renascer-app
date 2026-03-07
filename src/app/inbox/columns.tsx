@@ -35,6 +35,11 @@ const statusLabels: Record<string, string> = {
     unconfirmed: 'Não Confirmado',
     canceled: 'Cancelado',
     'aguardando humano': 'Aguardando Humano',
+    'IA assistida': 'IA Assistida',
+    'IA bloqueada': 'IA Bloqueada',
+    'IA autorizada': 'IA Autorizada',
+    'concluído pela IA': 'Concluído pela IA',
+    'concluído por humano': 'Concluído por Humano',
 }
 
 
@@ -124,7 +129,7 @@ export const columns: ColumnDef<InboxItem>[] = [
       const isAiActive: boolean = row.original.isAiActive;
       const agent = row.original.humanAgent;
       const attendant = isAiActive ? 'IA' : (agent || 'Humano');
-      const badgeClass = isAiActive ? getStatusBadgeClasses('open') : getStatusBadgeClasses('humano');
+      const badgeClass = isAiActive ? getStatusBadgeClasses('IA assistida') : getStatusBadgeClasses('humano');
       
       return (
         <Badge className={`${badgeClass} gap-2`}>
