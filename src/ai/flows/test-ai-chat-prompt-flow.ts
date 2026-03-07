@@ -139,7 +139,13 @@ const testAiChatPromptFlow = ai.defineFlow(
       const reason =
         'Nenhum provedor de IA está configurado ou disponível. Verifique suas chaves de API no ambiente do servidor.';
       console.error(`[AI Test Flow] Error: ${reason}`);
-      throw new Error(reason);
+      return {
+        response: '',
+        wasBlocked: true,
+        blockReason: reason,
+        fallbackTriggered: false,
+        providerUsed: 'none',
+      };
     }
     
     console.log(`[AI Test Flow] Provider selected: ${providerToUse}. Fallback: ${fallbackTriggered}`);
@@ -149,19 +155,31 @@ const testAiChatPromptFlow = ai.defineFlow(
         ? modelRef('openai/gpt-4-turbo')
         : modelRef('googleai/gemini-2.5-flash');
 
-    const {output} = await prompt(input, {model: modelToUse});
+    try {
+        const {output} = await prompt(input, {model: modelToUse});
 
-    if (!output) {
-      throw new Error(
-        `Falha ao obter resposta da simulação do provedor ${providerToUse}.`
-      );
+        if (!output) {
+          throw new Error(
+            `A IA não retornou uma resposta estruturada.`
+          );
+        }
+        
+        return {
+            response: output.response,
+            providerUsed: providerToUse,
+            wasBlocked: false,
+            fallbackTriggered: fallbackTriggered,
+        };
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred during AI generation.';
+        console.error(`[AI Test Flow] Test failed for provider ${providerToUse}:`, errorMessage);
+        return {
+            response: '',
+            wasBlocked: true,
+            blockReason: `O teste de simulação falhou: ${errorMessage}`,
+            fallbackTriggered: fallbackTriggered,
+            providerUsed: providerToUse,
+        };
     }
-    
-    return {
-        response: output.response,
-        providerUsed: providerToUse,
-        wasBlocked: false,
-        fallbackTriggered: fallbackTriggered,
-    };
   }
 );

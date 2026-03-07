@@ -192,6 +192,21 @@ export default function ConversationPage() {
             body: JSON.stringify({ conversationHistory: convHistory })
         });
         
+        if (!response.ok) {
+            let errorDetails = "Ocorreu um erro no servidor.";
+            try {
+                const errorText = await response.text();
+                // Check if it's our structured JSON error
+                const errorJson = JSON.parse(errorText);
+                errorDetails = errorJson.details || errorJson.error || errorDetails;
+            } catch (e) {
+                // The response was not JSON, so it might be an HTML error page.
+                console.error("Received non-JSON error response from summary API");
+                errorDetails = "Resposta inesperada do servidor.";
+            }
+            throw new Error(errorDetails);
+        }
+
         const result = await response.json();
 
         if (result.success) {

@@ -65,18 +65,41 @@ export function AiSettingsForm() {
     
     const [testProvider, setTestProvider] = useState<'openai' | 'gemini' | 'automatic'>('automatic');
 
+    const handleFetchError = (error: any, context: string) => {
+        console.error(`Failed to fetch ${context}`, error);
+        toast({
+            variant: "destructive",
+            title: `Erro ao carregar ${context}`,
+            description: error instanceof Error ? error.message : "O servidor retornou uma resposta inesperada.",
+        });
+    }
+
      useEffect(() => {
         const fetchData = async () => {
             try {
                 setLoading(true);
+
+                const processResponse = async (res: Response, name: string) => {
+                    if (!res.ok) {
+                        throw new Error(`Falha ao buscar ${name}. Status: ${res.status}`);
+                    }
+                    const contentType = res.headers.get("content-type");
+                    if (!contentType || !contentType.includes("application/json")) {
+                        console.error(`Resposta não-JSON para ${name}`, await res.text());
+                        throw new TypeError(`Resposta inesperada do servidor para ${name}.`);
+                    }
+                    return res.json();
+                };
+
                 const [settingsRes, promptsRes, providersRes] = await Promise.all([
                     fetch('/api/settings/ai'),
                     fetch('/api/settings/prompts'),
                     fetch('/api/settings/ai/providers')
                 ]);
-                const settingsData = await settingsRes.json();
-                const promptsData = await promptsRes.json();
-                const providersData = await providersRes.json();
+                
+                const settingsData = await processResponse(settingsRes, 'configurações de IA');
+                const promptsData = await processResponse(promptsRes, 'prompts');
+                const providersData = await processResponse(providersRes, 'status do provedor');
                 
                 setSettings(settingsData);
                 setPrompts(promptsData);
@@ -88,8 +111,7 @@ export function AiSettingsForm() {
                 setPublishedPrompt(published || null);
 
             } catch (error) {
-                console.error("Failed to fetch settings", error);
-                toast({ variant: "destructive", title: "Erro", description: "Não foi possível carregar as configurações de IA." });
+                handleFetchError(error, "configurações");
             } finally {
                 setLoading(false);
                 setLoadingProviders(false);

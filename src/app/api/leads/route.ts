@@ -5,15 +5,25 @@ import { leadService } from '@/lib/db/services';
  * API route to list leads.
  */
 export async function GET() {
-  const leads = await leadService.listLeads();
-  return NextResponse.json(leads);
+  try {
+    const leads = await leadService.listLeads();
+    return NextResponse.json(leads);
+  } catch (error) {
+    console.error('API Error fetching leads:', error);
+    return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500 });
+  }
 }
 
 /**
  * API route to create or update a lead.
  */
 export async function POST(request: Request) {
+  try {
     const body = await request.json();
     const updatedLead = await leadService.createOrUpdateLead(body);
     return NextResponse.json(updatedLead);
+  } catch (error) {
+    console.error('API Error creating/updating lead:', error);
+    return NextResponse.json({ error: 'Failed to save lead' }, { status: 500 });
+  }
 }
