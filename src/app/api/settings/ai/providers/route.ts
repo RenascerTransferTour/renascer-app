@@ -35,7 +35,7 @@ export async function GET() {
         enabled: settings.activeProvider === 'openai' || (settings.isFallbackEnabled && settings.fallbackProvider === 'openai'),
         status: openaiConfigured ? 'Configurado' : 'Não Configurado',
         message: openaiConfigured 
-            ? 'Chave de API detectada no ambiente do servidor. Este provedor está pronto para uso.' 
+            ? 'Uma chave de API foi detectada no ambiente do servidor. O sistema pode tentar usar este provedor.' 
             : 'A chave OPENAI_API_KEY não foi encontrada no ambiente do servidor. A configuração deve ser feita no backend.'
       },
       {
@@ -46,7 +46,7 @@ export async function GET() {
         enabled: settings.activeProvider === 'gemini' || (settings.isFallbackEnabled && settings.fallbackProvider === 'gemini') || settings.activeProvider === 'automatic',
         status: geminiConfigured ? 'Configurado' : 'Não Configurado',
         message: geminiConfigured 
-            ? 'Chave de API detectada no ambiente do servidor. Este provedor está pronto para uso.'
+            ? 'Uma chave de API foi detectada no ambiente do servidor. O sistema pode tentar usar este provedor.'
             : 'A chave GEMINI_API_KEY não foi encontrada no ambiente do servidor. A configuração deve ser feita no backend.'
       }
     ];

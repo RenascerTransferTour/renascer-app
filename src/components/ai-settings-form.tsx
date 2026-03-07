@@ -38,6 +38,7 @@ import { Skeleton } from "./ui/skeleton"
 import type { AiSettings, AiPrompt, AiFlowPermission } from "@/lib/db/data-model"
 import type { ProviderStatus } from "@/app/api/settings/ai/providers/route"
 import { cn } from "@/lib/utils"
+import { getStatusBadgeClasses } from "@/lib/utils"
 
 const flowPermissionsData: {id: AiFlowPermission['flowName']; label: string; description: string;}[] = [
     { id: 'welcome', label: 'Boas-Vindas', description: 'Permite que a IA envie a primeira mensagem de boas-vindas.' },
@@ -334,7 +335,7 @@ export function AiSettingsForm() {
         <Card>
             <CardHeader>
                 <CardTitle>Provedores de IA e Credenciais</CardTitle>
-                <CardDescription>Gerencie quais modelos de IA são usados e suas credenciais (placeholders).</CardDescription>
+                <CardDescription>Gerencie quais modelos de IA são usados e suas credenciais.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                  <div className="flex flex-col sm:flex-row sm:items-end gap-4">
@@ -370,7 +371,7 @@ export function AiSettingsForm() {
                                 </div>
                                 <Tooltip>
                                     <TooltipTrigger>
-                                        <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn('gap-1.5', p.configured ? 'bg-green-100 text-green-800 dark:bg-green-900/50' : 'bg-muted text-muted-foreground')}>
+                                        <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn('gap-1.5', p.configured ? getStatusBadgeClasses('connected') : getStatusBadgeClasses('not_configured'))}>
                                             {p.configured ? <CheckCircle className="size-3" /> : <HelpCircle className="size-3" />}
                                             {p.status}
                                         </Badge>
@@ -382,13 +383,13 @@ export function AiSettingsForm() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> API Key (Placeholder)</Label>
+                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> Chave de API (somente visual)</Label>
                                     <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
-                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo é uma representação. A chave real é configurada no servidor.</p>
+                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo é uma representação. A chave real é configurada no ambiente do servidor.</p>
                                 </div>
                                 <Alert variant="default" className="text-xs">
                                      <Server className="h-4 w-4" />
-                                     <AlertTitle className="text-xs font-semibold">Aviso de Configuração</AlertTitle>
+                                     <AlertTitle className="text-xs font-semibold">Configuração no Servidor</AlertTitle>
                                      <AlertDescription>{p.message}</AlertDescription>
                                 </Alert>
                             </CardContent>

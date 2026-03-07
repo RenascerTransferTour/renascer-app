@@ -16,6 +16,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'ativo':
     case 'ia autorizada':
     case 'connected':
+    case 'configurado':
       return 'border-transparent bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300';
     // Yellow / Amber
     case 'não confirmado':
@@ -23,6 +24,8 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'em revisão':
     case 'negotiation':
     case 'aguardando aprovação':
+    case 'not_configured':
+    case 'não configurado':
       return 'border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300';
     // Red / Destructive
     case 'cancelada':
@@ -33,6 +36,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'failing':
     case 'disconnected':
     case 'expired':
+    case 'error':
       return 'border-transparent bg-destructive/10 text-destructive dark:bg-destructive/20';
     // Blue / Info
     case 'em andamento':

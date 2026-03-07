@@ -23,7 +23,7 @@ import { QrCode, CheckCircle2, AlertTriangle, Clock, XCircle, Share2, Server, Ke
 import type { Channel } from "@/lib/db/data-model"
 import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
-import { format, formatDistanceToNow } from "date-fns"
+import { format, formatDistanceToNow, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { getStatusBadgeClasses } from "@/lib/utils"
@@ -38,7 +38,7 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4v-8.5z" /></svg>
 )
 
-const statusConfig: Record<Channel['status'], { icon: React.ElementType, text: string }> = {
+const statusConfig: Record<string, { icon: React.ElementType, text: string }> = {
     'connected': { icon: CheckCircle2, text: 'Conectado' },
     'disconnected': { icon: XCircle, text: 'Desconectado' },
     'pending': { icon: Clock, text: 'Pendente' },
@@ -218,7 +218,7 @@ export default function ChannelsPage() {
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-2">
                                             <span>Status:</span>
-                                            <StatusBadge status="awaiting_qr" />
+                                            {waChannel && <StatusBadge status={waChannel.status} />}
                                         </div>
                                         <p className="text-sm text-muted-foreground">Aponte a câmera do seu WhatsApp em <span className="font-semibold">Aparelhos Conectados &gt; Conectar um Aparelho</span> para escanear o código.</p>
                                         <div className="flex gap-2">
@@ -244,12 +244,12 @@ export default function ChannelsPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                             {igChannel?.lastError && (
+                             {igChannel?.status === 'failing' && igChannel?.lastError && (
                                 <Alert variant="destructive">
                                     <AlertTriangle className="h-4 w-4" />
                                     <AlertTitle>Último Erro</AlertTitle>
                                     <AlertDescription>
-                                        {igChannel.lastError} (verificado {igChannel.lastChecked ? formatDistanceToNow(new Date(igChannel.lastChecked), { addSuffix: true, locale: ptBR }) : 'agora'})
+                                        {igChannel.lastError} (verificado {igChannel.lastChecked ? formatDistanceToNow(parseISO(igChannel.lastChecked), { addSuffix: true, locale: ptBR }) : 'agora'})
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -277,15 +277,24 @@ export default function ChannelsPage() {
                                     <CardTitle>Conexão Facebook</CardTitle>
                                     <CardDescription>Gerencie a integração com o Facebook Messenger.</CardDescription>
                                 </div>
-                                {fbChannel && <StatusBadge status={fbChannel.status}/>}
+                                {fbChannel && 
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Badge className={cn(getStatusBadgeClasses('mock'), "gap-1.5 capitalize")}><Info className="h-3 w-3" />Modo Simulado</Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Este canal opera com dados locais e não está conectado a uma API real.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                }
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
                              <Alert>
-                                <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                <AlertTitle>Conexão Ativa (Modo Simulado)</AlertTitle>
+                                <Info className="h-4 w-4" />
+                                <AlertTitle>Conexão Simulada</AlertTitle>
                                 <AlertDescription>
-                                    O canal está respondendo em modo de simulação. Última verificação bem-sucedida {fbChannel?.lastChecked ? formatDistanceToNow(new Date(fbChannel.lastChecked), { addSuffix: true, locale: ptBR }) : 'recentemente'}.
+                                    Este canal está respondendo em modo de simulação. Última verificação bem-sucedida {fbChannel?.lastChecked ? formatDistanceToNow(parseISO(fbChannel.lastChecked), { addSuffix: true, locale: ptBR }) : 'recentemente'}.
                                 </AlertDescription>
                             </Alert>
                             <p className="text-sm text-muted-foreground">Conecte sua página do Facebook para centralizar o atendimento.</p>
@@ -323,7 +332,7 @@ export default function ChannelsPage() {
                                     <span className="font-semibold capitalize">{channel.name}</span>
                                      <Tooltip>
                                         <TooltipTrigger>
-                                            <Badge variant="outline">Modo Simulado</Badge>
+                                            <Badge variant="outline" className='gap-1.5'><Info className="h-3 w-3" />Modo Simulado</Badge>
                                         </TooltipTrigger>
                                         <TooltipContent>
                                             <p>Este canal opera com dados locais e não está conectado a uma API real.</p>
