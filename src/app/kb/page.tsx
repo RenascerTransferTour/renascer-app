@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Input } from "@/components/ui/input"
-import { knowledgeBaseArticles } from "@/lib/data"
+import { knowledgeBaseArticles } from "@/lib/db/mock-data"
 import { Search } from "lucide-react"
 
 const categories = Array.from(new Set(knowledgeBaseArticles.map(a => a.category)));
