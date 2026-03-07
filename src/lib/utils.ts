@@ -15,6 +15,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'concluída':
     case 'ativo':
     case 'ia autorizada':
+    case 'connected':
       return 'border-transparent bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300';
     // Yellow / Amber
     case 'não confirmado':
@@ -29,6 +30,9 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'perdido':
     case 'closed-lost':
     case 'ia bloqueada':
+    case 'failing':
+    case 'disconnected':
+    case 'expired':
       return 'border-transparent bg-destructive/10 text-destructive dark:bg-destructive/20';
     // Blue / Info
     case 'em andamento':
@@ -41,6 +45,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'aguardando humano':
     case 'humano':
     case 'aguardando fechamento':
+    case 'awaiting_qr':
       return 'border-transparent bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-300';
     // Purple / Special
     case 'enviado':
@@ -54,6 +59,7 @@ export const getStatusBadgeClasses = (status?: string) => {
     case 'closed':
     case 'rascunho':
     case 'concluído por humano':
+    case 'mock':
     default:
       return 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80';
   }

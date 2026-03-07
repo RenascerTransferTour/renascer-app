@@ -159,16 +159,16 @@ export function AiSettingsForm() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(settings),
-            }).then(res => {
-                if (!res.ok) return Promise.reject({ name: 'Configurações Gerais' });
+            }).then(async res => {
+                if (!res.ok) return Promise.reject({ name: 'Configurações Gerais', error: await res.json() });
                 return res.json();
             }),
             fetch('/api/settings/ai/permissions', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(permissions),
-            }).then(res => {
-                if (!res.ok) return Promise.reject({ name: 'Permissões de Fluxo' });
+            }).then(async res => {
+                if (!res.ok) return Promise.reject({ name: 'Permissões de Fluxo', error: await res.json() });
                 return res.json();
             }),
         ]);
@@ -200,6 +200,7 @@ export function AiSettingsForm() {
         }
     
         setSaving(false);
+        await fetchData(); // Refetch data to show updated state
     };
 
     const handlePublishPrompt = async () => {
@@ -207,11 +208,15 @@ export function AiSettingsForm() {
         setIsPublishing(true);
         try {
             // First, save the current draft content.
-            await fetch('/api/settings/prompts', {
+            const saveRes = await fetch('/api/settings/prompts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(draftPrompt),
             });
+             if (!saveRes.ok) {
+                const errorData = await saveRes.json();
+                throw new Error(errorData.error || 'Falha ao salvar o rascunho do prompt.');
+            }
     
             // Then, trigger the publish action.
             const publishRes = await fetch('/api/settings/prompts/publish', {
@@ -369,12 +374,12 @@ export function AiSettingsForm() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 <div className="space-y-1">
-                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> API Key</Label>
+                                    <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> API Key (Placeholder)</Label>
                                     <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
                                 </div>
                                 <Alert variant="default" className="text-xs">
                                      <Server className="h-4 w-4" />
-                                     <AlertTitle className="text-xs font-semibold">Aviso de Segurança</AlertTitle>
+                                     <AlertTitle className="text-xs font-semibold">Aviso de Configuração</AlertTitle>
                                      <AlertDescription>{p.message}</AlertDescription>
                                 </Alert>
                             </CardContent>

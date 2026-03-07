@@ -25,6 +25,8 @@ import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
 import { format, formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { cn } from "@/lib/utils"
+import { getStatusBadgeClasses } from "@/lib/utils"
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M16.75 13.96c.25.13.43.2.5.28.08.08.14.18.18.3.04.1.06.2.04.3s-.04.2-.1.32c-.04.1-.1.18-.18.25a.87.87 0 01-.43.18c-.2.03-.43.02-.7-.02-.25-.04-.53-.1-.82-.18-.3-.08-.58-.18-.88-.32a9.44 9.44 0 01-1.4-.82 8.37 8.37 0 01-1.14-1.1c-.3-.4-.58-.8-.8-1.24-.24-.46-.4-1-.48-1.53a3.2 3.2 0 01-.04-.48c0-.18.02-.35.08-.5.05-.16.14-.3.26-.42.12-.12.25-.2.4-.26.15-.05.3-.07.46-.07.13 0 .26.02.38.05.12.03.24.08.34.15.1.07.2.16.28.28.08.1.13.23.14.35.02.12.02.26 0 .4-.02.16-.06.3-.12.44s-.13.25-.22.34c-.1.1-.2.18-.3.25-.1.08-.18.14-.24.2-.06.05-.1.1-.14.13-.03.03-.04.04-.02.07.02.03.1.1.2.18.1.07.2.14.32.23.1.1.2.17.3.25.3.23.6.43.9.6.34.18.66.3.96.36.1.02.2.04.3.05.1 0 .2.02.3.02.13 0 .25-.02.38-.05.12-.03.24-.08.34-.15.1-.07.18-.16.24-.25.06-.1.1-.2.12-.32.02-.1.02-.2 0-.32a.8.8 0 00-.06-.32.74.74 0 00-.16-.3c-.06-.08-.14-.15-.22-.2-.08-.05-.17-.1-.26-.12-.1-.02-.2-.02-.3-.02s-.2.02-.3.04-.18.06-.25.1c-.07.04-.13.1-.18.15-.05.06-.1.1-.13.16-.03.05-.06.1-.08.15-.02.05-.03.1-.02.13.01.03.02.06.04.08a.3.3 0 00.08.08.3.3 0 00.1.04.3.3 0 00.12 0 .3.3 0 00.1-.04.34.34 0 00.08-.08.3.3 0 00.04-.1.2.2 0 000-.12zM12 2a10 10 0 00-10 10 10 10 0 0010 10 10 10 0 0010-10A10 10 0 0012 2zm0 18a8 8 0 01-8-8 8 8 0 018-8 8 8 0 018 8 8 8 0 01-8 8z" /></svg>
@@ -36,19 +38,20 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4v-8.5z" /></svg>
 )
 
+const statusConfig: Record<Channel['status'], { icon: React.ElementType, text: string }> = {
+    'connected': { icon: CheckCircle2, text: 'Conectado' },
+    'disconnected': { icon: XCircle, text: 'Desconectado' },
+    'pending': { icon: Clock, text: 'Pendente' },
+    'awaiting_qr': { icon: Clock, text: 'Aguardando Leitura' },
+    'failing': { icon: AlertTriangle, text: 'Falhando' },
+    'expired': { icon: AlertTriangle, text: 'Expirado' }
+};
+
 const StatusBadge = ({ status }: { status: Channel['status'] }) => {
-    const statusConfig = {
-      'connected': { icon: CheckCircle2, text: 'Conectado', className: 'border-transparent bg-green-100 text-green-800 dark:bg-green-800/30 dark:text-green-300' },
-      'disconnected': { icon: XCircle, text: 'Desconectado', className: 'border-transparent bg-destructive/10 text-destructive dark:bg-destructive/20' },
-      'pending': { icon: Clock, text: 'Pendente', className: 'border-transparent bg-yellow-100 text-yellow-800 dark:bg-yellow-800/30 dark:text-yellow-300' },
-      'awaiting_qr': { icon: Clock, text: 'Aguardando Leitura', className: 'border-transparent bg-orange-100 text-orange-800 dark:bg-orange-800/30 dark:text-orange-300' },
-      'failing': { icon: AlertTriangle, text: 'Falhando', className: 'border-transparent bg-red-100 text-red-800 dark:bg-red-800/30 dark:text-red-300' },
-      'expired': { icon: AlertTriangle, text: 'Expirado', className: 'border-transparent bg-destructive/10 text-destructive dark:bg-destructive/20' }
-    };
     const config = statusConfig[status] || statusConfig.disconnected;
-    const { icon: Icon, className, text } = config;
+    const { icon: Icon, text } = config;
     return (
-      <Badge className={`${className} gap-1.5 capitalize`}><Icon className="h-3 w-3" />{text}</Badge>
+      <Badge className={cn(getStatusBadgeClasses(status), "gap-1.5 capitalize")}><Icon className="h-3 w-3" />{text}</Badge>
     );
 };
 
@@ -246,7 +249,7 @@ export default function ChannelsPage() {
                                     <AlertTriangle className="h-4 w-4" />
                                     <AlertTitle>Último Erro</AlertTitle>
                                     <AlertDescription>
-                                        {igChannel.lastError} (verificado {formatDistanceToNow(new Date(igChannel.lastChecked!), { addSuffix: true, locale: ptBR })})
+                                        {igChannel.lastError} (verificado {igChannel.lastChecked ? formatDistanceToNow(new Date(igChannel.lastChecked), { addSuffix: true, locale: ptBR }) : 'agora'})
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -280,9 +283,9 @@ export default function ChannelsPage() {
                         <CardContent className="space-y-4">
                              <Alert>
                                 <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                <AlertTitle>Conexão Ativa</AlertTitle>
+                                <AlertTitle>Conexão Ativa (Modo Simulado)</AlertTitle>
                                 <AlertDescription>
-                                    O canal está conectado e funcionando. Última verificação bem-sucedida {fbChannel?.lastChecked ? formatDistanceToNow(new Date(fbChannel.lastChecked), { addSuffix: true, locale: ptBR }) : 'recentemente'}.
+                                    O canal está respondendo em modo de simulação. Última verificação bem-sucedida {fbChannel?.lastChecked ? formatDistanceToNow(new Date(fbChannel.lastChecked), { addSuffix: true, locale: ptBR }) : 'recentemente'}.
                                 </AlertDescription>
                             </Alert>
                             <p className="text-sm text-muted-foreground">Conecte sua página do Facebook para centralizar o atendimento.</p>
@@ -318,6 +321,7 @@ export default function ChannelsPage() {
                                     {channel.type === 'facebook' && <FacebookIcon className="h-6 w-6 text-blue-600"/>}
                                     {channel.type === 'website' && <Webhook className="h-6 w-6 text-slate-500"/>}
                                     <span className="font-semibold capitalize">{channel.name}</span>
+                                     <Badge variant="outline">Modo Simulado</Badge>
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
                                      <div className="flex items-center space-x-2">
@@ -368,7 +372,7 @@ export default function ChannelsPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Histórico de Eventos</CardTitle>
-                    <CardDescription>Registro das últimas atividades e webhooks recebidos dos canais.</CardDescription>
+                    <CardDescription>Registro das últimas atividades e webhooks recebidos dos canais (simulado).</CardDescription>
                 </CardHeader>
                 <CardContent>
                      <div className="border rounded-lg">
@@ -394,7 +398,7 @@ export default function ChannelsPage() {
                                     <TableCell>{log.event}</TableCell>
                                     <TableCell>{log.date}</TableCell>
                                     <TableCell>
-                                        <Badge variant={log.status === 'Sucesso' ? 'default': 'destructive'} className={log.status === 'Sucesso' ? 'bg-green-100 text-green-800' : ''}>
+                                        <Badge variant={log.status === 'Sucesso' ? 'default': 'destructive'} className={cn(getStatusBadgeClasses(log.status === 'Sucesso' ? 'connected' : 'failing'))}>
                                             {log.status}
                                         </Badge>
                                     </TableCell>

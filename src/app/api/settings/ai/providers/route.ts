@@ -36,7 +36,7 @@ export async function GET() {
         status: openaiConfigured ? 'Configurado' : 'Não Configurado',
         message: openaiConfigured 
             ? 'Chave de API detectada no ambiente do servidor. A conexão real será testada durante o uso.' 
-            : 'A chave OPENAI_API_KEY não foi encontrada no ambiente do servidor.'
+            : 'A chave OPENAI_API_KEY não foi encontrada. O provedor usará dados simulados.'
       },
       {
         id: 'gemini',
@@ -47,7 +47,7 @@ export async function GET() {
         status: geminiConfigured ? 'Configurado' : 'Não Configurado',
         message: geminiConfigured 
             ? 'Chave de API detectada no ambiente do servidor. A conexão real será testada durante o uso.' 
-            : 'A chave GEMINI_API_KEY não foi encontrada no ambiente do servidor.'
+            : 'A chave GEMINI_API_KEY não foi encontrada. O provedor usará dados simulados.'
       }
     ];
 
