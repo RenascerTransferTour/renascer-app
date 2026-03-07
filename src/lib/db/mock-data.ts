@@ -17,7 +17,7 @@ const now = new Date();
 // --- Seed Data (immutable originals) ---
 
 export const originalOperators: Operator[] = [
-    { id: 'op-1', fullName: 'Claudia Vaz', email: 'claudia@renascer.ai', role: 'admin', active: true, avatar: 'https://picsum.photos/seed/99/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
+    { id: 'op-1', fullName: 'Cláudia Vaz', email: 'claudia@renascer.ai', role: 'admin', active: true, avatar: 'https://picsum.photos/seed/99/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'op-2', fullName: 'Carlos', email: 'carlos@renascer.ai', role: 'agent', active: true, avatar: 'https://picsum.photos/seed/98/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'IA', fullName: 'Assistente IA', email: 'ia@renascer.ai', role: 'agent', active: true, avatar: '', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
 ];
@@ -83,7 +83,7 @@ export const originalMessages: Message[] = [
     { id: 'msg-1-2', conversationId: 'conv-1', senderType: 'ai', authorName: "Assistente IA", content: 'Olá, Ana! Seja bem-vinda à Renascer. Para qual data e horário você precisa do transfer? E qual o local de partida?', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
     { id: 'msg-1-3', conversationId: 'conv-1', senderType: 'user', content: 'Seria para o dia 28, às 15h. Partindo da Av. Paulista.', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
     { id: 'msg-1-4', conversationId: 'conv-1', senderType: 'ai', authorName: "Assistente IA", content: 'Entendido, Ana. Coletei as informações. A Cláudia, nossa especialista em orçamentos, irá preparar sua proposta e entrará em contato em breve.', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 2).toISOString() },
-    { id: 'msg-1-5', conversationId: 'conv-1', senderType: 'agent', authorName: 'Claudia Vaz', content: 'Olá Ana, aqui é a Claudia. Recebi sua solicitação. Preparei seu orçamento para o transfer executivo. Ele já está disponível para sua aprovação.', contentType: 'text', deliveryStatus: 'sent', createdAt: subDays(now, 1).toISOString() },
+    { id: 'msg-1-5', conversationId: 'conv-1', senderType: 'agent', authorName: 'Cláudia Vaz', content: 'Olá Ana, aqui é a Cláudia. Recebi sua solicitação. Preparei seu orçamento para o transfer executivo. Ele já está disponível para sua aprovação.', contentType: 'text', deliveryStatus: 'sent', createdAt: subDays(now, 1).toISOString() },
     { id: 'msg-2-1', conversationId: 'conv-2', senderType: 'user', content: 'Oi, vcs fazem viagens para Campos do Jordão? Saindo do Rio.', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 5).toISOString() },
     { id: 'msg-2-2', conversationId: 'conv-2', senderType: 'ai', authorName: "Assistente IA", content: 'Oi, Bruno! Fazemos sim. Uma excelente escolha de destino! Para quantas pessoas e qual data você estaria planejando?', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 5).toISOString() },
     { id: 'msg-3-1', conversationId: 'conv-3', senderType: 'user', content: 'PRECISO URGENTE de um contato para transporte de diretoria para um evento. Me liguem!', contentType: 'text', deliveryStatus: 'read', createdAt: subDays(now, 1).toISOString() },
@@ -101,9 +101,9 @@ export const originalConversations: Conversation[] = [
     status: 'aguardando humano',
     priority: 'medium',
     isAiActive: false,
-    humanOwnerId: 'op-1', // Claudia
+    humanOwnerId: 'op-1', // Cláudia
     aiMode: 'assisted',
-    lastMessage: 'Olá Ana, aqui é a Claudia. Recebi sua solicitação. Preparei seu orçamento...',
+    lastMessage: 'Olá Ana, aqui é a Cláudia. Recebi sua solicitação. Preparei seu orçamento...',
     lastMessageAt: subDays(now, 1).toISOString(),
     startedAt: subDays(now, 2).toISOString(),
     createdAt: subDays(now, 2).toISOString(),
@@ -160,7 +160,7 @@ export const originalConversations: Conversation[] = [
     priority: 'low',
     isAiActive: false,
     aiMode: 'off',
-    humanOwnerId: 'op-1', // Claudia
+    humanOwnerId: 'op-1', // Cláudia
     lastMessage: 'Infelizmente precisei cancelar a viagem. Fica para a próxima.',
     lastMessageAt: subDays(now, 3).toISOString(),
     startedAt: subDays(now, 4).toISOString(),
@@ -175,7 +175,7 @@ export const originalConversations: Conversation[] = [
     priority: 'medium',
     isAiActive: false,
     aiMode: 'assisted',
-    humanOwnerId: 'op-1', // Claudia
+    humanOwnerId: 'op-1', // Cláudia
     lastMessage: 'Ainda estou aguardando a confirmação do meu voo para fechar o transfer.',
     lastMessageAt: subDays(now, 4).toISOString(),
     startedAt: subDays(now, 5).toISOString(),
@@ -238,7 +238,7 @@ export const originalAiSettings: AiSettings = {
     aiMode: 'assisted',
     requireHumanApproval: true,
     isFallbackEnabled: true,
-    fallbackHumanName: 'Claudia Vaz',
+    fallbackHumanName: 'Cláudia Vaz',
     activeProvider: 'automatic',
     fallbackProvider: 'openai',
     commercialActivationKey: 'unauthorized',
@@ -359,7 +359,7 @@ export let originalAuditLogs: AuditLog[] = [
         id: 'log-ana-4',
         timestamp: subDays(now, 1).toISOString(),
         contactId: 'contact-1',
-        actor: 'Claudia Vaz',
+        actor: 'Cláudia Vaz',
         actorType: 'human',
         channel: 'whatsapp',
         entityType: 'quote',
@@ -423,3 +423,39 @@ export const system = {
         return { success: true, message: "All local mock data has been reset to defaults." };
     }
 }
+
+const db = {
+    operators,
+    contacts,
+    channels,
+    leads,
+    messages,
+    conversations,
+    quotes,
+    reservations,
+    calendarEvents,
+    deals,
+    knowledgeBaseArticles,
+    aiSettings,
+    aiFlowPermissions,
+    aiProviderConfigs,
+    aiPrompts,
+    auditLogs,
+    originalOperators,
+    originalContacts,
+    originalChannels,
+    originalLeads,
+    originalMessages,
+    originalConversations,
+    originalQuotes,
+    originalReservations,
+    originalCalendarEvents,
+    originalDeals,
+    originalKnowledgeBaseArticles,
+    originalAiSettings,
+    originalAiFlowPermissions,
+    originalAiProviderConfigs,
+    originalAiPrompts,
+    originalAuditLogs,
+    system
+};

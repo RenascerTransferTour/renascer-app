@@ -100,7 +100,7 @@ const eventTypeLabels: Record<string, string> = {
     mensagem_recebida: 'Cliente enviou uma mensagem',
     sugestão_ia_gerada: 'IA analisou e gerou sugestão',
     orçamento_rascunho_criado: 'IA gerou rascunho de orçamento',
-    finalizado_manual: 'Ação finalizada manualmente'
+    finalizado_manual: 'Finalizado manualmente pela Cláudia'
 };
 
 
@@ -423,7 +423,7 @@ export default function ConversationPage() {
                     <div className="flex items-center gap-2">
                         <UserCircle className="h-4 w-4 text-muted-foreground" />
                         <span className='text-muted-foreground'>Responsável:</span>
-                        <span className='font-medium ml-auto'>{conversation.humanOwnerId === 'op-1' ? 'Claudia Vaz' : 'IA'}</span>
+                        <span className='font-medium ml-auto'>{conversation.humanOwnerId === 'op-1' ? 'Cláudia Vaz' : 'IA'}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-muted-foreground" />
