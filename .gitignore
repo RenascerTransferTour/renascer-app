@@ -1,45 +1,80 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependências
+node_modules/
+.bun/
+.pnpm-store/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Build / cache
+.next/
+out/
+dist/
+build/
+.cache/
+.tmp/
+temp/
+tmp/
+coverage/
 
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
 
-# vercel
-.vercel
+# Lockfiles e ruído de pacote
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+bun.lockb
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Ambiente / segredos locais
+.env
+.env.*
+!.env.example
 
-.genkit/*
-.env*
-
-# firebase
-firebase-debug.log
+# Firebase / emuladores / estado local
+.firebase/
 firestore-debug.log
+ui-debug.log
+
+# Arquivos binários e mídia pesada
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.svg
+*.ico
+*.mp4
+*.mov
+*.mp3
+*.wav
+*.pdf
+*.zip
+*.tar
+*.gz
+
+# Arquivos gerados / minificados
+*.min.js
+*.min.css
+*.map
+
+# IDE / sistema
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Test artifacts
+playwright-report/
+test-results/
+
+# Git metadata
+.git/
+
+# Nix / cache de ambiente
+.nix/
+.direnv/
+
+# Arquivos de saída diversos
+*.tsbuildinfo
