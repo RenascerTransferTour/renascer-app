@@ -245,7 +245,7 @@ export const bookings: Booking[] = [
     customerId: 'customer-2',
     quoteId: 'quote-2',
     service: 'Tour',
-    date: addDays(now, 40).toISOString(),
+    date: subDays(now, 2).toISOString(),
     status: 'concluída',
     details: 'Viagem para Campos do Jordão, motorista bilíngue solicitado.',
     createdAt: subDays(now, 3).toISOString(),
@@ -270,13 +270,24 @@ export const bookings: Booking[] = [
     details: 'Transfer do Aeroporto de Congonhas, aguardando confirmação do voo do cliente.',
     createdAt: subDays(now, 4).toISOString(),
   },
+  {
+    id: 'booking-6',
+    customerId: 'customer-1',
+    quoteId: 'quote-1',
+    service: 'Transfer',
+    date: addDays(now, 5).toISOString(),
+    status: 'reagendada',
+    details: 'Transfer para GRU. Cliente reagendou do dia 28 para o dia 30.',
+    createdAt: subDays(now, 1).toISOString(),
+  },
 ];
 
 export const calendarEvents: CalendarEvent[] = [
-  { id: 'ce-1', title: 'Pickup Evento WTC (Empresa S.A)', type: 'Pickup', start: setMinutes(setHours(addDays(now, 15), 9), 0), end: setMinutes(setHours(addDays(now, 15), 18), 0), team: 'Equipe A', status: 'Confirmed' },
-  { id: 'ce-2', title: 'Viagem Campos do Jordão (B. Costa)', type: 'Tour', start: setMinutes(setHours(addDays(now, 40), 10), 0), end: setMinutes(setHours(addDays(now, 42), 16), 0), team: 'Equipe B', status: 'Confirmed' },
-  { id: 'ce-3', title: 'Transfer Ana Silva (GRU)', type: 'Transfer', start: setMinutes(setHours(addDays(now, 25), 15), 0), end: setMinutes(setHours(addDays(now, 25), 16), 30), team: 'Equipe A', status: 'Pending' },
-  { id: 'ce-4', title: 'Manutenção Van 01', type: 'Booking', start: setMinutes(setHours(addDays(now, 2), 8), 0), end: setMinutes(setHours(addDays(now, 2), 12), 0), status: 'Confirmed' }
+  { id: 'ce-1', title: 'Pickup Evento WTC (Empresa S.A)', type: 'Pickup', start: setMinutes(setHours(addDays(now, 15), 9), 0), end: setMinutes(setHours(addDays(now, 15), 18), 0), team: 'Equipe A', status: 'confirmada' },
+  { id: 'ce-2', title: 'Viagem Campos do Jordão (B. Costa)', type: 'Tour', start: setMinutes(setHours(subDays(now, 2), 10), 0), end: setMinutes(setHours(addDays(subDays(now, 2), 2), 16), 0), team: 'Equipe B', status: 'concluída' },
+  { id: 'ce-3', title: 'Transfer Ana Silva (GRU)', type: 'Transfer', start: setMinutes(setHours(addDays(now, 25), 15), 0), end: setMinutes(setHours(addDays(now, 25), 16), 30), team: 'Equipe A', status: 'pendente' },
+  { id: 'ce-4', title: 'Manutenção Van 01', type: 'Booking', start: setMinutes(setHours(addDays(now, 2), 8), 0), end: setMinutes(setHours(addDays(now, 2), 12), 0), status: 'confirmada' },
+  { id: 'ce-5', title: 'Viagem Angra (Cancelado)', type: 'Tour', start: setMinutes(setHours(addDays(now, 50), 9), 0), end: setMinutes(setHours(addDays(now, 52), 18), 0), team: 'Equipe C', status: 'cancelada' }
 
 ];
 

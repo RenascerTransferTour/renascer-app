@@ -31,7 +31,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils';
+import { cn, getStatusBadgeClasses } from '@/lib/utils';
 import { useMemo, useState } from 'react';
 import type { Message } from '@/lib/types';
 import { generateConversationSummary } from '@/ai/flows/generate-conversation-summary-flow';
@@ -47,6 +47,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
   
+const statusLabels: Record<string, string> = {
+    open: 'Aberto',
+    closed: 'Fechado',
+    pending: 'Pendente',
+    unconfirmed: 'Não Confirmado',
+    canceled: 'Cancelado',
+}
 
 export default function ConversationPage() {
   const params = useParams();
@@ -102,6 +109,10 @@ export default function ConversationPage() {
         setIsGeneratingSummary(false);
     }
   };
+  
+  const urgencyClasses = getStatusBadgeClasses(customer.urgency === 'high' ? 'cancelado' : (customer.urgency === 'medium' ? 'não confirmado' : 'concluída'));
+  const interestClasses = getStatusBadgeClasses(customer.interestLevel === 'high' ? 'confirmada' : (customer.interestLevel === 'medium' ? 'pendente' : 'rascunho'));
+
 
   return (
     <div className="grid h-[calc(100vh-8rem)] grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -114,7 +125,12 @@ export default function ConversationPage() {
                         <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
-                        <h2 className="text-lg font-semibold">{customer.name}</h2>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-lg font-semibold">{customer.name}</h2>
+                            <Badge className={`${getStatusBadgeClasses(conversation.status)} capitalize`}>
+                                {statusLabels[conversation.status] || conversation.status}
+                            </Badge>
+                        </div>
                         <p className="text-sm text-muted-foreground">
                         via{' '}
                         <span className="font-medium text-primary">
@@ -243,21 +259,27 @@ export default function ConversationPage() {
                 </div>
             </div>
             <Separator/>
-            <div className='space-y-1'>
-                <div className="flex items-center gap-2">
-                    <Waypoints className="h-4 w-4 text-muted-foreground" />
-                    <span className='text-muted-foreground'>Canal de Origem:</span>
-                    <Badge variant="outline" className='ml-auto'>{customer.originChannel}</Badge>
+            <div className='space-y-2'>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Waypoints className="h-4 w-4 text-muted-foreground" />
+                        <span className='text-muted-foreground'>Canal de Origem:</span>
+                    </div>
+                    <Badge variant="outline" className='font-normal'>{customer.originChannel}</Badge>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Star className="h-4 w-4 text-muted-foreground" />
-                    <span className='text-muted-foreground'>Nível de Interesse:</span>
-                    <Badge variant={customer.interestLevel === 'high' ? 'default' : 'secondary'} className='ml-auto capitalize'>{customer.interestLevel}</Badge>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-muted-foreground" />
+                        <span className='text-muted-foreground'>Nível de Interesse:</span>
+                    </div>
+                    <Badge className={cn(interestClasses, 'capitalize')}>{customer.interestLevel}</Badge>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Zap className="h-4 w-4 text-muted-foreground" />
-                    <span className='text-muted-foreground'>Urgência:</span>
-                    <Badge variant={customer.urgency === 'high' ? 'destructive' : 'outline'} className='ml-auto capitalize'>{customer.urgency}</Badge>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <Zap className="h-4 w-4 text-muted-foreground" />
+                        <span className='text-muted-foreground'>Urgência:</span>
+                    </div>
+                    <Badge className={cn(urgencyClasses, 'capitalize')}>{customer.urgency}</Badge>
                 </div>
             </div>
             <Separator />

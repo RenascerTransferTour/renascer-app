@@ -67,7 +67,7 @@ export type CalendarEvent = {
   start: Date;
   end: Date;
   details?: string;
-  status?: string;
+  status: 'confirmada' | 'pendente' | 'cancelada' | 'concluída';
   team?: string;
 };
 
@@ -75,7 +75,7 @@ export type PipelineDeal = {
   id: string;
   customerId: string;
   title: string;
-  stage: 'new-lead' | 'qualified' | 'quote-sent' | 'negotiation' | 'closed-won' | 'closed-lost' | 'unconfirmed' | 'canceled';
+  stage: 'new-lead' | 'qualified' | 'quote-sent' | 'negotiation' | 'unconfirmed' | 'closed-won' | 'closed-lost' | 'canceled';
   value: number;
   createdAt: string;
 };

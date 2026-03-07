@@ -85,10 +85,10 @@ export function DataTable<TData, TValue>({
             </Select>
             <Select onValueChange={(value) => table.getColumn("status")?.setFilterValue(value === "all" ? "" : value)}>
                 <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Status" />
+                    <SelectValue placeholder="Situação" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">Todos Status</SelectItem>
+                    <SelectItem value="all">Todas Situações</SelectItem>
                     <SelectItem value="open">Aberto</SelectItem>
                     <SelectItem value="pending">Pendente</SelectItem>
                     <SelectItem value="unconfirmed">Não Confirmado</SelectItem>
@@ -124,6 +124,7 @@ export function DataTable<TData, TValue>({
                 <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className="cursor-pointer"
                 >
                     {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>

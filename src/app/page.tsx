@@ -1,6 +1,7 @@
 import { StatsCards } from '@/components/dashboard/stats-cards';
 import { SalesChart } from '@/components/dashboard/sales-chart';
 import { RecentActivities } from '@/components/dashboard/recent-activities';
+import { OperationalSummary } from '@/components/dashboard/operational-summary';
 
 export default function DashboardPage() {
   return (
@@ -12,6 +13,7 @@ export default function DashboardPage() {
         </p>
       </div>
       
+      <OperationalSummary />
       <StatsCards />
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">

@@ -12,25 +12,8 @@ import {
   import { format, parseISO } from 'date-fns';
   import { ptBR } from 'date-fns/locale';
   import { PlusCircle } from "lucide-react"
+  import { getStatusBadgeClasses } from "@/lib/utils"
 
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'aprovado':
-        return 'default';
-      case 'enviado':
-        return 'secondary';
-      case 'rascunho':
-      case 'em revisão':
-      case 'não confirmado':
-        return 'outline';
-      case 'perdido':
-      case 'cancelado':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
-  
   export default function QuotesPage() {
     return (
       <div className="space-y-8">
@@ -54,7 +37,7 @@ import {
                 <TableHead>Cliente</TableHead>
                 <TableHead>Resumo</TableHead>
                 <TableHead>Faixa de Preço</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Situação</TableHead>
                 <TableHead>Criado em</TableHead>
                 <TableHead>Última Atualização</TableHead>
                 </TableRow>
@@ -68,7 +51,7 @@ import {
                     <TableCell>{quote.summary}</TableCell>
                     <TableCell>{`R$ ${quote.priceRange[0]} - R$ ${quote.priceRange[1]}`}</TableCell>
                     <TableCell>
-                        <Badge variant={getStatusVariant(quote.status)} className="capitalize">{quote.status}</Badge>
+                        <Badge className={`${getStatusBadgeClasses(quote.status)} capitalize`}>{quote.status}</Badge>
                     </TableCell>
                     <TableCell>{format(parseISO(quote.createdAt), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                     <TableCell>{format(parseISO(quote.updatedAt), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</TableCell>

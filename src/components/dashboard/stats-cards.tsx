@@ -16,6 +16,7 @@ import {
   Ban,
   FileQuestion,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 const stats = [
   {
@@ -30,7 +31,7 @@ const stats = [
     value: '8',
     icon: MessageCircle,
     change: '3 urgentes',
-    changeColor: 'text-destructive'
+    changeColor: 'text-orange-500 font-semibold'
   },
   {
     title: 'Orçamentos (24h)',
@@ -66,26 +67,9 @@ const stats = [
     value: '3',
     icon: FileQuestion,
     change: 'Aguardando cliente',
+    changeColor: 'text-yellow-600 dark:text-yellow-400',
   },
 ];
-
-const highlights = [
-    {
-        icon: Clock,
-        title: "Atendimento 24h",
-        description: "3 atendimentos na madrugada"
-    },
-    {
-        icon: ThumbsUp,
-        title: "Orçamento Rápido",
-        description: "Média de 15 min para envio"
-    },
-    {
-        icon: TrendingUp,
-        title: "Serviços em Alta",
-        description: "Transfer GRU e Viagens"
-    }
-]
 
 export function StatsCards() {
   return (
@@ -100,7 +84,7 @@ export function StatsCards() {
             <CardContent>
               <div className="text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground">
-                <span className={stat.changeColor || ''}>{stat.change}</span>
+                <span className={cn(stat.changeColor)}>{stat.change}</span>
                 {stat.description && ` ${stat.description}`}
               </p>
             </CardContent>

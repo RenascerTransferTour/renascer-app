@@ -12,23 +12,7 @@ import {
   import { format, parseISO } from 'date-fns';
   import { ptBR } from 'date-fns/locale';
   import { PlusCircle } from "lucide-react"
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'confirmada':
-        return 'default';
-      case 'concluída':
-        return 'secondary';
-      case 'pendente':
-      case 'não confirmado':
-        return 'outline';
-      case 'cancelada':
-      case 'reagendada':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
+  import { getStatusBadgeClasses } from "@/lib/utils"
   
   export default function BookingsPage() {
     return (
@@ -53,7 +37,7 @@ import {
                 <TableHead>Cliente</TableHead>
                 <TableHead>Serviço</TableHead>
                 <TableHead>Data</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Situação</TableHead>
                 <TableHead>Detalhes</TableHead>
                 </TableRow>
             </TableHeader>
@@ -66,7 +50,7 @@ import {
                     <TableCell>{booking.service}</TableCell>
                     <TableCell>{format(parseISO(booking.date), 'dd/MM/yyyy', { locale: ptBR })}</TableCell>
                     <TableCell>
-                        <Badge variant={getStatusVariant(booking.status)} className="capitalize">{booking.status}</Badge>
+                        <Badge className={`${getStatusBadgeClasses(booking.status)} capitalize`}>{booking.status}</Badge>
                     </TableCell>
                     <TableCell className="max-w-[300px] truncate">{booking.details}</TableCell>
                     </TableRow>
