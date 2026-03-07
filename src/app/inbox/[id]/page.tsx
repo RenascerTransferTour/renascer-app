@@ -23,6 +23,10 @@ import {
   Clock,
   XCircle,
   CheckCircle2,
+  History,
+  FileEdit,
+  UserCog,
+  MessageCircleQuestion,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -39,6 +43,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn, getStatusBadgeClasses } from '@/lib/utils';
 import { useMemo, useState, useEffect } from 'react';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import {
     Dialog,
     DialogContent,
@@ -51,7 +57,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Message, Conversation, Contact, AiFlowPermission } from '@/lib/types';
+import type { Message, Conversation, Contact, AiFlowPermission, AuditLog } from '@/lib/types';
   
 const statusLabels: Record<string, string> = {
     open: 'Aberto',
@@ -82,6 +88,22 @@ const getStatusIcon = (status: string) => {
     }
 }
 
+const eventTypeIcons: Record<string, React.ElementType> = {
+    mensagem_recebida: MessageCircleQuestion,
+    sugestão_ia_gerada: Sparkles,
+    orçamento_rascunho_criado: FileEdit,
+    finalizado_manual: UserCog,
+    default: History
+};
+
+const eventTypeLabels: Record<string, string> = {
+    mensagem_recebida: 'Cliente enviou uma mensagem',
+    sugestão_ia_gerada: 'IA analisou e gerou sugestão',
+    orçamento_rascunho_criado: 'IA gerou rascunho de orçamento',
+    finalizado_manual: 'Ação finalizada manualmente'
+};
+
+
 type Customer = Contact & {
     urgency: 'low' | 'medium' | 'high';
     interestLevel: 'low' | 'medium' | 'high';
@@ -96,6 +118,7 @@ export default function ConversationPage() {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [permissions, setPermissions] = useState<AiFlowPermission[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [newMessage, setNewMessage] = useState('');
@@ -124,6 +147,7 @@ export default function ConversationPage() {
                 setConversation(convData);
                 setMessages(convData.messages);
                 setCustomer(convData.contact); // This needs to be improved with proper lead data
+                setAuditLogs(convData.auditLogs);
                 setIsAiActive(convData.isAiActive);
                 setPermissions(permsData);
             } catch (error) {
@@ -386,87 +410,129 @@ export default function ConversationPage() {
             </CardFooter>
         </Card>
       </div>
-      <div className="hidden md:block h-full">
-        <Card className="h-full flex flex-col">
-          <CardHeader>
-            <CardTitle>Detalhes do Cliente</CardTitle>
-            <CardDescription>Informações e histórico de {customer.fullName}.</CardDescription>
-          </CardHeader>
-          <Separator />
-          <CardContent className="py-4 space-y-4 text-sm flex-1">
-            <div className='space-y-2'>
-                <div className="flex items-center gap-2">
-                    <UserCircle className="h-4 w-4 text-muted-foreground" />
-                    <span className='text-muted-foreground'>Responsável:</span>
-                    <span className='font-medium ml-auto'>{conversation.humanOwnerId === 'op-1' ? 'Claudia' : 'IA'}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span className='text-muted-foreground'>Telefone:</span>
-                    <span className='font-medium ml-auto'>{customer.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className='text-muted-foreground'>Email:</span>
-                    <span className='font-medium ml-auto'>{customer.email}</span>
-                </div>
-            </div>
-            <Separator/>
-            <div className='space-y-2'>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Waypoints className="h-4 w-4 text-muted-foreground" />
-                        <span className='text-muted-foreground'>Canal de Origem:</span>
-                    </div>
-                    <Badge variant="outline" className='font-normal'>{customer.originChannel || 'N/A'}</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-muted-foreground" />
-                        <span className='text-muted-foreground'>Nível de Interesse:</span>
-                    </div>
-                    <Badge className={cn(interestClasses, 'capitalize')}>{customer.interestLevel}</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-muted-foreground" />
-                        <span className='text-muted-foreground'>Urgência:</span>
-                    </div>
-                    <Badge className={cn(urgencyClasses, 'capitalize')}>{customer.urgency}</Badge>
-                </div>
-            </div>
+      <div className="hidden md:block h-full overflow-y-auto">
+        <div className="flex flex-col gap-4">
+            <Card className="flex flex-col">
+            <CardHeader>
+                <CardTitle>Detalhes do Cliente</CardTitle>
+                <CardDescription>Informações de {customer.fullName}.</CardDescription>
+            </CardHeader>
             <Separator />
-            <div className="space-y-2">
-                <p className='text-xs font-semibold text-muted-foreground uppercase'>Ações Rápidas</p>
-                <Tooltip>
-                    <TooltipTrigger className='w-full'>
-                        <div className='w-full'>
-                            <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateQuote}>
-                                <FileText className="mr-2 h-4 w-4"/> Criar Orçamento
-                                {!aiPermissions.canCreateQuote && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
-                            </Button>
+            <CardContent className="py-4 space-y-4 text-sm flex-1">
+                <div className='space-y-2'>
+                    <div className="flex items-center gap-2">
+                        <UserCircle className="h-4 w-4 text-muted-foreground" />
+                        <span className='text-muted-foreground'>Responsável:</span>
+                        <span className='font-medium ml-auto'>{conversation.humanOwnerId === 'op-1' ? 'Claudia' : 'IA'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span className='text-muted-foreground'>Telefone:</span>
+                        <span className='font-medium ml-auto'>{customer.phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4 text-muted-foreground" />
+                        <span className='text-muted-foreground'>Email:</span>
+                        <span className='font-medium ml-auto'>{customer.email}</span>
+                    </div>
+                </div>
+                <Separator/>
+                <div className='space-y-2'>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Waypoints className="h-4 w-4 text-muted-foreground" />
+                            <span className='text-muted-foreground'>Canal de Origem:</span>
                         </div>
-                    </TooltipTrigger>
-                    {!aiPermissions.canCreateQuote && <TooltipContent>A criação de orçamento está desativada nas configurações.</TooltipContent>}
-                </Tooltip>
-                <Tooltip>
-                    <TooltipTrigger className='w-full'>
-                         <div className='w-full'>
-                            <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateBooking}>
-                                <Bookmark className="mr-2 h-4 w-4"/> Criar Reserva
-                                {!aiPermissions.canCreateBooking && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
-                            </Button>
+                        <Badge variant="outline" className='font-normal'>{customer.originChannel || 'N/A'}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Star className="h-4 w-4 text-muted-foreground" />
+                            <span className='text-muted-foreground'>Nível de Interesse:</span>
                         </div>
-                    </TooltipTrigger>
-                    {!aiPermissions.canCreateBooking && <TooltipContent>A criação de reserva está desativada nas configurações.</TooltipContent>}
-                </Tooltip>
-            </div>
-          </CardContent>
-          <Separator />
-          <CardFooter className='p-2'>
-             <Button className="w-full" variant="destructive"><LogOut className="mr-2 h-4 w-4"/> Encerrar Atendimento</Button>
-          </CardFooter>
-        </Card>
+                        <Badge className={cn(interestClasses, 'capitalize')}>{customer.interestLevel}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <Zap className="h-4 w-4 text-muted-foreground" />
+                            <span className='text-muted-foreground'>Urgência:</span>
+                        </div>
+                        <Badge className={cn(urgencyClasses, 'capitalize')}>{customer.urgency}</Badge>
+                    </div>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                    <p className='text-xs font-semibold text-muted-foreground uppercase'>Ações Rápidas</p>
+                    <Tooltip>
+                        <TooltipTrigger className='w-full'>
+                            <div className='w-full'>
+                                <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateQuote}>
+                                    <FileText className="mr-2 h-4 w-4"/> Criar Orçamento
+                                    {!aiPermissions.canCreateQuote && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
+                                </Button>
+                            </div>
+                        </TooltipTrigger>
+                        {!aiPermissions.canCreateQuote && <TooltipContent>A criação de orçamento está desativada nas configurações.</TooltipContent>}
+                    </Tooltip>
+                    <Tooltip>
+                        <TooltipTrigger className='w-full'>
+                            <div className='w-full'>
+                                <Button className="w-full justify-start" variant="ghost" disabled={!aiPermissions.canCreateBooking}>
+                                    <Bookmark className="mr-2 h-4 w-4"/> Criar Reserva
+                                    {!aiPermissions.canCreateBooking && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
+                                </Button>
+                            </div>
+                        </TooltipTrigger>
+                        {!aiPermissions.canCreateBooking && <TooltipContent>A criação de reserva está desativada nas configurações.</TooltipContent>}
+                    </Tooltip>
+                </div>
+            </CardContent>
+            <Separator />
+            <CardFooter className='p-2'>
+                <Button className="w-full" variant="destructive"><LogOut className="mr-2 h-4 w-4"/> Encerrar Atendimento</Button>
+            </CardFooter>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Histórico de Atividades</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {auditLogs.map(log => {
+                        const Icon = eventTypeIcons[log.eventType] || eventTypeIcons.default;
+                        const actorIcon = log.actorType === 'human' ? User : log.actorType === 'ai' ? Bot : UserCircle;
+                        const label = eventTypeLabels[log.eventType] || log.eventType.replace(/_/g, ' ');
+                        return (
+                            <div key={log.id} className="flex gap-3">
+                                <div className="flex flex-col items-center">
+                                    <div className={cn("flex items-center justify-center size-8 rounded-full bg-muted", getStatusBadgeClasses(log.eventType))}>
+                                        <Icon className="size-4" />
+                                    </div>
+                                    <div className="w-px h-full bg-border"></div>
+                                </div>
+                                <div>
+                                    <p className="text-sm font-medium capitalize">{label}</p>
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                        <svelte:fragment>
+                                            <actorIcon className="size-3" />
+                                            <span>{log.actor}</span>
+                                            <span>•</span>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    <span>{formatDistanceToNow(parseISO(log.timestamp), { addSuffix: true, locale: ptBR })}</span>
+                                                </TooltipTrigger>
+                                                <TooltipContent>{format(parseISO(log.timestamp), "dd/MM/yyyy HH:mm:ss", { locale: ptBR })}</TooltipContent>
+                                            </Tooltip>
+                                        </svelte:fragment>
+                                    </div>
+                                    {log.notes && <p className="text-xs text-muted-foreground mt-1 bg-muted/50 p-2 rounded-md">{log.notes}</p>}
+                                </div>
+                            </div>
+                        )
+                    })}
+                </CardContent>
+            </Card>
+        </div>
       </div>
     </div>
     </TooltipProvider>

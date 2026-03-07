@@ -11,7 +11,7 @@
  */
 
 import * as repos from './repositories';
-import type { Conversation, Contact, Quote, Reservation, Deal, Channel, AiFlowPermission, AiSettings, AiPrompt } from './data-model';
+import type { Conversation, Contact, Quote, Reservation, Deal, Channel, AiFlowPermission, AiSettings, AiPrompt, AuditLog } from './data-model';
 
 export const conversationService = {
   /**
@@ -45,11 +45,13 @@ export const conversationService = {
     if (!contact) return null;
     
     const messages = repos.messages.findByConversationId(id);
+    const auditLogs = repos.auditLogs.findByContactId(conversation.contactId);
 
     return {
       ...conversation,
       contact,
       messages,
+      auditLogs,
     };
   },
 };

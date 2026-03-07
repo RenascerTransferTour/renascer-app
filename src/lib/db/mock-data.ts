@@ -6,7 +6,7 @@
  * repository layer will interact with.
  */
 
-import { subDays, addDays, setHours, setMinutes } from 'date-fns';
+import { subDays, addDays, setHours, setMinutes, subMinutes } from 'date-fns';
 import type { 
     Operator, Contact, Channel, Lead, Conversation, Message, Quote, Reservation, CalendarEvent, Deal, 
     AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, KnowledgeBaseArticle, AuditLog
@@ -337,18 +337,58 @@ export let aiProviderConfigs: AiProviderConfig[] = deepClone(originalAiProviderC
 export let aiPrompts: AiPrompt[] = deepClone(originalAiPrompts);
 export let auditLogs: AuditLog[] = [
     {
-        id: 'log-1',
-        timestamp: new Date().toISOString(),
-        actor: 'Claudia Vaz',
+        id: 'log-ana-1',
+        timestamp: subDays(now, 2).toISOString(),
+        contactId: 'contact-1',
+        actor: 'Ana Silva',
+        actorType: 'customer',
+        channel: 'whatsapp',
+        entityType: 'conversation',
+        entityId: 'conv-1',
+        eventType: 'mensagem_recebida',
+        source: 'whatsapp',
+    },
+    {
+        id: 'log-ana-2',
+        timestamp: subMinutes(subDays(now, 2), -5).toISOString(),
+        contactId: 'contact-1',
+        actor: 'Assistente IA',
+        actorType: 'ai',
+        channel: 'whatsapp',
+        entityType: 'conversation',
+        entityId: 'conv-1',
+        eventType: 'sugestão_ia_gerada',
+        notes: 'IA qualificou o lead e preparou o handoff.',
+        source: 'ai_flow',
+    },
+     {
+        id: 'log-ana-3',
+        timestamp: subMinutes(subDays(now, 1), -30).toISOString(),
+        contactId: 'contact-1',
+        actor: 'Assistente IA',
+        actorType: 'ai',
+        entityType: 'quote',
+        entityId: 'quote-1',
+        eventType: 'orçamento_rascunho_criado',
+        notes: 'Rascunho de orçamento para Transfer GRU gerado pela IA.',
+        source: 'ai_flow',
+        after: { status: 'rascunho', summary: 'Transfer Executivo: Av. Paulista para Aeroporto GRU', priceRange: [280, 350] }
+    },
+    {
+        id: 'log-ana-4',
+        timestamp: subDays(now, 1).toISOString(),
+        contactId: 'contact-1',
+        actor: 'Claudia',
         actorType: 'human',
         channel: 'whatsapp',
-        entityType: 'orçamento',
-        entityId: 'ORC-204',
-        eventType: 'orçamento_finalizado',
+        entityType: 'quote',
+        entityId: 'quote-1',
+        eventType: 'finalizado_manual',
+        notes: 'Orçamento revisado e enviado ao cliente.',
+        source: 'app',
+        approvedBy: 'op-1',
         before: { status: 'rascunho' },
-        after: { status: 'enviado' },
-        source: 'manual',
-        approvedBy: 'Claudia Vaz'
+        after: { status: 'enviado' }
     }
 ];
 

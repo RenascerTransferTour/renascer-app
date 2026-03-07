@@ -230,18 +230,35 @@ export interface KnowledgeBaseArticle {
 
 // --- SYSTEM & LOGGING ---
 
+/**
+ * Examples of eventType:
+ * - mensagem_recebida
+ * - mensagem_enviada
+ * - lead_criado
+ * - lead_atualizado
+ * - orçamento_rascunho_criado
+ * - orçamento_enviado
+ * - reserva_rascunho_criada
+ * - reserva_confirmada
+ * - agendamento_criado
+ * - atendimento_finalizado
+ * - sugestão_ia_gerada
+ * - aprovação_claudia
+ * - finalizado_manual
+ */
 export interface AuditLog {
   id: string; // UUID
   timestamp: string; // ISO 8601
+  contactId: string; // Foreign Key to Contact
   actor: string; // Name of the human, AI, or system component
-  actorType: 'human' | 'ai' | 'system';
+  actorType: 'human' | 'ai' | 'system' | 'customer';
   channel?: string;
-  entityType: string;
+  entityType: 'conversation' | 'lead' | 'quote' | 'reservation' | 'deal';
   entityId: string;
   eventType: string; // The action performed
   before?: Record<string, any>; // JSONB: State of the entity before the change
   after?: Record<string, any>; // JSONB: State of the entity after the change
   notes?: string;
-  source?: string; // Where the action was initiated from (e.g., 'Inbox')
+  source: 'app' | 'whatsapp' | 'instagram' | 'facebook' | 'website' | 'ai_flow' | 'manual';
   approvedBy?: string; // ID of the user who approved
 }

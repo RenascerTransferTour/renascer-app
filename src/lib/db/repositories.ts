@@ -157,6 +157,13 @@ export const aiPrompts = {
     }
 };
 
+export const auditLogs = {
+    list: () => list(db.auditLogs),
+    findByContactId: (contactId: string) => db.auditLogs
+        .filter(log => log.contactId === contactId)
+        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+};
+
 export const knowledgeBase = {
     list: () => list(db.knowledgeBaseArticles),
 };
