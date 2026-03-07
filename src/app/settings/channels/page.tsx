@@ -38,20 +38,36 @@ const FacebookIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4v-8.5z" /></svg>
 )
 
-const statusConfig: Record<string, { icon: React.ElementType, text: string }> = {
-    'connected': { icon: CheckCircle2, text: 'Conectado' },
-    'disconnected': { icon: XCircle, text: 'Desconectado' },
-    'pending': { icon: Clock, text: 'Pendente' },
-    'awaiting_qr': { icon: Clock, text: 'Aguardando Leitura' },
-    'failing': { icon: AlertTriangle, text: 'Falhando' },
-    'expired': { icon: AlertTriangle, text: 'Expirado' }
+const statusConfig: Record<string, { icon: React.ElementType, text: string, className: string }> = {
+    'connected': { icon: CheckCircle2, text: 'Conectado', className: getStatusBadgeClasses('connected') },
+    'disconnected': { icon: XCircle, text: 'Desconectado', className: getStatusBadgeClasses('disconnected') },
+    'pending': { icon: Clock, text: 'Pendente', className: getStatusBadgeClasses('pending') },
+    'awaiting_qr': { icon: Clock, text: 'Aguardando Leitura', className: getStatusBadgeClasses('awaiting_qr') },
+    'failing': { icon: AlertTriangle, text: 'Falhando', className: getStatusBadgeClasses('failing') },
+    'expired': { icon: AlertTriangle, text: 'Expirado', className: getStatusBadgeClasses('expired') },
+    'mock': { icon: Info, text: 'Modo Simulado', className: getStatusBadgeClasses('mock') }
 };
 
-const StatusBadge = ({ status }: { status: Channel['status'] }) => {
+const StatusBadge = ({ status, isMock = false }: { status: Channel['status'], isMock?: boolean }) => {
+    // For this mock environment, some "connected" statuses are actually simulated.
+    if (isMock && status === 'connected') {
+        const config = statusConfig.mock;
+        const { icon: Icon, text, className } = config;
+        return (
+            <Tooltip>
+                <TooltipTrigger>
+                    <Badge className={cn(className, "gap-1.5 capitalize")}><Icon className="h-3 w-3" />{text}</Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Este canal opera com dados locais e não está conectado a uma API real.</p>
+                </TooltipContent>
+            </Tooltip>
+        );
+    }
     const config = statusConfig[status] || statusConfig.disconnected;
-    const { icon: Icon, text } = config;
+    const { icon: Icon, text, className } = config;
     return (
-      <Badge className={cn(getStatusBadgeClasses(status), "gap-1.5 capitalize")}><Icon className="h-3 w-3" />{text}</Badge>
+      <Badge className={cn(className, "gap-1.5 capitalize")}><Icon className="h-3 w-3" />{text}</Badge>
     );
 };
 
@@ -155,7 +171,7 @@ export default function ChannelsPage() {
                                     <CardTitle>Conexão WhatsApp</CardTitle>
                                     <CardDescription>Gerencie a integração com a API do WhatsApp Business.</CardDescription>
                                 </div>
-                                {waChannel && <StatusBadge status={waChannel.status}/>}
+                                {waChannel && <StatusBadge status={waChannel.status} isMock={true} />}
                             </div>
                         </CardHeader>
                         <Tabs defaultValue="api" className="w-full">
@@ -277,16 +293,7 @@ export default function ChannelsPage() {
                                     <CardTitle>Conexão Facebook</CardTitle>
                                     <CardDescription>Gerencie a integração com o Facebook Messenger.</CardDescription>
                                 </div>
-                                {fbChannel && 
-                                    <Tooltip>
-                                        <TooltipTrigger>
-                                            <Badge className={cn(getStatusBadgeClasses('mock'), "gap-1.5 capitalize")}><Info className="h-3 w-3" />Modo Simulado</Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Este canal opera com dados locais e não está conectado a uma API real.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
-                                }
+                                {fbChannel && <StatusBadge status={fbChannel.status} isMock={true} />}
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -330,14 +337,7 @@ export default function ChannelsPage() {
                                     {channel.type === 'facebook' && <FacebookIcon className="h-6 w-6 text-blue-600"/>}
                                     {channel.type === 'website' && <Webhook className="h-6 w-6 text-slate-500"/>}
                                     <span className="font-semibold capitalize">{channel.name}</span>
-                                     <Tooltip>
-                                        <TooltipTrigger>
-                                            <Badge variant="outline" className='gap-1.5'><Info className="h-3 w-3" />Modo Simulado</Badge>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                            <p>Este canal opera com dados locais e não está conectado a uma API real.</p>
-                                        </TooltipContent>
-                                    </Tooltip>
+                                    <StatusBadge status={channel.status} isMock={['facebook', 'website', 'whatsapp'].includes(channel.type)} />
                                 </div>
                                 <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
                                      <div className="flex items-center space-x-2">
@@ -420,7 +420,7 @@ export default function ChannelsPage() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell className="text-muted-foreground">{log.details}</TableCell>
-                                </TableRow>
+                                 </TableRow>
                             ))}
                         </TableBody>
                         </Table>

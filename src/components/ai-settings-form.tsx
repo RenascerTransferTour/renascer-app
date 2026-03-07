@@ -335,7 +335,7 @@ export function AiSettingsForm() {
         <Card>
             <CardHeader>
                 <CardTitle>Provedores de IA e Credenciais</CardTitle>
-                <CardDescription>Gerencie quais modelos de IA são usados e suas credenciais.</CardDescription>
+                <CardDescription>Gerencie quais modelos de IA são usados e suas credenciais de ambiente.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                  <div className="flex flex-col sm:flex-row sm:items-end gap-4">
@@ -371,7 +371,7 @@ export function AiSettingsForm() {
                                 </div>
                                 <Tooltip>
                                     <TooltipTrigger>
-                                        <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn('gap-1.5', p.configured ? getStatusBadgeClasses('connected') : getStatusBadgeClasses('not_configured'))}>
+                                        <Badge variant={p.configured ? 'secondary' : 'outline'} className={cn('gap-1.5', getStatusBadgeClasses(p.status))}>
                                             {p.configured ? <CheckCircle className="size-3" /> : <HelpCircle className="size-3" />}
                                             {p.status}
                                         </Badge>
