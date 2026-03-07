@@ -335,7 +335,7 @@ export function AiSettingsForm() {
         <Card>
             <CardHeader>
                 <CardTitle>Provedores de IA e Credenciais</CardTitle>
-                <CardDescription>Gerencie quais modelos de IA são usados e suas credenciais de ambiente.</CardDescription>
+                <CardDescription>Gerencie quais modelos de IA são usados e suas credenciais. A configuração das chaves de API é feita no ambiente do servidor.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                  <div className="flex flex-col sm:flex-row sm:items-end gap-4">
@@ -385,13 +385,8 @@ export function AiSettingsForm() {
                                 <div className="space-y-1">
                                     <Label htmlFor={`${p.id}-key`} className="text-xs text-muted-foreground flex items-center gap-1"><KeyRound className="size-3"/> Chave de API (somente visual)</Label>
                                     <Input id={`${p.id}-key`} type="password" readOnly value="*******************************" />
-                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo é uma representação. A chave real é configurada no ambiente do servidor.</p>
+                                     <p className="text-[11px] text-muted-foreground pt-1">Este campo é uma representação. A chave real é configurada no ambiente do servidor e não é exposta aqui.</p>
                                 </div>
-                                <Alert variant="default" className="text-xs">
-                                     <Server className="h-4 w-4" />
-                                     <AlertTitle className="text-xs font-semibold">Configuração no Servidor</AlertTitle>
-                                     <AlertDescription>{p.message}</AlertDescription>
-                                </Alert>
                             </CardContent>
                         </Card>
                     ))}
