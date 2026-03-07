@@ -8,6 +8,7 @@
  */
 
 import {ai} from '@/ai/genkit';
+import {getActiveModel} from '@/ai/utils';
 import {z} from 'genkit';
 
 const GenerateConversationSummaryInputSchema = z.object({
@@ -61,7 +62,8 @@ const generateConversationSummaryFlow = ai.defineFlow(
     outputSchema: GenerateConversationSummaryOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const activeModel = await getActiveModel();
+    const {output} = await prompt(input, {model: activeModel});
     if (!output) {
       throw new Error('Failed to generate conversation summary.');
     }

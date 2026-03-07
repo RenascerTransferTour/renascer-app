@@ -33,6 +33,17 @@ export const serverConfig = {
   getMetaApiToken: (): string | undefined => {
     return process.env.META_API_TOKEN;
   },
+
+  /**
+   * Checks which AI providers are configured via environment variables.
+   * @returns An object indicating the configuration status of each provider.
+   */
+  getProviderConfigStatus: () => {
+    return {
+      geminiConfigured: !!process.env.GEMINI_API_KEY,
+      openaiConfigured: !!process.env.OPENAI_API_KEY,
+    };
+  },
 };
 
 console.log('Server config loaded.');

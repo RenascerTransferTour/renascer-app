@@ -9,6 +9,7 @@
  */
 
 import { ai } from '@/ai/genkit';
+import { getActiveModel } from '@/ai/utils';
 import { z } from 'zod';
 
 // Input Schema
@@ -97,7 +98,8 @@ const intelligentCustomerSupportFlow = ai.defineFlow(
     outputSchema: IntelligentCustomerSupportOutputSchema,
   },
   async (input) => {
-    const { output } = await intelligentCustomerSupportPrompt(input);
+    const activeModel = await getActiveModel();
+    const { output } = await intelligentCustomerSupportPrompt(input, { model: activeModel });
     return output!;
   }
 );

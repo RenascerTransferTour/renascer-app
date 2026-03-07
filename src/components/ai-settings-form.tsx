@@ -51,6 +51,9 @@ export function AiSettingsForm() {
     const [prompts, setPrompts] = useState<AiPrompt[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const [providerStatus, setProviderStatus] = useState({ gemini: false, openai: false });
+    const [loadingProviders, setLoadingProviders] = useState(true);
+
     const [draftPrompt, setDraftPrompt] = useState('');
     const [publishedPrompt, setPublishedPrompt] = useState('');
 
@@ -65,15 +68,18 @@ export function AiSettingsForm() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [settingsRes, promptsRes] = await Promise.all([
+                const [settingsRes, promptsRes, providersRes] = await Promise.all([
                     fetch('/api/settings/ai'),
-                    fetch('/api/settings/prompts')
+                    fetch('/api/settings/prompts'),
+                    fetch('/api/settings/ai/providers')
                 ]);
                 const settingsData = await settingsRes.json();
                 const promptsData = await promptsRes.json();
+                const providersData = await providersRes.json();
                 
                 setSettings(settingsData);
                 setPrompts(promptsData);
+                setProviderStatus({ gemini: providersData.geminiConfigured, openai: providersData.openaiConfigured });
 
                 const draft = promptsData.find((p: AiPrompt) => p.status === 'draft');
                 const published = promptsData.find((p: AiPrompt) => p.status === 'published');
@@ -85,6 +91,7 @@ export function AiSettingsForm() {
                 toast({ variant: "destructive", title: "Erro", description: "Não foi possível carregar as configurações de IA." });
             } finally {
                 setLoading(false);
+                setLoadingProviders(false);
             }
         };
         fetchData();
@@ -229,7 +236,9 @@ export function AiSettingsForm() {
                                 <CardTitle className="text-lg">OpenAI (ChatGPT)</CardTitle>
                                 <CardDescription>gpt-4-turbo</CardDescription>
                             </div>
-                            <Badge variant="secondary">Configurado</Badge>
+                            <Badge variant={providerStatus.openai ? 'secondary' : 'outline'} className={providerStatus.openai ? 'bg-green-100 text-green-800' : ''}>
+                                {providerStatus.openai ? 'Configurado' : 'Não Configurado'}
+                            </Badge>
                         </CardHeader>
                         <CardContent className="space-y-2">
                              <div className="space-y-1">
@@ -238,7 +247,7 @@ export function AiSettingsForm() {
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button variant="outline" className="w-full">Testar Conexão</Button>
+                            <Button variant="outline" className="w-full" disabled={!providerStatus.openai}>Testar Conexão</Button>
                         </CardFooter>
                     </Card>
                      <Card>
@@ -247,7 +256,9 @@ export function AiSettingsForm() {
                                 <CardTitle className="text-lg">Gemini (Google)</CardTitle>
                                 <CardDescription>gemini-2.5-flash</CardDescription>
                             </div>
-                            <Badge variant="secondary">Configurado</Badge>
+                             <Badge variant={providerStatus.gemini ? 'secondary' : 'outline'} className={providerStatus.gemini ? 'bg-green-100 text-green-800' : ''}>
+                                {providerStatus.gemini ? 'Configurado' : 'Não Configurado'}
+                            </Badge>
                         </CardHeader>
                         <CardContent className="space-y-2">
                              <div className="space-y-1">
@@ -256,7 +267,7 @@ export function AiSettingsForm() {
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button variant="outline" className="w-full">Testar Conexão</Button>
+                            <Button variant="outline" className="w-full" disabled={!providerStatus.gemini}>Testar Conexão</Button>
                         </CardFooter>
                     </Card>
                 </div>
@@ -330,8 +341,8 @@ export function AiSettingsForm() {
                                             <SelectValue placeholder="Selecione o provedor" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="gemini">Gemini (Simulado)</SelectItem>
-                                            <SelectItem value="openai">OpenAI (Simulado)</SelectItem>
+                                            <SelectItem value="gemini" disabled={!providerStatus.gemini}>Gemini (Simulado)</SelectItem>
+                                            <SelectItem value="openai" disabled={!providerStatus.openai}>OpenAI (Simulado)</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
