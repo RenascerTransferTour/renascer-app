@@ -80,7 +80,7 @@ export default function CalendarPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Calendário de Atividades</h1>
           <p className="text-muted-foreground">
-            Visualize todos os eventos. Sugestões de horários da IA devem ser confirmadas manualmente pela Cláudia.
+            Visualize todos os eventos. Sugestões de horários da IA devem ser confirmadas manually pela Cláudia.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -117,10 +117,10 @@ export default function CalendarPage() {
                         subText = 'Horário sugerido pela IA';
                         Icon = Bot;
                     } else if (event.status === 'aguardando aprovação') {
-                        subText = 'Aguardando aprovação';
+                        subText = 'Aguardando aprovação da Cláudia';
                         Icon = UserCheck;
                     } else if (event.status === 'confirmada' && event.source === 'human') {
-                        subText = 'Agendado manualmente';
+                        subText = 'Agendado manualmente pela Cláudia';
                     }
 
                     return (
