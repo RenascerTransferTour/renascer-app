@@ -1,7 +1,6 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { conversations, customers } from '@/lib/data';
 import {
   Bot,
   User,
@@ -34,8 +33,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn, getStatusBadgeClasses } from '@/lib/utils';
-import { useMemo, useState } from 'react';
-import type { Message } from '@/lib/types';
+import { useMemo, useState, useEffect } from 'react';
 import { generateConversationSummary } from '@/ai/flows/generate-conversation-summary-flow';
 import {
     Dialog,
@@ -49,6 +47,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import type { Message, Conversation, Contact } from '@/lib/types';
   
 const statusLabels: Record<string, string> = {
     open: 'Aberto',
@@ -64,25 +63,97 @@ const statusLabels: Record<string, string> = {
     'concluído por humano': 'Concluído por Humano',
 }
 
+type Customer = Contact & {
+    urgency: 'low' | 'medium' | 'high';
+    interestLevel: 'low' | 'medium' | 'high';
+};
+
+
 export default function ConversationPage() {
   const params = useParams();
   const { id } = params;
 
-  const conversation = useMemo(() => conversations.find((c) => c.id === id), [id]);
-  const customer = useMemo(
-    () => customers.find((c) => c.id === conversation?.customerId),
-    [conversation]
-  );
-  
-  const [messages, setMessages] = useState<Message[]>(conversation?.messages || []);
+  const [conversation, setConversation] = useState<Conversation | null>(null);
+  const [customer, setCustomer] = useState<Customer | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [newMessage, setNewMessage] = useState('');
-  const [isAiActive, setIsAiActive] = useState(conversation?.isAiActive || false);
+  const [isAiActive, setIsAiActive] = useState(false);
   const [summary, setSummary] = useState('');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    if (id) {
+        const fetchConversation = async () => {
+            try {
+                setLoading(true);
+                const res = await fetch(`/api/conversations/${id}`);
+                const data = await res.json();
+                setConversation(data);
+                setMessages(data.messages);
+                setCustomer(data.contact); // This needs to be improved with proper lead data
+                setIsAiActive(data.isAiActive);
+            } catch (error) {
+                console.error("Failed to fetch conversation", error);
+                 toast({
+                    variant: "destructive",
+                    title: "Erro ao carregar conversa",
+                    description: "Não foi possível buscar os detalhes da conversa.",
+                })
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchConversation();
+    }
+  }, [id, toast]);
+
+
+  if (loading) {
+      return (
+        <div className="grid h-[calc(100vh-8rem)] grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+             <div className="md:col-span-2 lg:col-span-3 flex flex-col h-full">
+                <Card className='flex flex-col h-full'>
+                    <CardHeader className="flex flex-row items-center justify-between border-b p-4">
+                         <div className='flex items-center gap-3'>
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className='space-y-1'>
+                                <Skeleton className="h-5 w-32" />
+                                <Skeleton className="h-4 w-24" />
+                            </div>
+                         </div>
+                         <div className='flex items-center gap-2'>
+                             <Skeleton className="h-9 w-32" />
+                             <Skeleton className="h-9 w-36" />
+                         </div>
+                    </CardHeader>
+                    <CardContent className='flex-1 p-4'/>
+                    <CardFooter className='p-4 border-t'>
+                        <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                </Card>
+             </div>
+             <div className='hidden md:block h-full'>
+                <Card className='h-full'>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-40" />
+                        <Skeleton className="h-4 w-48" />
+                    </CardHeader>
+                    <CardContent className='space-y-4'>
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-16 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </CardContent>
+                </Card>
+             </div>
+        </div>
+      )
+  }
+
   if (!conversation || !customer) {
-    return <div>Conversa não encontrada.</div>;
+    return <div className='text-center'>Conversa não encontrada ou falha ao carregar.</div>;
   }
   
   // Mock permissions based on AI settings (IA Assistida mode by default)
@@ -93,10 +164,13 @@ export default function ConversationPage() {
 
     const msg: Message = {
       id: `msg-${Date.now()}`,
-      role: 'agent',
+      conversationId: conversation.id,
+      senderType: 'agent',
       content: newMessage,
-      timestamp: new Date().toISOString(),
-      authorName: conversation.humanAgent || 'Admin',
+      contentType: 'text',
+      authorName: conversation.humanOwnerId || 'Admin',
+      createdAt: new Date().toISOString(),
+      deliveryStatus: 'sent',
     };
 
     setMessages([...messages, msg]);
@@ -107,15 +181,31 @@ export default function ConversationPage() {
     setIsGeneratingSummary(true);
     setSummary('');
     try {
-        const convHistory = messages.map(m => ({ role: m.role === 'user' ? 'user' : (m.role === 'agent' ? 'agent' : 'AI'), message: m.content }));
-        const result = await generateConversationSummary({ conversationHistory: convHistory });
-        setSummary(result.summary);
+        const convHistory = messages.map(m => ({ 
+            role: m.senderType === 'user' ? 'user' : (m.senderType === 'agent' ? 'agent' : 'AI'), 
+            message: m.content 
+        }));
+        
+        const response = await fetch('/api/summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ conversationHistory: convHistory })
+        });
+        
+        const result = await response.json();
+
+        if (result.success) {
+            setSummary(result.summary);
+        } else {
+             throw new Error(result.details || 'Failed to generate summary from API.');
+        }
+
     } catch (error) {
         console.error("Failed to generate summary:", error);
         toast({
             variant: "destructive",
             title: "Erro ao gerar resumo",
-            description: "Não foi possível conectar ao serviço de IA.",
+            description: error instanceof Error ? error.message : "Não foi possível conectar ao serviço de IA.",
         })
     } finally {
         setIsGeneratingSummary(false);
@@ -134,11 +224,11 @@ export default function ConversationPage() {
                 <div className='flex items-center gap-3'>
                     <Avatar className="h-10 w-10 border">
                         <AvatarImage src={customer.avatar} data-ai-hint="person avatar" />
-                        <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{customer.fullName.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-semibold">{customer.name}</h2>
+                            <h2 className="text-lg font-semibold">{customer.fullName}</h2>
                             <Badge className={`${getStatusBadgeClasses(conversation.status)} capitalize`}>
                                 {statusLabels[conversation.status] || conversation.status}
                             </Badge>
@@ -146,7 +236,7 @@ export default function ConversationPage() {
                         <p className="text-sm text-muted-foreground">
                         via{' '}
                         <span className="font-medium text-primary">
-                            {conversation.channel}
+                            {conversation.channelId.replace('channel-','')}
                         </span>
                         </p>
                     </div>
@@ -198,29 +288,29 @@ export default function ConversationPage() {
                     key={message.id}
                     className={cn(
                     'flex items-end gap-2',
-                    message.role === 'user' ? 'justify-start' : 'justify-end'
+                    message.senderType === 'user' ? 'justify-start' : 'justify-end'
                     )}
                 >
-                    {message.role === 'user' && (
+                    {message.senderType === 'user' && (
                     <Avatar className="h-8 w-8 border">
                         <AvatarImage src={customer.avatar} data-ai-hint="person avatar" />
-                        <AvatarFallback>{customer.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{customer.fullName.charAt(0)}</AvatarFallback>
                     </Avatar>
                     )}
                     <div
                     className={cn(
                         'max-w-md rounded-lg p-3',
-                        message.role === 'user'
+                        message.senderType === 'user'
                         ? 'bg-muted rounded-bl-none'
                         : 'bg-primary text-primary-foreground rounded-br-none'
                     )}
                     >
                     <p className="text-sm">{message.content}</p>
                     </div>
-                    {message.role !== 'user' && (
+                    {message.senderType !== 'user' && (
                     <Avatar className="h-8 w-8">
                         <AvatarFallback>
-                        {message.role === 'ai' ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                        {message.senderType === 'ai' ? <Bot className="h-4 w-4" /> : <User className="h-4 w-4" />}
                         </AvatarFallback>
                     </Avatar>
                     )}
@@ -254,7 +344,7 @@ export default function ConversationPage() {
         <Card className="h-full flex flex-col">
           <CardHeader>
             <CardTitle>Detalhes do Cliente</CardTitle>
-            <CardDescription>Informações e histórico de {customer.name}.</CardDescription>
+            <CardDescription>Informações e histórico de {customer.fullName}.</CardDescription>
           </CardHeader>
           <Separator />
           <CardContent className="py-4 space-y-4 text-sm flex-1">
@@ -262,7 +352,7 @@ export default function ConversationPage() {
                 <div className="flex items-center gap-2">
                     <UserCircle className="h-4 w-4 text-muted-foreground" />
                     <span className='text-muted-foreground'>Responsável:</span>
-                    <span className='font-medium ml-auto'>{conversation.humanAgent || 'IA'}</span>
+                    <span className='font-medium ml-auto'>{conversation.humanOwnerId === 'op-1' ? 'Claudia' : 'IA'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-muted-foreground" />
@@ -282,7 +372,7 @@ export default function ConversationPage() {
                         <Waypoints className="h-4 w-4 text-muted-foreground" />
                         <span className='text-muted-foreground'>Canal de Origem:</span>
                     </div>
-                    <Badge variant="outline" className='font-normal'>{customer.originChannel}</Badge>
+                    <Badge variant="outline" className='font-normal'>{customer.originChannel || 'N/A'}</Badge>
                 </div>
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -309,7 +399,7 @@ export default function ConversationPage() {
                             {!aiPermissions.canCreateQuote && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
                         </Button>
                     </TooltipTrigger>
-                    {!aiPermissions.canCreateQuote && <TooltipContent>A IA não tem permissão para criar orçamentos. Requer aprovação de {conversation.humanAgent || 'um humano'}.</TooltipContent>}
+                    {!aiPermissions.canCreateQuote && <TooltipContent>A IA não tem permissão para criar orçamentos. Requer aprovação de {conversation.humanOwnerId === 'op-1' ? 'Claudia' : 'um humano'}.</TooltipContent>}
                 </Tooltip>
                 <Tooltip>
                     <TooltipTrigger className='w-full'>
@@ -318,7 +408,7 @@ export default function ConversationPage() {
                             {!aiPermissions.canCreateBooking && <Lock className="ml-auto h-3 w-3 text-muted-foreground"/>}
                         </Button>
                     </TooltipTrigger>
-                    {!aiPermissions.canCreateBooking && <TooltipContent>A IA não tem permissão para criar reservas. Requer aprovação de {conversation.humanAgent || 'um humano'}.</TooltipContent>}
+                    {!aiPermissions.canCreateBooking && <TooltipContent>A IA não tem permissão para criar reservas. Requer aprovação de {conversation.humanOwnerId === 'op-1' ? 'Claudia' : 'um humano'}.</TooltipContent>}
                 </Tooltip>
             </div>
           </CardContent>

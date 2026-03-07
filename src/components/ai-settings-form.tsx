@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,8 @@ import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizon
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Badge } from "./ui/badge"
+import { Skeleton } from "./ui/skeleton"
+import type { AiSettings, AiPrompt } from "@/lib/db/data-model"
 
 const flowPermissionsData = [
     { id: 'welcome', label: 'Boas-Vindas', description: 'Permite que a IA envie a primeira mensagem de boas-vindas.' },
@@ -45,55 +47,49 @@ const flowPermissionsData = [
 ];
 
 export function AiSettingsForm() {
-    const [masterPrompt, setMasterPrompt] = useState(`You are a premium virtual assistant for "Renascer Transfer Tour", specializing in executive transport, transfers, and tours. Your tone is professional, welcoming, and efficient. You are a pre-service assistant. Your main goal is lead qualification and conversation organization.
+    const [settings, setSettings] = useState<any | null>(null);
+    const [prompts, setPrompts] = useState<AiPrompt[]>([]);
+    const [loading, setLoading] = useState(true);
 
-Your primary goals are:
-1.  **Welcome the user warmly**: Start with a professional and friendly greeting, introducing yourself as the virtual assistant for Renascer Transfer Tour.
-2.  **Understand the user's need**: Quickly identify if they need a 'Transfer', 'Turismo', 'Transporte Executivo', 'Serviço para Eventos', or 'Viagem Longa'.
-3.  **Extract Information**: Fill in the 'gatheredInformation' object with all relevant details you can find from the entire conversation. If a piece of information is not available or unclear, set the corresponding field to 'null'.
-4.  **DO NOT PROVIDE PRICES OR QUOTES**: You are not authorized to give final prices or create quotes. Your role is to collect data.
-5.  **Formulate a Handoff Response**: When the user requests a price or has provided enough information for a quote, your 'aiResponse' must state that you have gathered the necessary information and that a human specialist will take over.
-    - Example response: "Obrigada pelas informações! Coletei tudo que preciso. A Cláudia, nossa especialista, irá preparar seu orçamento e entrará em contato em breve."
-6.  **Decide on Escalation**: Set 'escalateToHuman' to 'true' in the following situations:
-    - The user has provided enough information to generate a quote (e.g., origin, destination, date, number of passengers).
-    - The customer explicitly requests to speak to a human (e.g., "quero falar com uma pessoa", "falar com atendente", "falar com Cláudia").
-    - The inquiry is about a complaint, a very complex event, or a sensitive matter.
-    - The customer expresses clear frustration or confusion.
-    - You have already asked for key information twice and the customer has not provided it.
-Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualification service.`);
-    
+    const [draftPrompt, setDraftPrompt] = useState('');
+    const [publishedPrompt, setPublishedPrompt] = useState('');
+
     const [testUserPrompt, setTestUserPrompt] = useState("Olá, quanto custa um transfer para o aeroporto de guarulhos?");
     const [testResponse, setTestResponse] = useState("");
     const [isTesting, setIsTesting] = useState(false);
     const { toast } = useToast();
     
-    const [aiPermissions, setAiPermissions] = useState({
-        globalOn: true,
-        automationMode: 'assisted',
-        requireHumanApproval: true,
-        humanFallback: 'Claudia',
-        primaryProvider: 'gemini',
-        isFallbackEnabled: false,
-        fallbackProvider: 'openai',
-        channelPermissions: {
-            whatsapp: true,
-            instagram: true,
-            facebook: false,
-            website: true
-        },
-        flowRouting: {
-            welcome: 'gemini',
-            qualification: 'gemini',
-            faq: 'gemini',
-            quoteCreation: 'automatic',
-            bookingCreation: 'automatic',
-            crmUpdate: 'automatic',
-            saleClosing: 'automatic',
-            postSale: 'automatic',
-        }
-    });
-
     const [testProvider, setTestProvider] = useState<'openai' | 'gemini'>('gemini');
+
+     useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                const [settingsRes, promptsRes] = await Promise.all([
+                    fetch('/api/settings/ai'),
+                    fetch('/api/settings/prompts')
+                ]);
+                const settingsData = await settingsRes.json();
+                const promptsData = await promptsRes.json();
+                
+                setSettings(settingsData);
+                setPrompts(promptsData);
+
+                const draft = promptsData.find((p: AiPrompt) => p.status === 'draft');
+                const published = promptsData.find((p: AiPrompt) => p.status === 'published');
+                setDraftPrompt(draft?.content || '');
+                setPublishedPrompt(published?.content || '');
+
+            } catch (error) {
+                console.error("Failed to fetch settings", error);
+                toast({ variant: "destructive", title: "Erro", description: "Não foi possível carregar as configurações de IA." });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchData();
+    }, [toast]);
+
 
     const handleTestPrompt = async () => {
         if (!testUserPrompt.trim()) return;
@@ -101,7 +97,7 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
         setTestResponse("");
         try {
             const result = await testAiChatPrompt({
-                masterPrompt,
+                masterPrompt: draftPrompt,
                 userPrompt: testUserPrompt,
                 provider: testProvider,
             });
@@ -126,6 +122,16 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
         'full': 'A IA pode fechar vendas e confirmar reservas de forma autônoma. (Requer cuidado)',
     }
 
+    if (loading || !settings) {
+        return (
+            <div className="space-y-8">
+                <Card><CardHeader><Skeleton className="h-8 w-64"/></CardHeader><CardContent><Skeleton className="h-40 w-full"/></CardContent></Card>
+                <Card><CardHeader><Skeleton className="h-8 w-72"/></CardHeader><CardContent><Skeleton className="h-32 w-full"/></CardContent></Card>
+                <Card><CardHeader><Skeleton className="h-8 w-80"/></CardHeader><CardContent><Skeleton className="h-64 w-full"/></CardContent></Card>
+            </div>
+        )
+    }
+
   return (
     <TooltipProvider>
     <div className="space-y-8">
@@ -140,12 +146,12 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                         <h4 className='font-semibold'>Chave Geral da IA</h4>
                         <p className='text-xs text-muted-foreground'>Ativa ou desativa completamente a inteligência artificial em todos os canais.</p>
                     </Label>
-                    <Switch id="ai-active" checked={aiPermissions.globalOn} onCheckedChange={(c) => setAiPermissions(p => ({...p, globalOn: c}))} />
+                    <Switch id="ai-active" checked={settings.globalAiEnabled} />
                 </div>
                 
                 <div className="space-y-2">
                     <Label>Modo de Automação</Label>
-                    <RadioGroup value={aiPermissions.automationMode} onValueChange={(v) => setAiPermissions(p => ({...p, automationMode: v}))} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <RadioGroup value={settings.aiMode} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <RadioGroupItem value="off" id="r0" className="peer sr-only" />
                             <Label htmlFor="r0" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
@@ -161,7 +167,7 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                             </Label>
                         </div>
                         <div>
-                            <RadioGroupItem value="partial" id="r3" className="peer sr-only"/>
+                            <RadioGroupItem value="partial_autonomous" id="r3" className="peer sr-only"/>
                             <Label htmlFor="r3" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                                 <Bot className="mb-2"/>
                                 IA Operacional Parcial
@@ -170,7 +176,7 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <div>
-                                    <RadioGroupItem value="full" id="r4" className="peer sr-only" disabled />
+                                    <RadioGroupItem value="full_autonomous" id="r4" className="peer sr-only" disabled />
                                     <Label htmlFor="r4" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 opacity-60 cursor-not-allowed">
                                         <div className='relative'>
                                             <Bot className="mb-2"/>
@@ -185,11 +191,11 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                             </TooltipContent>
                         </Tooltip>
                     </RadioGroup>
-                    <Alert variant={aiPermissions.automationMode === 'full' ? 'destructive' : 'default'} className="mt-4">
+                    <Alert variant={settings.aiMode === 'full_autonomous' ? 'destructive' : 'default'} className="mt-4">
                         <Info className="h-4 w-4" />
-                        <AlertTitle>Modo selecionado: {aiPermissions.automationMode}</AlertTitle>
+                        <AlertTitle>Modo selecionado: {settings.aiMode}</AlertTitle>
                         <AlertDescription>
-                            {modeDescriptions[aiPermissions.automationMode]}
+                            {modeDescriptions[settings.aiMode]}
                         </AlertDescription>
                     </Alert>
                 </div>
@@ -204,7 +210,7 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
             <CardContent className="space-y-6">
                 <div className="space-y-2">
                     <Label>Provedor Principal</Label>
-                    <Select value={aiPermissions.primaryProvider} onValueChange={(v) => setAiPermissions(p => ({...p, primaryProvider: v}))}>
+                    <Select value={settings.activeProvider}>
                         <SelectTrigger className="w-[280px]">
                             <SelectValue placeholder="Selecione um provedor" />
                         </SelectTrigger>
@@ -280,8 +286,8 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                         id="master-prompt"
                         placeholder="Defina as instruções principais para a IA..."
                         className="min-h-[250px] font-mono text-xs"
-                        value={masterPrompt}
-                        onChange={(e) => setMasterPrompt(e.target.value)}
+                        value={draftPrompt}
+                        onChange={(e) => setDraftPrompt(e.target.value)}
                         />
                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Info className="size-4 shrink-0"/> 
@@ -292,7 +298,7 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                         <Textarea
                         id="master-prompt-published"
                         className="min-h-[250px] font-mono text-xs bg-muted/70"
-                        value={masterPrompt} // In a real app, this would be the last published version
+                        value={publishedPrompt}
                         readOnly
                         />
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -395,14 +401,13 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                             </p>
                         </div>
                         <Switch
-                            checked={aiPermissions.requireHumanApproval}
-                            onCheckedChange={(c) => setAiPermissions(p => ({...p, requireHumanApproval: c}))}
+                            checked={settings.requireHumanApproval}
                             aria-label="Exigir Aprovação Humana"
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="human-fallback">Responsável Humano (Fallback)</Label>
-                        <Input id="human-fallback" value={aiPermissions.humanFallback} onChange={(e) => setAiPermissions(p => ({...p, humanFallback: e.target.value}))}/>
+                        <Input id="human-fallback" value={settings.fallbackHumanName} />
                         <p className="text-sm text-muted-foreground">Nome do humano que receberá as solicitações que a IA não pode concluir.</p>
                     </div>
                 </div>
@@ -419,7 +424,7 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                                         {perm.description}
                                     </p>
                                 </div>
-                                 <Select value={aiPermissions.flowRouting[perm.id as keyof typeof aiPermissions.flowRouting]} onValueChange={v => setAiPermissions(p => ({...p, flowRouting: {...p.flowRouting, [perm.id]: v}}))}>
+                                 <Select value={'automatic'}>
                                     <SelectTrigger className="w-[180px]">
                                         <SelectValue placeholder="Selecione Provedor" />
                                     </SelectTrigger>
@@ -437,12 +442,11 @@ Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualifica
                 <div className="space-y-4">
                     <Label className="font-semibold flex items-center gap-2"><MessageSquare/> Autorizações de Canal</Label>
                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 rounded-md border p-4">
-                        {Object.entries(aiPermissions.channelPermissions).map(([id, checked]) => (
+                        {['whatsapp', 'instagram', 'facebook', 'website'].map((id) => (
                              <div key={id} className="flex flex-row items-center justify-between">
                                 <Label className='font-normal capitalize'>{id}</Label>
                                 <Switch
-                                    checked={checked}
-                                    onCheckedChange={(c) => setAiPermissions(p => ({...p, channelPermissions: {...p.channelPermissions, [id]: c}}))}
+                                    checked={true}
                                 />
                             </div>
                         ))}
