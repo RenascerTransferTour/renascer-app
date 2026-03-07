@@ -13,6 +13,7 @@ import {z} from 'genkit';
 const TestAiChatPromptInputSchema = z.object({
   masterPrompt: z.string().describe('The core instructions or system prompt for the AI.'),
   userPrompt: z.string().describe('The sample prompt provided by the administrator to test the AI.'),
+  provider: z.enum(['openai', 'gemini']).optional().describe('The AI provider to use for the test.'),
 });
 export type TestAiChatPromptInput = z.infer<typeof TestAiChatPromptInputSchema>;
 
@@ -29,11 +30,11 @@ const prompt = ai.definePrompt({
   name: 'testAiChatPromptBasePrompt',
   input: {schema: TestAiChatPromptInputSchema},
   output: {schema: TestAiChatPromptOutputSchema},
-  prompt: `System Prompt: {{{masterPrompt}}}
+  prompt: `System Prompt (simulating {{provider | 'gemini'}}): {{{masterPrompt}}}
 
 User Input: {{{userPrompt}}}
 
-Based on the System Prompt, generate a response to the User Input. Your response should adhere to the instructions provided in the System Prompt.`, // Combine master and user prompt
+Based on the System Prompt, generate a response to the User Input. Your response should adhere to the instructions provided in the System Prompt.`,
 });
 
 const testAiChatPromptFlow = ai.defineFlow(
@@ -44,6 +45,11 @@ const testAiChatPromptFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    if (!output) {
+      // Simulate a provider-specific error message
+      const providerName = input.provider === 'openai' ? 'OpenAI' : 'Gemini';
+      throw new Error(`Failed to get a response from the ${providerName} simulation.`);
+    }
+    return output;
   }
 );
