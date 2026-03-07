@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Badge } from "./ui/badge"
 import { Skeleton } from "./ui/skeleton"
 import type { AiSettings, AiPrompt } from "@/lib/db/data-model"
+import type { ProviderStatus } from "@/app/api/settings/ai/providers/route"
 import { cn } from "@/lib/utils"
 
 const flowPermissionsData = [
@@ -52,7 +53,7 @@ export function AiSettingsForm() {
     const [prompts, setPrompts] = useState<AiPrompt[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const [providerStatus, setProviderStatus] = useState({ gemini: false, openai: false });
+    const [providerStatus, setProviderStatus] = useState<ProviderStatus[]>([]);
     const [loadingProviders, setLoadingProviders] = useState(true);
 
     const [draftPrompt, setDraftPrompt] = useState<AiPrompt | null>(null);
@@ -78,10 +79,16 @@ export function AiSettingsForm() {
         const fetchData = async () => {
             try {
                 setLoading(true);
+                setLoadingProviders(true);
 
                 const processResponse = async (res: Response, name: string) => {
                     if (!res.ok) {
-                        throw new Error(`Falha ao buscar ${name}. Status: ${res.status}`);
+                        const errorText = await res.text();
+                        let errorDetails = errorText;
+                        try {
+                           errorDetails = JSON.parse(errorText).details || errorText;
+                        } catch (e) { /* Not a JSON response */ }
+                        throw new Error(`Falha ao buscar ${name}. Status: ${res.status}. Detalhes: ${errorDetails}`);
                     }
                     const contentType = res.headers.get("content-type");
                     if (!contentType || !contentType.includes("application/json")) {
@@ -103,7 +110,7 @@ export function AiSettingsForm() {
                 
                 setSettings(settingsData);
                 setPrompts(promptsData);
-                setProviderStatus({ gemini: providersData.geminiConfigured, openai: providersData.openaiConfigured });
+                setProviderStatus(providersData);
 
                 const draft = promptsData.find((p: AiPrompt) => p.status === 'draft');
                 const published = promptsData.find((p: AiPrompt) => p.status === 'published');
@@ -133,11 +140,34 @@ export function AiSettingsForm() {
         setIsTesting(true);
         setTestResult(null);
         try {
-            const result = await testAiChatPrompt({
-                masterPrompt: draftPrompt.content,
-                userPrompt: testUserPrompt,
-                provider: testProvider,
+            const res = await fetch('/api/ai/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    masterPrompt: draftPrompt.content,
+                    userPrompt: testUserPrompt,
+                    provider: testProvider,
+                }),
             });
+
+            if (!res.ok) {
+                 const errorBody = await res.text();
+                 let errorDetails = "Ocorreu um erro no servidor.";
+                 try {
+                     const errorJson = JSON.parse(errorBody);
+                     errorDetails = errorJson.details || errorJson.error || errorDetails;
+                 } catch (e) {
+                     console.error("Received non-JSON error response from test API", errorBody);
+                     errorDetails = `Resposta inesperada do servidor: ${errorBody.substring(0, 100)}`;
+                 }
+                 throw new Error(errorDetails);
+            }
+            
+            const result = await res.json();
+            if (result.error) {
+                 throw new Error(result.details || result.error);
+            }
+
             setTestResult(result);
         } catch (error) {
             console.error(error);
@@ -156,9 +186,12 @@ export function AiSettingsForm() {
     const modeDescriptions: Record<string, string> = {
         'off': 'A IA está completamente desligada e não interagirá com os clientes.',
         'assisted': 'IA coleta dados iniciais e então transfere para um humano para o orçamento. (Padrão)',
-        'partial': 'IA pode criar rascunhos de orçamentos e reservas, mas um humano deve aprovar.',
-        'full': 'A IA pode fechar vendas e confirmar reservas de forma autônoma. (Requer cuidado)',
+        'partial_autonomous': 'IA pode criar rascunhos de orçamentos e reservas, mas um humano deve aprovar.',
+        'full_autonomous': 'A IA pode fechar vendas e confirmar reservas de forma autônoma. (Requer cuidado)',
     }
+
+    const openaiStatus = providerStatus.find(p => p.id === 'openai');
+    const geminiStatus = providerStatus.find(p => p.id === 'gemini');
 
     if (loading || !settings) {
         return (
@@ -265,10 +298,10 @@ export function AiSettingsForm() {
                         <CardHeader className="flex-row items-start justify-between">
                             <div>
                                 <CardTitle className="text-lg">OpenAI (ChatGPT)</CardTitle>
-                                <CardDescription>gpt-4-turbo</CardDescription>
+                                <CardDescription>{openaiStatus?.model || 'gpt-4-turbo'}</CardDescription>
                             </div>
-                            <Badge variant={providerStatus.openai ? 'secondary' : 'outline'} className={cn(providerStatus.openai ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
-                                {providerStatus.openai ? 'Configurado' : 'Não Configurado'}
+                            <Badge variant={openaiStatus?.configured ? 'secondary' : 'outline'} className={cn(openaiStatus?.configured ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
+                                {loadingProviders ? 'Verificando...' : (openaiStatus?.status || 'Indisponível')}
                             </Badge>
                         </CardHeader>
                         <CardContent className="space-y-2">
@@ -278,17 +311,17 @@ export function AiSettingsForm() {
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button variant="outline" className="w-full" disabled={!providerStatus.openai}>Testar Conexão</Button>
+                            <Button variant="outline" className="w-full" disabled={!openaiStatus?.configured}>Testar Conexão</Button>
                         </CardFooter>
                     </Card>
                      <Card>
                         <CardHeader className="flex-row items-start justify-between">
                             <div>
                                 <CardTitle className="text-lg">Gemini (Google)</CardTitle>
-                                <CardDescription>gemini-2.5-flash</CardDescription>
+                                <CardDescription>{geminiStatus?.model || 'gemini-2.5-flash'}</CardDescription>
                             </div>
-                             <Badge variant={providerStatus.gemini ? 'secondary' : 'outline'} className={cn(providerStatus.gemini ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
-                                {providerStatus.gemini ? 'Configurado' : 'Não Configurado'}
+                             <Badge variant={geminiStatus?.configured ? 'secondary' : 'outline'} className={cn(geminiStatus?.configured ? 'bg-green-100 text-green-800' : 'bg-muted text-muted-foreground')}>
+                                {loadingProviders ? 'Verificando...' : (geminiStatus?.status || 'Indisponível')}
                             </Badge>
                         </CardHeader>
                         <CardContent className="space-y-2">
@@ -298,7 +331,7 @@ export function AiSettingsForm() {
                             </div>
                         </CardContent>
                         <CardFooter>
-                            <Button variant="outline" className="w-full" disabled={!providerStatus.gemini}>Testar Conexão</Button>
+                            <Button variant="outline" className="w-full" disabled={!geminiStatus?.configured}>Testar Conexão</Button>
                         </CardFooter>
                     </Card>
                 </div>
@@ -374,8 +407,8 @@ export function AiSettingsForm() {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="automatic">Automático (usa configurações)</SelectItem>
-                                                <SelectItem value="gemini" disabled={!providerStatus.gemini}>Gemini (Simulado)</SelectItem>
-                                                <SelectItem value="openai" disabled={!providerStatus.openai}>OpenAI (Simulado)</SelectItem>
+                                                <SelectItem value="gemini" disabled={!geminiStatus?.configured}>Gemini (Simulado)</SelectItem>
+                                                <SelectItem value="openai" disabled={!openaiStatus?.configured}>OpenAI (Simulado)</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
