@@ -278,6 +278,13 @@ export default function ChannelsPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                             <Alert>
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                <AlertTitle>Conexão Ativa</AlertTitle>
+                                <AlertDescription>
+                                    O canal está conectado e funcionando. Última verificação bem-sucedida {fbChannel?.lastChecked ? formatDistanceToNow(new Date(fbChannel.lastChecked), { addSuffix: true, locale: ptBR }) : 'recentemente'}.
+                                </AlertDescription>
+                            </Alert>
                             <p className="text-sm text-muted-foreground">Conecte sua página do Facebook para centralizar o atendimento.</p>
                              <div className="space-y-2">
                                 <Label>Page ID</Label>
