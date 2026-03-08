@@ -1,208 +1,145 @@
 
 """
-A user of the system, typically an operator or administrator.
+Represents an article in the knowledge base.
 """
-type Users @table(name: "users") {
-  userId: String! @column(name: "user_id") @primaryKey
-  fullName: String @column(name: "full_name")
-  email: String! @column(name: "email")
-  roleId: String @column(name: "role_id")
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
-}
-
-"""
-Defines a role in the system, like 'admin' or 'agent'.
-"""
-type Roles @table(name: "roles") {
-  roleId: String! @column(name: "role_id") @primaryKey
-  roleName: String! @column(name: "role_name")
-}
-
-"""
-Joins table for Users and Roles.
-"""
-type UserRoles @table(name: "user_roles") {
-  userRoleId: String! @column(name: "user_role_id") @primaryKey
-  userId: String! @column(name: "user_id")
-  roleId: String! @column(name: "role_id")
-}
-
-"""
-Represents an external contact (customer, lead).
-"""
-type Contacts @table(name: "contacts") {
-  contactId: String! @column(name: "contact_id") @primaryKey
-  fullName: String @column(name: "full_name")
-  phone: String
-  email: String
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
-}
-
-"""
-A sales opportunity in the CRM pipeline.
-"""
-type Deals @table(name: "deals") {
-  dealId: String! @column(name: "deal_id") @primaryKey
-  contactId: String! @column(name: "contact_id")
-  title: String!
-  pipelineStage: String @column(name: "pipeline_stage")
-  estimatedValue: Float @column(name: "estimated_value")
-  ownerId: String @column(name: "owner_id")
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
-}
-
-"""
-A conversation thread with a contact.
-"""
-type Conversations @table(name: "conversations") {
-  conversationId: String! @column(name: "conversation_id") @primaryKey
-  contactId: String! @column(name: "contact_id")
-  channelId: String! @column(name: "channel_id")
-  status: String
-  priority: String
-  lastMessage: String @column(name: "last_message")
-  lastMessageAt: Timestamp @column(name: "last_message_at")
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
-}
-
-"""
-An individual message within a conversation.
-"""
-type Messages @table(name: "messages") {
-  messageId: String! @column(name: "message_id") @primaryKey
-  conversationId: String! @column(name: "conversation_id")
-  senderType: String @column(name: "sender_type")
+type KnowledgeBaseArticle {
+  id: ID!
+  category: String
   content: String
-  contentType: String @column(name: "content_type")
-  createdAt: Timestamp @column(name: "created_at")
-}
-
-"""
-A price quote for a service.
-"""
-type Quotes @table(name: "quotes") {
-  quoteId: String! @column(name: "quote_id") @primaryKey
-  contactId: String! @column(name: "contact_id")
-  conversationId: String! @column(name: "conversation_id")
+  createdAt: Timestamp!
+  isEligibleForAI: Boolean
   status: String
   summary: String
-  priceMin: Float @column(name: "price_min")
-  priceMax: Float @column(name: "price_max")
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
-}
-
-"""
-A confirmed booking for a service.
-"""
-type Reservations @table(name: "reservations") {
-  reservationId: String! @column(name: "reservation_id") @primaryKey
-  contactId: String! @column(name: "contact_id")
-  quoteId: String! @column(name: "quote_id")
-  status: String
-  service: String
-  details: String
-  scheduledDate: Timestamp @column(name: "scheduled_date")
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
-}
-
-"""
-An event on the operational calendar.
-"""
-type CalendarEvents @table(name: "calendar_events") {
-  eventId: String! @column(name: "event_id") @primaryKey
-  reservationId: String @column(name: "reservation_id")
   title: String!
-  eventType: String! @column(name: "event_type")
-  startTime: Timestamp! @column(name: "start_time")
-  endTime: Timestamp! @column(name: "end_time")
+  updatedAt: Timestamp!
+}
+
+"""
+Represents a customer or lead contact.
+"""
+type Contact {
+  id: ID!
+  avatar: String
+  createdAt: Timestamp!
+  email: String
+  fullName: String!
+  language: String
+  phone: String
+  updatedAt: Timestamp!
+}
+
+"""
+Represents a conversation with a contact.
+"""
+type Conversation {
+  id: ID!
+  contact: Contact!
+  createdAt: Timestamp!
+  isAiActive: Boolean
+  lastMessage: String
+  lastMessageAt: Timestamp
+  priority: String
   status: String!
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
+  updatedAt: Timestamp!
 }
 
 """
-A log of significant actions in the system.
+Represents a sales deal in the CRM pipeline.
 """
-type AuditLogs @table(name: "audit_logs") {
-  logId: String! @column(name: "log_id") @primaryKey
-  actor: String!
-  actorType: String! @column(name: "actor_type")
-  entityType: String! @column(name: "entity_type")
-  entityId: String! @column(name: "entity_id")
-  eventType: String! @column(name: "event_type")
-  notes: String
-  createdAt: Timestamp @column(name: "created_at")
-}
-
-"""
-An article in the internal knowledge base.
-"""
-type KnowledgeBaseArticles @table(name: "kb_articles") {
-  articleId: String! @column(name: "article_id") @primaryKey
-  category: String!
+type Deal {
+  id: ID!
+  contact: Contact!
+  createdAt: Timestamp!
+  estimatedValue: Float
+  owner: User
+  pipelineStage: String!
+  status: String
   title: String!
-  summary: String
+  updatedAt: Timestamp!
+}
+
+"""
+Represents a single message within a conversation.
+"""
+type Message {
+  id: ID!
+  authorName: String
   content: String!
-  authorId: String! @column(name: "author_id")
-  status: String!
-  isEligibleForAI: Boolean @column(name: "is_eligible_for_ai")
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
+  conversation: Conversation!
+  createdAt: Timestamp!
+  senderType: String!
 }
 
 """
-Global settings for the AI.
+Represents a price quote provided to a contact.
 """
-type AISettings @table(name: "ai_settings") {
-  settingsId: String! @column(name: "settings_id") @primaryKey
-  globalAiEnabled: Boolean @column(name: "global_ai_enabled")
-  aiMode: String @column(name: "ai_mode")
-  activeProvider: String @column(name: "active_provider")
-  isFallbackEnabled: Boolean @column(name: "is_fallback_enabled")
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
+type Quote {
+  id: ID!
+  contact: Contact!
+  createdAt: Timestamp!
+  priceRange: String
+  status: String!
+  summary: String!
+  updatedAt: Timestamp!
 }
 
 """
-Represents a commercial license key for autonomous AI features.
+Represents a confirmed or pending service reservation.
 """
-type ActivationKeys @table(name: "activation_keys") {
-  keyId: String! @column(name: "key_id") @primaryKey
-  keyHash: String! @column(name: "key_hash")
+type Reservation {
+  id: ID!
+  contact: Contact!
+  createdAt: Timestamp!
+  details: String
+  reservedBy: String
+  scheduledDate: Timestamp
+  service: String
   status: String!
-  createdAt: Timestamp @column(name: "created_at")
-  expiresAt: Timestamp @column(name: "expires_at")
+  updatedAt: Timestamp!
 }
 
 """
-Represents a specific channel account (e.g., a WhatsApp number).
+Represents an event in the operational calendar.
 """
-type ChannelAccounts @table(name: "channel_accounts") {
-  accountId: String! @column(name: "account_id") @primaryKey
-  channelType: String! @column(name: "channel_type")
-  accountIdentifier: String! @column(name: "account_identifier") # e.g., phone number or IG handle
-  status: String!
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
+type CalendarEvent {
+  id: ID!
+  createdAt: Timestamp!
+  end: Timestamp
+  eventType: String
+  start: Timestamp
+  status: String
+  title: String!
+  updatedAt: Timestamp!
 }
 
 """
-Manages the connection credentials and settings for channel accounts.
+Represents a log of actions performed in the system.
 """
-type ChannelConnections @table(name: "channel_connections") {
-  connectionId: String! @column(name: "connection_id") @primaryKey
-  accountId: String! @column(name: "account_id")
-  provider: String! # e.g., 'meta', 'google'
-  credentials: JSON @column(name: "credentials")
-  status: String!
-  lastChecked: Timestamp @column(name: "last_checked")
-  lastError: String @column(name: "last_error")
-  createdAt: Timestamp @column(name: "created_at")
-  updatedAt: Timestamp @column(name: "updated_at")
+type AuditLog {
+  id: ID!
+  actor: String
+  actorType: String
+  after: String
+  before: String
+  channel: String
+  contact: Contact
+  createdAt: Timestamp!
+  entityId: String
+  entityType: String
+  eventType: String
+  notes: String
+  source: String
+}
+
+"""
+Represents an operator or user of the system.
+"""
+type User {
+  id: ID!
+  avatar: String
+  createdAt: Timestamp!
+  email: String!
+  fullName: String
+  role: String
+  updatedAt: Timestamp!
 }
