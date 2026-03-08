@@ -1,8 +1,362 @@
-"""
-A user of the application.
-"""
-type User @table(key: "id") {
-  id: String!
-  name: String
-  email: String!
+# GraphQL Schema for Renascer Transfer Tour - Phase 2 Backend Foundation
+
+# --- Enums for status and categorization ---
+
+enum UserSystemRole {
+  ADMIN
+  AGENT
+  VIEWER
+}
+
+enum ContactStatus {
+  NEW
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+enum DealStage {
+  NEW_LEAD
+  QUALIFIED
+  QUOTE_SENT
+  NEGOTIATION
+  UNCONFIRMED
+  CLOSED_WON
+  CLOSED_LOST
+  CANCELED
+  AWAITING_CLOSURE
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  PENDING
+  AWAITING_HUMAN
+  AI_ASSISTED
+}
+
+enum MessageDirection {
+  INBOUND
+  OUTBOUND
+}
+
+enum QuoteStatus {
+  DRAFT
+  REVIEW_PENDING
+  SENT
+  UNCONFIRMED
+  APPROVED
+  LOST
+  CANCELED
+}
+
+enum ReservationStatus {
+  PENDING
+  UNCONFIRMED
+  CONFIRMED
+  RESCHEDULED
+  COMPLETED
+  CANCELED
+}
+
+enum CalendarEventType {
+  PICKUP
+  TRANSFER
+  TOUR
+  BOOKING
+  MAINTENANCE
+  OTHER
+}
+
+enum AuditActorType {
+  HUMAN
+  AI
+  SYSTEM
+  CUSTOMER
+}
+
+enum KnowledgeBaseStatus {
+  DRAFT
+  REVIEWED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AiMode {
+  OFF
+  ASSISTED
+  PARTIAL_AUTONOMOUS
+  FULL_AUTONOMOUS
+}
+
+enum ActivationKeyStatus {
+  ACTIVE
+  INACTIVE
+  REVOKED
+}
+
+enum ChannelType {
+  WHATSAPP
+  INSTAGRAM
+  FACEBOOK
+  WEBSITE
+  MANUAL
+}
+
+enum ConnectionStatus {
+  NOT_CONFIGURED
+  CONNECTED
+  DISCONNECTED
+  AWAITING_QR
+  FAILING
+  MOCK
+}
+
+# --- Core Relational Schema ---
+
+type User @table(name: "users") {
+  id: ID! @column(name: "id", primaryKey: true)
+  fullName: String! @column(name: "full_name")
+  email: String! @column(name: "email", unique: true)
+  hashedPassword: String @column(name: "hashed_password")
+  isActive: Boolean! @column(name: "is_active", default: "true")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  roles: [UserRole] @relationship(through: "UserRoleMapping", from: "user", to: "role")
+}
+
+type Role @table(name: "roles") {
+  id: ID! @column(name: "id", primaryKey: true)
+  name: UserSystemRole! @column(name: "name", unique: true)
+  users: [User] @relationship(through: "UserRoleMapping", from: "role", to: "user")
+}
+
+type UserRoleMapping @table(name: "user_roles") {
+  user: User! @relationship(name: "user_role_to_user", field: "userId")
+  userId: ID! @column(name: "user_id")
+  role: Role! @relationship(name: "user_role_to_role", field: "roleId")
+  roleId: ID! @column(name: "role_id")
+}
+
+type Contact @table(name: "contacts") {
+  id: ID! @column(name: "id", primaryKey: true)
+  name: String! @column(name: "name")
+  phone: String @column(name: "phone", unique: true)
+  email: String @column(name: "email", unique: true)
+  source: String @column(name: "source")
+  notes: String @column(name: "notes")
+  status: ContactStatus! @column(name: "status", default: "'NEW'")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  deals: [Deal] @relationship(name: "contact_to_deals", field: "contactId")
+  conversations: [Conversation] @relationship(name: "contact_to_conversations", field: "contactId")
+}
+
+type Deal @table(name: "deals") {
+  id: ID! @column(name: "id", primaryKey: true)
+  title: String! @column(name: "title")
+  stage: DealStage! @column(name: "stage", default: "'NEW_LEAD'")
+  estimatedValue: Float @column(name: "estimated_value")
+  nextAction: String @column(name: "next_action")
+  aiSuggestion: String @column(name: "ai_suggestion")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  
+  contact: Contact! @relationship(name: "deal_to_contact", field: "contactId")
+  contactId: ID! @column(name: "contact_id")
+  
+  assignedTo: User @relationship(name: "deal_to_user_assigned", field: "assignedToId")
+  assignedToId: ID @column(name: "assigned_to_id")
+  
+  approvedBy: User @relationship(name: "deal_to_user_approved", field: "approvedById")
+  approvedById: ID @column(name: "approved_by_id")
+  
+  quote: Quote @relationship(name: "deal_to_quote", field: "dealId")
+}
+
+type Conversation @table(name: "conversations") {
+  id: ID! @column(name: "id", primaryKey: true)
+  status: ConversationStatus! @column(name: "status", default: "'OPEN'")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  
+  contact: Contact! @relationship(name: "conversation_to_contact", field: "contactId")
+  contactId: ID! @column(name: "contact_id")
+  
+  channel: ChannelConnection! @relationship(name: "conversation_to_channel", field: "channelId")
+  channelId: ID! @column(name: "channel_id")
+  
+  assignedTo: User @relationship(name: "conversation_to_user", field: "assignedToId")
+  assignedToId: ID @column(name: "assigned_to_id")
+
+  messages: [Message] @relationship(name: "conversation_to_messages", field: "conversationId")
+}
+
+type Message @table(name: "messages") {
+  id: ID! @column(name: "id", primaryKey: true)
+  direction: MessageDirection! @column(name: "direction")
+  content: String! @column(name: "content")
+  sentAt: Timestamp! @column(name: "sent_at", default: "now()")
+  
+  conversation: Conversation! @relationship(name: "message_to_conversation", field: "conversationId")
+  conversationId: ID! @column(name: "conversation_id")
+}
+
+type Quote @table(name: "quotes") {
+  id: ID! @column(name: "id", primaryKey: true)
+  origin: String @column(name: "origin")
+  destination: String @column(name: "destination")
+  serviceDate: Timestamp @column(name: "service_date")
+  passengers: Int @column(name: "passengers")
+  bags: Int @column(name: "bags")
+  aiSuggestedValue: Float @column(name: "ai_suggested_value")
+  finalApprovedValue: Float @column(name: "final_approved_value")
+  status: QuoteStatus! @column(name: "status", default: "'DRAFT'")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  
+  contact: Contact! @relationship(name: "quote_to_contact", field: "contactId")
+  contactId: ID! @column(name: "contact_id")
+  
+  deal: Deal! @relationship(name: "quote_to_deal", field: "dealId")
+  dealId: ID! @column(name: "deal_id")
+
+  assignedTo: User @relationship(name: "quote_to_user_assigned", field: "assignedToId")
+  assignedToId: ID @column(name: "assigned_to_id")
+  
+  approvedBy: User @relationship(name: "quote_to_user_approved", field: "approvedById")
+  approvedById: ID @column(name: "approved_by_id")
+  
+  reservation: Reservation @relationship(name: "quote_to_reservation", field: "quoteId")
+}
+
+type Reservation @table(name: "reservations") {
+  id: ID! @column(name: "id", primaryKey: true)
+  origin: String @column(name: "origin")
+  destination: String @column(name: "destination")
+  serviceDate: Timestamp! @column(name: "service_date")
+  passengers: Int @column(name: "passengers")
+  bags: Int @column(name: "bags")
+  status: ReservationStatus! @column(name: "status", default: "'PENDING'")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+  
+  contact: Contact! @relationship(name: "reservation_to_contact", field: "contactId")
+  contactId: ID! @column(name: "contact_id")
+  
+  quote: Quote! @relationship(name: "reservation_to_quote", field: "quoteId")
+  quoteId: ID! @column(name: "quote_id")
+
+  assignedTo: User @relationship(name: "reservation_to_user_assigned", field: "assignedToId")
+  assignedToId: ID @column(name: "assigned_to_id")
+  
+  confirmedBy: User @relationship(name: "reservation_to_user_confirmed", field: "confirmedById")
+  confirmedById: ID @column(name: "confirmed_by_id")
+  
+  calendarEvent: CalendarEvent @relationship(name: "reservation_to_event", field: "reservationId")
+}
+
+type CalendarEvent @table(name: "calendar_events") {
+  id: ID! @column(name: "id", primaryKey: true)
+  title: String! @column(name: "title")
+  serviceDate: Timestamp! @column(name: "service_date")
+  status: ReservationStatus! @column(name: "status")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  
+  reservation: Reservation @relationship(name: "event_to_reservation", field: "reservationId")
+  reservationId: ID @column(name: "reservation_id")
+  
+  assignedTo: User @relationship(name: "event_to_user_assigned", field: "assignedToId")
+  assignedToId: ID @column(name: "assigned_to_id")
+}
+
+type AuditLog @table(name: "audit_logs") {
+  id: ID! @column(name: "id", primaryKey: true)
+  actorType: AuditActorType! @column(name: "actor_type")
+  actorLabel: String! @column(name: "actor_label")
+  eventType: String! @column(name: "event_type")
+  entityType: String! @column(name: "entity_type")
+  entityId: String! @column(name: "entity_id")
+  beforeJson: JSON @column(name: "before_json")
+  afterJson: JSON @column(name: "after_json")
+  notes: String @column(name: "notes")
+  source: String @column(name: "source")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+}
+
+type KnowledgeBaseArticle @table(name: "knowledge_base_articles") {
+  id: ID! @column(name: "id", primaryKey: true)
+  title: String! @column(name: "title")
+  category: String! @column(name: "category")
+  summary: String @column(name: "summary")
+  content: String! @column(name: "content")
+  status: KnowledgeBaseStatus! @column(name: "status", default: "'DRAFT'")
+  isEligibleForAI: Boolean! @column(name: "is_eligible_for_ai", default: "false")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+}
+
+type AiSetting @table(name: "ai_settings") {
+  id: ID! @column(name: "id", primaryKey: true)
+  mode: AiMode! @column(name: "mode", default: "'ASSISTED'")
+  activationStatus: ActivationKeyStatus! @column(name: "activation_status", default: "'INACTIVE'")
+  openaiStatus: ConnectionStatus! @column(name: "openai_status", default: "'NOT_CONFIGURED'")
+  geminiStatus: ConnectionStatus! @column(name: "gemini_status", default: "'NOT_CONFIGURED'")
+  manualFinalizationRequired: Boolean! @column(name: "manual_finalization_required", default: "true")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+}
+
+type ActivationKey @table(name: "activation_keys") {
+  id: ID! @column(name: "id", primaryKey: true)
+  keyLabel: String! @column(name: "key_label", unique: true)
+  status: ActivationKeyStatus! @column(name: "status", default: "'INACTIVE'")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+}
+
+type ChannelAccount @table(name: "channel_accounts") {
+  id: ID! @column(name: "id", primaryKey: true)
+  channelType: ChannelType! @column(name: "channel_type")
+  accountName: String! @column(name: "account_name")
+  accountIdentifier: String @column(name: "account_identifier", unique: true)
+  status: ConnectionStatus! @column(name: "status", default: "'NOT_CONFIGURED'")
+  createdAt: Timestamp! @column(name: "created_at", default: "now()")
+  updatedAt: Timestamp! @column(name: "updated_at", default: "now()")
+}
+
+type ChannelConnection @table(name: "channel_connections") {
+  id: ID! @column(name: "id", primaryKey: true)
+  deviceName: String @column(name: "device_name")
+  connectionStatus: ConnectionStatus! @column(name: "connection_status", default: "'NOT_CONFIGURED'")
+  lastPairedAt: Timestamp @column(name: "last_paired_at")
+  
+  channelAccount: ChannelAccount! @relationship(name: "connection_to_account", field: "channelAccountId")
+  channelAccountId: ID! @column(name: "channel_account_id")
+}
+
+type Query {
+  user(id: ID!): User @resolver(name: "postgres-connector::users_get")
+  users: [User!]! @resolver(name: "postgres-connector::users_list")
+  contact(id: ID!): Contact @resolver(name: "postgres-connector::contacts_get")
+  contacts: [Contact!]! @resolver(name: "postgres-connector::contacts_list")
+  deal(id: ID!): Deal @resolver(name: "postgres-connector::deals_get")
+  deals: [Deal!]! @resolver(name: "postgres-connector::deals_list")
+}
+
+type Mutation {
+  createUser(
+    fullName: String!
+    email: String!
+  ): User @resolver(name: "postgres-connector::users_create")
+  createContact(
+    name: String!
+    phone: String
+    email: String
+    source: String
+  ): Contact @resolver(name: "postgres-connector::contacts_create")
+  createDeal(
+    title: String!
+    contactId: ID!
+    estimatedValue: Float
+  ): Deal @resolver(name: "postgres-connector::deals_create")
 }
