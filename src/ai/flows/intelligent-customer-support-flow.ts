@@ -1,6 +1,7 @@
 'use server';
 /**
  * @fileOverview This file implements a Genkit flow for an intelligent customer support AI.
+ * It uses the MAGNUS system prompt for structured, rule-based responses.
  *
  * - intelligentCustomerSupport - A function that handles customer inquiries, gathers information,
  *   provides automated responses, and escalates to human agents when necessary.
@@ -11,8 +12,9 @@
 import { ai } from '@/ai/genkit';
 import { getActiveModel } from '@/ai/utils';
 import { z } from 'zod';
+import { MAGNUS_SYSTEM_PROMPT } from '@/ai/prompts/magnus';
 
-// Input Schema
+// Input Schema - remains the same as it provides the necessary context.
 const IntelligentCustomerSupportInputSchema = z.object({
   customerMessage: z.string().describe('The latest message from the customer.'),
   conversationHistory: z.array(z.object({
@@ -23,25 +25,33 @@ const IntelligentCustomerSupportInputSchema = z.object({
 
 export type IntelligentCustomerSupportInput = z.infer<typeof IntelligentCustomerSupportInputSchema>;
 
-// Output Schema
+// Output Schema - updated to match the MAGNUS prompt's structured JSON output.
 const IntelligentCustomerSupportOutputSchema = z.object({
-  aiResponse: z.string().describe('The AI\'s response to the customer.'),
-  escalateToHuman: z.boolean().describe('True if the conversation needs to be escalated to a human agent, false otherwise.'),
-  gatheredInformation: z.object({
-    customerName: z.string().nullable().describe('Name of the customer, if provided.'),
-    customerPhone: z.string().nullable().describe('Phone number of the customer, if provided.'),
-    originChannel: z.string().nullable().describe('Channel through which the customer is contacting (e.g., WhatsApp, Instagram).'),
-    serviceType: z.string().nullable().describe('Type of service the customer is inquiring about (e.g., Transfer, Turismo, Executivo, Corporativo, Eventos, Viagens Longas).'),
-    destination: z.string().nullable().describe('Desired destination, if applicable.'),
-    departureDate: z.string().nullable().describe('Requested departure date, in a YYYY-MM-DD format if possible.'),
-    departureTime: z.string().nullable().describe('Requested departure time, in a HH:MM format if possible.'),
-    numberOfPassengers: z.number().nullable().describe('Number of passengers, if specified.'),
-    luggageDetails: z.string().nullable().describe('Details about luggage, if mentioned.'),
-    urgencyLevel: z.enum(['low', 'medium', 'high']).nullable().describe('Urgency level of the request, if implied or stated.'),
-    interestLevel: z.enum(['low', 'medium', 'high']).nullable().describe('Customer\'s interest level, if implied or stated.'),
-    observations: z.string().nullable().describe('Any other relevant observations or details.'),
-  }).describe('Structured information extracted from the conversation.'),
-}).describe('Output from the intelligent customer support flow.');
+  should_reply: z.boolean().describe('Indicates if the system should send a reply.'),
+  silence_reason: z.string().nullable().describe('Reason for not replying.'),
+  language: z.enum(['pt', 'en', 'es']).describe('Detected language of the customer.'),
+  customer_type: z.string().describe('Type of customer.'),
+  stage: z.string().describe('Current stage of the conversation.'),
+  handoff_to_claudia: z.boolean().describe('Indicates if the conversation should be handed off to Claudia.'),
+  form_sent: z.boolean().describe('Indicates if the data collection form has been sent.'),
+  close_conversation: z.boolean().describe('Indicates if the conversation should be closed for the AI.'),
+  service_type: z.string().describe('Detected service type.'),
+  intent: z.string().describe('Detected user intent.'),
+  collected_data: z.object({
+    customer_name: z.string().nullable(),
+    origin: z.string().nullable(),
+    destination: z.string().nullable(),
+    date: z.string().nullable(),
+    time: z.string().nullable(),
+    passengers: z.number().nullable(),
+    bags: z.number().nullable(),
+    bag_size: z.string().nullable(),
+    child: z.boolean().nullable(),
+    region_interest: z.string().nullable(),
+    trip_destination_city: z.string().nullable(),
+  }),
+  messages: z.array(z.string()).describe('A list of messages for the AI to send.'),
+});
 
 export type IntelligentCustomerSupportOutput = z.infer<typeof IntelligentCustomerSupportOutputSchema>;
 
@@ -52,30 +62,14 @@ export async function intelligentCustomerSupport(
   return intelligentCustomerSupportFlow(input);
 }
 
-// Prompt definition
+// Prompt definition - now using the imported MAGNUS prompt as a system prompt.
 const intelligentCustomerSupportPrompt = ai.definePrompt({
   name: 'intelligentCustomerSupportPrompt',
+  system: MAGNUS_SYSTEM_PROMPT,
   input: { schema: IntelligentCustomerSupportInputSchema },
   output: { schema: IntelligentCustomerSupportOutputSchema },
-  prompt: `You are a premium virtual assistant for "Renascer Transfer Tour", specializing in executive transport, transfers, and tours. Your tone is professional, welcoming, and efficient. You are a pre-service assistant. Your main goal is lead qualification and conversation organization.
-
-Your primary goals are:
-1.  **Welcome the user warmly**: Start with a professional and friendly greeting, introducing yourself as the virtual assistant for Renascer Transfer Tour.
-2.  **Understand the user's need**: Quickly identify if they need a 'Transfer', 'Turismo', 'Transporte Executivo', 'Serviço para Eventos', or 'Viagem Longa'.
-3.  **Extract Information**: Fill in the 'gatheredInformation' object with all relevant details you can find from the entire conversation. If a piece of information is not available or unclear, set the corresponding field to 'null'.
-4.  **DO NOT PROVIDE PRICES OR QUOTES**: You are not authorized to give final prices or create quotes. Your role is to collect data.
-5.  **Formulate a Handoff Response**: When the user requests a price or has provided enough information for a quote, your 'aiResponse' must state that you have gathered the necessary information and that a human specialist will take over.
-    - Example response: "Obrigada pelas informações! Coletei tudo que preciso. A Cláudia, nossa especialista, irá preparar seu orçamento e entrará em contato em breve."
-6.  **Decide on Escalation**: Set 'escalateToHuman' to 'true' in the following situations:
-    - The user has provided enough information to generate a quote (e.g., origin, destination, date, number of passengers).
-    - The customer explicitly requests to speak to a human (e.g., "quero falar com uma pessoa", "falar com atendente", "falar com Cláudia").
-    - The inquiry is about a complaint, a very complex event, or a sensitive matter.
-    - The customer expresses clear frustration or confusion.
-    - You have already asked for key information twice and the customer has not provided it.
-Otherwise, set 'escalateToHuman' to 'false' and continue the automated qualification service.
-
-Conversation History:
-{{#if conversationHistory}}
+  prompt: `{{#if conversationHistory}}
+--- CONVERSATION HISTORY START ---
 {{#each conversationHistory}}
 {{#if (eq role "user")}}
 Customer: {{{content}}}
@@ -83,11 +77,10 @@ Customer: {{{content}}}
 AI: {{{content}}}
 {{/if}}
 {{/each}}
-{{else}}
-No previous conversation history. This is the first message.
+--- CONVERSATION HISTORY END ---
 {{/if}}
 
-Latest Customer Message: {{{customerMessage}}}`
+Latest Customer Message: {{{customerMessage}}}`,
 });
 
 // Flow definition
@@ -100,45 +93,38 @@ const intelligentCustomerSupportFlow = ai.defineFlow(
   async (input) => {
     const activeModel = await getActiveModel();
     if (!activeModel) {
+        // Return a valid output shape for the error case, respecting the new schema.
         return {
-            aiResponse: "Desculpe, nosso sistema de IA está temporariamente indisponível. Um atendente humano irá ajudá-lo em breve.",
-            escalateToHuman: true,
-            gatheredInformation: {
-                customerName: null,
-                customerPhone: null,
-                originChannel: null,
-                serviceType: null,
-                destination: null,
-                departureDate: null,
-                departureTime: null,
-                numberOfPassengers: null,
-                luggageDetails: null,
-                urgencyLevel: 'medium',
-                interestLevel: 'medium',
-                observations: 'AI provider not configured, escalating immediately.'
-            }
+            should_reply: true,
+            silence_reason: 'ai_provider_not_configured',
+            language: 'pt',
+            customer_type: 'unknown',
+            stage: 'error',
+            handoff_to_claudia: true,
+            form_sent: false,
+            close_conversation: true,
+            service_type: 'unknown',
+            intent: 'error',
+            collected_data: { customer_name: null, origin: null, destination: null, date: null, time: null, passengers: null, bags: null, bag_size: null, child: null, region_interest: null, trip_destination_city: null },
+            messages: ["Desculpe, nosso sistema de IA está temporariamente indisponível. Um atendente humano irá ajudá-lo em breve."]
         };
     }
     const { output } = await intelligentCustomerSupportPrompt(input, { model: activeModel });
     if (!output) {
       // In case the model fails to return a structured output
       return {
-            aiResponse: "Ocorreu um problema ao processar sua solicitação com a IA. Um atendente humano irá ajudá-lo.",
-            escalateToHuman: true,
-            gatheredInformation: {
-                customerName: null,
-                customerPhone: null,
-                originChannel: null,
-                serviceType: null,
-                destination: null,
-                departureDate: null,
-                departureTime: null,
-                numberOfPassengers: null,
-                luggageDetails: null,
-                urgencyLevel: 'medium',
-                interestLevel: 'medium',
-                observations: 'AI failed to return structured output.'
-            }
+            should_reply: true,
+            silence_reason: 'ai_failed_to_return_structured_output',
+            language: 'pt',
+            customer_type: 'unknown',
+            stage: 'error',
+            handoff_to_claudia: true,
+            form_sent: false,
+            close_conversation: true,
+            service_type: 'unknown',
+            intent: 'error',
+            collected_data: { customer_name: null, origin: null, destination: null, date: null, time: null, passengers: null, bags: null, bag_size: null, child: null, region_interest: null, trip_destination_city: null },
+            messages: ["Ocorreu um problema ao processar sua solicitação com a IA. Um atendente humano irá ajudá-lo."]
         };
     }
     return output;
