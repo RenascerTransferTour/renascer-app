@@ -335,3 +335,69 @@ Padronizar:
   "messages": []
 }
 ```
+
+---
+
+## Exemplo 6 — Cliente pede para falar com a Cláudia
+
+### Request
+```json
+{
+  "conversation_id": "conv_106",
+  "customer_id": "cust_106",
+  "timestamp": "2026-03-08T15:25:00-03:00",
+  "channel": "whatsapp",
+  "has_text": true,
+  "has_media": false,
+  "media_types": [],
+  "last_customer_message": "Quero falar com a Claudia",
+  "message_language_hint": "pt",
+  "metadata": {
+    "is_saved_contact": false,
+    "internal": false,
+    "team": false,
+    "driver": false,
+    "partner": false,
+    "human_active": false
+  },
+  "state": {
+    "customer_name": null,
+    "form_sent": false,
+    "human_takeover": false,
+    "conversation_closed": false,
+    "service_type": "unknown"
+  }
+}
+```
+
+### Response
+```json
+{
+  "should_reply": true,
+  "silence_reason": null,
+  "language": "pt",
+  "customer_type": "external_customer",
+  "stage": "handoff",
+  "handoff_to_claudia": true,
+  "form_sent": false,
+  "close_conversation": true,
+  "service_type": "unknown",
+  "intent": "talk_to_claudia",
+  "collected_data": {
+    "customer_name": null,
+    "origin": null,
+    "destination": null,
+    "date": null,
+    "time": null,
+    "passengers": null,
+    "bags": null,
+    "bag_size": null,
+    "child": null,
+    "region_interest": null,
+    "trip_destination_city": null
+  },
+  "messages": [
+    "Perfeito. Vou redirecionar seu atendimento para a Administradora Claudia Rosani Vaz da Silva; em instantes ela dará continuidade 😊"
+  ]
+}
+```
