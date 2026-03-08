@@ -18,7 +18,3 @@ connectors:
     config:
       database: '${db.name}'
       connectionUri: 'postgresql://${db.user}:${db.password}@${db.host}:${db.port}/${db.name}?sslmode=require'
-
-# Defines how Data Connect maps GraphQL types and fields to the database.
-# We will use the default mapping, which is sufficient for this schema.
-# customMappings: ...
