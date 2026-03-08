@@ -316,7 +316,7 @@ Padronizar:
   "stage": "silent",
   "handoff_to_claudia": false,
   "form_sent": false,
-  "close_conversation": true,
+  "close_conversation": false,
   "service_type": "unknown",
   "intent": "none",
   "collected_data": {
