@@ -31,7 +31,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { type TestAiChatPromptOutput } from "@/ai/flows/test-ai-chat-prompt-flow"
 import { useToast } from "@/hooks/use-toast"
-import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle, ShieldOff, Check, Ban, UserCheck, Eye, EyeOff } from "lucide-react"
+import { Loader2, AlertTriangle, ShieldCheck, Bot, Info, History, SlidersHorizontal, MessageSquare, Workflow, Lock, KeyRound, Server, ChevronRight, Power, HelpCircle, CheckCircle, XCircle, ShieldOff, Check, Ban, UserCheck, Eye, EyeOff, Mic, Video, Image, FileText } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Badge } from "./ui/badge"
@@ -77,6 +77,13 @@ export function AiSettingsForm() {
     const [testProvider, setTestProvider] = useState<'openai' | 'gemini' | 'automatic'>('automatic');
     const [visualApiKeys, setVisualApiKeys] = useState<{[key: string]: string}>({ openai: '', gemini: '' });
     const [showApiKey, setShowApiKey] = useState<{[key: string]: boolean}>({ openai: false, gemini: false });
+
+    const mediaPermissions = [
+        { id: 'allowImageGeneration', label: 'Geração de Imagens', description: 'Permite criar imagens a partir de texto (text-to-image).', icon: Image },
+        { id: 'allowAudioGeneration', label: 'Geração de Áudio (TTS)', description: 'Permite converter texto em áudio para respostas faladas.', icon: Mic },
+        { id: 'allowVideoGeneration', label: 'Geração de Vídeos', description: 'Permite criar pequenos vídeos a partir de texto ou imagens.', icon: Video },
+        { id: 'allowFileGeneration', label: 'Geração de Documentos', description: 'Permite criar arquivos como PDFs (ex: cotações).', icon: FileText },
+    ];
 
     const fetchData = useCallback(async () => {
         try {
@@ -418,6 +425,79 @@ export function AiSettingsForm() {
                 </Card>
             </div>
         </div>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Geração de Mídia por IA</CardTitle>
+                <CardDescription>Controle a capacidade da IA de gerar e enviar áudio, vídeo, imagens ou documentos.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                        <Label className="text-base flex items-center gap-2">
+                            <Badge className={cn(getStatusBadgeClasses('disconnected'))}>
+                                Autorização não concedida
+                            </Badge>
+                            <span>Ativação de Mídia</span>
+                        </Label>
+                        <p className="text-sm text-muted-foreground">Permite que a IA envie mídias reais em vez de apenas criar sugestões.</p>
+                    </div>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <span className="inline-flex">
+                                <Button disabled>
+                                    <KeyRound className="mr-2"/>
+                                    Autorizar Mídia
+                                </Button>
+                            </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>A ativação real será configurada futuramente no backend.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </div>
+                
+                <Separator />
+
+                <div>
+                    <h4 className="text-md font-medium mb-1">Permissões por tipo de mídia</h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                        Defina quais tipos de mídia a IA pode gerar. Desativado até que a chave principal seja autorizada.
+                    </p>
+                    <div className="space-y-4">
+                        {mediaPermissions.map(perm => {
+                            const Icon = perm.icon;
+                            return (
+                                <div key={perm.id} className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                     <div className="flex items-center gap-4">
+                                        <Icon className="size-5 text-muted-foreground"/>
+                                        <div className="space-y-0.5">
+                                            <Label htmlFor={perm.id}>{perm.label}</Label>
+                                            <p className="text-xs text-muted-foreground">{perm.description}</p>
+                                        </div>
+                                    </div>
+                                    <Switch
+                                        id={perm.id}
+                                        checked={settings[perm.id as keyof AiSettings] as boolean}
+                                        onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, [perm.id]: checked }) : null)}
+                                        disabled={settings.mediaActivationKey !== 'authorized'}
+                                    />
+                                </div>
+                            )
+                        })}
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter>
+                <Alert variant="default">
+                    <Info className="h-4 w-4"/>
+                    <AlertTitle>Não Automatizado: Envio Manual Obrigatório</AlertTitle>
+                    <AlertDescription>
+                        Com a chave de mídia desativada, a IA só pode gerar <span className="font-semibold">sugestões de mídia</span> para aprovação. O envio final é sempre feito por um humano.
+                    </AlertDescription>
+                </Alert>
+            </CardFooter>
+        </Card>
 
         <Card>
             <CardHeader>

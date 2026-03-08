@@ -181,6 +181,11 @@ export interface AiSettings {
   activeProvider: 'openai' | 'gemini' | 'automatic';
   fallbackProvider: 'openai' | 'gemini';
   commercialActivationKey: 'authorized' | 'unauthorized';
+  mediaActivationKey: 'authorized' | 'unauthorized';
+  allowAudioGeneration: boolean;
+  allowVideoGeneration: boolean;
+  allowImageGeneration: boolean;
+  allowFileGeneration: boolean;
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 }

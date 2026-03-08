@@ -243,6 +243,11 @@ export const originalAiSettings: AiSettings = {
     activeProvider: 'automatic',
     fallbackProvider: 'openai',
     commercialActivationKey: 'unauthorized',
+    mediaActivationKey: 'unauthorized',
+    allowAudioGeneration: false,
+    allowVideoGeneration: false,
+    allowImageGeneration: false,
+    allowFileGeneration: false,
     createdAt: now.toISOString(),
     updatedAt: now.toISOString(),
 };
@@ -462,6 +467,7 @@ const db = {
 };
 
     
+
 
 
 
