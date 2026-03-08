@@ -1,33 +1,15 @@
-# ---------------------------------
-# Firebase Data Connect Schema
-# Renascer Transfer Tour - Phase 2
-# ---------------------------------
-
-# -----------------
-# Enums
-# -----------------
-
-enum RoleName {
+# Defines clear enums for status fields to ensure data consistency.
+enum UserRoleType {
   ADMIN
   AGENT
   VIEWER
 }
 
-enum ChannelType {
-  WHATSAPP
-  INSTAGRAM
-  FACEBOOK
-  WEBSITE
-  MANUAL
-}
-
-enum ChannelStatus {
-  NOT_CONFIGURED
-  CONNECTED
-  DISCONNECTED
-  AWAITING_QR
-  FAILING
-  MOCK
+enum ContactStatus {
+  NEW
+  ACTIVE
+  INACTIVE
+  ARCHIVED
 }
 
 enum DealStage {
@@ -35,42 +17,32 @@ enum DealStage {
   QUALIFIED
   QUOTE_SENT
   NEGOTIATION
-  AWAITING_CLOSURE
   UNCONFIRMED
   CLOSED_WON
   CLOSED_LOST
   CANCELED
-}
-
-enum ConversationStatus {
-  OPEN
-  CLOSED
-  PENDING
-  AWAITING_HUMAN
-}
-
-enum MessageSenderType {
-  USER
-  AGENT
-  AI
-  SYSTEM
+  AWAITING_CLOSURE
 }
 
 enum QuoteStatus {
   DRAFT
-  REVIEW_PENDING
+  REVIEW
   SENT
+  UNCONFIRMED
   APPROVED
-  REJECTED
+  LOST
   CANCELED
+  AWAITING_APPROVAL
 }
 
 enum ReservationStatus {
-  PENDING_CONFIRMATION
+  PENDING
+  UNCONFIRMED
   CONFIRMED
   RESCHEDULED
   COMPLETED
   CANCELED
+  AWAITING_APPROVAL
 }
 
 enum CalendarEventType {
@@ -82,251 +54,268 @@ enum CalendarEventType {
   FOLLOW_UP
 }
 
-enum ActorType {
+enum AuditActorType {
   HUMAN
   AI
   SYSTEM
   CUSTOMER
 }
 
-enum ArticleStatus {
+enum KnowledgeBaseArticleStatus {
   DRAFT
   REVIEWED
   PUBLISHED
   ARCHIVED
 }
 
-enum AIMode {
+enum ChannelType {
+  WHATSAPP
+  INSTAGRAM
+  FACEBOOK
+  WEBSITE
+  MANUAL
+}
+
+enum ChannelConnectionStatus {
+  MOCK
+  NOT_CONFIGURED
+  CONNECTED
+  DISCONNECTED
+  AWAITING_QR
+  FAILING
+}
+
+enum AISettingMode {
   OFF
   ASSISTED
   PARTIAL_AUTONOMOUS
   FULL_AUTONOMOUS
 }
 
-enum ActivationKeyStatus {
-  ACTIVE
-  INACTIVE
-  EXPIRED
+# --- Core Entities ---
+
+"""
+Represents system users (operators) who log in and manage the application.
+"""
+type Users @table(name: "users") {
+  userId: String! @column(name: "user_id") @primaryKey
+  uid: String! @column(name: "uid") @unique
+  fullName: String @column(name: "full_name")
+  email: String! @column(name: "email") @unique
+  avatarUrl: String @column(name: "avatar_url")
+  isActive: Boolean! @column(name: "is_active") @default(value: "true")
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
+  roles: [UserRoles!]! @foreignKey(from: "userId", to: "userId")
 }
 
-enum ActivationKeyType {
-  COMMERCIAL_AUTOMATION
-  API_ACCESS
+"""
+Defines the roles available in the system (e.g., ADMIN, AGENT).
+"""
+type Roles @table(name: "roles") {
+  roleId: String! @column(name: "role_id") @primaryKey
+  roleName: UserRoleType! @column(name: "role_name") @unique
+  users: [UserRoles!]! @foreignKey(from: "roleId", to: "roleId")
 }
 
-
-# -----------------
-# Core Entities
-# -----------------
-
-# Represents a user of the system (e.g., an employee)
-type Users @table(name: "users") @auth(ops: []) {
-  id: ID! @column(name: "user_id", primaryKey: true)
-  uid: String! @column(name: "firebase_uid", unique: true) # Firebase Auth UID
-  fullName: String!
-  email: String! @column(unique: true)
-  avatarUrl: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  roles: [UserRoles!]! @relation(field: "id", references: "userId")
+"""
+Junction table to link users with their roles (many-to-many).
+"""
+type UserRoles @table(name: "user_roles") {
+  userRoleId: String! @column(name: "user_role_id") @primaryKey
+  userId: String! @column(name: "user_id")
+  roleId: String! @column(name: "role_id")
+  user: Users! @foreignKey(from: "userId", to: "userId")
+  role: Roles! @foreignKey(from: "roleId", to: "roleId")
 }
 
-# Defines roles for access control
-type Roles @table(name: "roles") @auth(ops: []) {
-  id: ID! @column(name: "role_id", primaryKey: true)
-  name: RoleName! @column(unique: true)
-  users: [UserRoles!]! @relation(field: "id", references: "roleId")
-}
-
-# Join table for many-to-many relationship between Users and Roles
-type UserRoles @table(name: "user_roles") @auth(ops: []) {
-  userId: ID! @column(name: "user_id")
-  roleId: ID! @column(name: "role_id")
-  user: Users! @relation(field: "userId", references: "id")
-  role: Roles! @relation(field: "roleId", references: "id")
-}
-
-# Represents an external customer or lead
-type Contacts @table(name: "contacts") @auth(ops: []) {
-  id: ID! @column(name: "contact_id", primaryKey: true)
-  fullName: String!
-  phone: String
-  email: String
-  avatarUrl: String
-  originChannel: ChannelType
+"""
+Represents external contacts (customers).
+"""
+type Contacts @table(name: "contacts") {
+  contactId: String! @column(name: "contact_id") @primaryKey
+  fullName: String! @column(name: "full_name")
+  phone: String @column(name: "phone") @unique
+  email: String @column(name: "email") @unique
+  originChannel: String @column(name: "origin_channel")
   notes: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  deals: [Deals!]! @relation(field: "id", references: "contactId")
-  conversations: [Conversations!]! @relation(field: "id", references: "contactId")
+  status: ContactStatus! @column(name: "status") @default(value: "NEW")
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
+  deals: [Deals!]! @foreignKey(from: "contactId", to: "contactId")
+  conversations: [Conversations!]! @foreignKey(from: "contactId", to: "contactId")
 }
 
-# Represents a sales opportunity or lead
-type Deals @table(name: "deals") @auth(ops: []) {
-  id: ID! @column(name: "deal_id", primaryKey: true)
-  contactId: ID! @column(name: "contact_id")
+"""
+Represents sales opportunities or leads in the CRM pipeline.
+"""
+type Deals @table(name: "deals") {
+  dealId: String! @column(name: "deal_id") @primaryKey
+  contactId: String! @column(name: "contact_id")
   title: String!
-  stage: DealStage!
-  estimatedValue: Float
-  finalValue: Float
-  ownerId: ID @column(name: "owner_id") # User who owns the deal
-  nextActionDate: Timestamp
-  nextActionDescription: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  contact: Contacts! @relation(field: "contactId", references: "id")
-  owner: Users @relation(field: "ownerId", references: "id")
-  quote: Quotes @relation(field: "id", references: "dealId")
+  stage: DealStage! @column(name: "stage") @default(value: "NEW_LEAD")
+  estimatedValue: Float @column(name: "estimated_value")
+  nextAction: String @column(name: "next_action")
+  assignedTo: String @column(name: "assigned_to") # FK to Users
+  approvedBy: String @column(name: "approved_by") # FK to Users
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
+  contact: Contacts! @foreignKey(from: "contactId", to: "contactId")
+  quote: Quotes @foreignKey(from: "dealId", to: "dealId")
 }
 
-# Represents a conversation with a contact
-type Conversations @table(name: "conversations") @auth(ops: []) {
-  id: ID! @column(name: "conversation_id", primaryKey: true)
-  contactId: ID! @column(name: "contact_id")
-  channelId: ID! @column(name: "channel_id")
-  status: ConversationStatus!
-  priority: String # e.g., 'low', 'medium', 'high'
-  assignedToId: ID @column(name: "assigned_to_id") # User currently handling it
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  contact: Contacts! @relation(field: "contactId", references: "id")
-  channel: ChannelConnections! @relation(field: "channelId", references: "id")
-  assignedTo: Users @relation(field: "assignedToId", references: "id")
-  messages: [Messages!]! @relation(field: "id", references: "conversationId")
+"""
+Represents a single conversation thread with a contact.
+"""
+type Conversations @table(name: "conversations") {
+  conversationId: String! @column(name: "conversation_id") @primaryKey
+  contactId: String! @column(name: "contact_id")
+  channelId: String! @column(name: "channel_id")
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  contact: Contacts! @foreignKey(from: "contactId", to: "contactId")
+  messages: [Messages!]! @foreignKey(from: "conversationId", to: "conversationId")
 }
 
-# Represents a single message in a conversation
-type Messages @table(name: "messages") @auth(ops: []) {
-  id: ID! @column(name: "message_id", primaryKey: true)
-  conversationId: ID! @column(name: "conversation_id")
-  senderType: MessageSenderType!
+"""
+Represents a single message within a conversation.
+"""
+type Messages @table(name: "messages") {
+  messageId: String! @column(name: "message_id") @primaryKey
+  conversationId: String! @column(name: "conversation_id")
   content: String!
-  createdAt: Timestamp!
-  conversation: Conversations! @relation(field: "conversationId", references: "id")
+  sender: String! # Could be contactId, userId, or 'AI'
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  conversation: Conversations! @foreignKey(from: "conversationId", to: "conversationId")
 }
 
-# Represents a price quote sent to a customer
-type Quotes @table(name: "quotes") @auth(ops: []) {
-  id: ID! @column(name: "quote_id", primaryKey: true)
-  dealId: ID! @column(name: "deal_id", unique: true)
+"""
+Represents a price quote for a service.
+"""
+type Quotes @table(name: "quotes") {
+  quoteId: String! @column(name: "quote_id") @primaryKey
+  dealId: String! @column(name: "deal_id") @unique
   origin: String
   destination: String
-  serviceDate: Timestamp
+  serviceDate: Timestamp @column(name: "service_date")
   passengers: Int
   bags: Int
-  aiSuggestedValue: Float
-  finalApprovedValue: Float
-  status: QuoteStatus!
-  notes: String
-  approvedById: ID @column(name: "approved_by_id")
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  deal: Deals! @relation(field: "dealId", references: "id")
-  approvedBy: Users @relation(field: "approvedById", references: "id")
-  reservation: Reservations @relation(field: "id", references: "quoteId")
+  aiSuggestedValue: Float @column(name: "ai_suggested_value")
+  finalApprovedValue: Float @column(name: "final_approved_value")
+  status: QuoteStatus! @column(name: "status") @default(value: "DRAFT")
+  approvedBy: String @column(name: "approved_by") # FK to Users
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
+  deal: Deals! @foreignKey(from: "dealId", to: "dealId")
+  reservation: Reservations @foreignKey(from: "quoteId", to: "quoteId")
 }
 
-# Represents a confirmed booking/reservation
-type Reservations @table(name: "reservations") @auth(ops: []) {
-  id: ID! @column(name: "reservation_id", primaryKey: true)
-  quoteId: ID! @column(name: "quote_id", unique: true)
-  status: ReservationStatus!
-  serviceDate: Timestamp!
-  notes: String
-  confirmedById: ID @column(name: "confirmed_by_id")
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  quote: Quotes! @relation(field: "quoteId", references: "id")
-  confirmedBy: Users @relation(field: "confirmedById", references: "id")
-  calendarEvent: CalendarEvents @relation(field: "id", references: "reservationId")
+"""
+Represents a confirmed service booking.
+"""
+type Reservations @table(name: "reservations") {
+  reservationId: String! @column(name: "reservation_id") @primaryKey
+  quoteId: String! @column(name: "quote_id") @unique
+  status: ReservationStatus! @column(name: "status") @default(value: "PENDING")
+  confirmedBy: String @column(name: "confirmed_by") # FK to Users
+  serviceDate: Timestamp! @column(name: "service_date")
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
+  quote: Quotes! @foreignKey(from: "quoteId", to: "quoteId")
+  calendarEvent: CalendarEvents @foreignKey(from: "reservationId", to: "reservationId")
 }
 
-# Represents an event in the operational calendar
-type CalendarEvents @table(name: "calendar_events") @auth(ops: []) {
-  id: ID! @column(name: "event_id", primaryKey: true)
-  reservationId: ID @column(name: "reservation_id", unique: true)
+"""
+Represents an event in the operational calendar.
+"""
+type CalendarEvents @table(name: "calendar_events") {
+  eventId: String! @column(name: "event_id") @primaryKey
+  reservationId: String @column(name: "reservation_id") @unique
   title: String!
-  start: Timestamp!
-  end: Timestamp!
-  eventType: CalendarEventType!
-  status: ReservationStatus!
-  notes: String
-  assignedToId: ID @column(name: "assigned_to_id")
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  reservation: Reservations @relation(field: "reservationId", references: "id")
-  assignedTo: Users @relation(field: "assignedToId", references: "id")
+  eventType: CalendarEventType! @column(name: "event_type")
+  startTime: Timestamp! @column(name: "start_time")
+  endTime: Timestamp! @column(name: "end_time")
+  assignedTo: String @column(name: "assigned_to") # FK to Users
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  reservation: Reservations @foreignKey(from: "reservationId", to: "reservationId")
 }
 
-# Logs important actions in the system for auditing
-type AuditLogs @table(name: "audit_logs") @auth(ops: []) {
-  id: ID! @column(name: "log_id", primaryKey: true)
-  actorType: ActorType!
-  actorName: String! # UID for user/AI, name for customer
-  eventType: String! # e.g., 'deal.stage.changed'
-  entityType: String! # e.g., 'Deals'
-  entityId: String!
+"""
+Logs significant actions within the system for auditing purposes.
+"""
+type AuditLogs @table(name: "audit_logs") {
+  logId: String! @column(name: "log_id") @primaryKey
+  actor: String!
+  actorType: AuditActorType! @column(name: "actor_type")
+  eventType: String! @column(name: "event_type")
+  entityType: String! @column(name: "entity_type")
+  entityId: String! @column(name: "entity_id")
+  before: JSON @column(type: "jsonb")
+  after: JSON @column(type: "jsonb")
   notes: String
-  source: String # e.g., 'app', 'whatsapp', 'ai_flow'
-  before: JSON # State before change
-  after: JSON # State after change
-  createdAt: Timestamp!
+  source: String
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
 }
 
-# Articles for internal knowledge and future AI training
-type KnowledgeBaseArticles @table(name: "knowledge_base_articles") @auth(ops: []) {
-  id: ID! @column(name: "article_id", primaryKey: true)
+"""
+Stores articles for the internal knowledge base.
+"""
+type KnowledgeBaseArticles @table(name: "knowledge_base_articles") {
+  articleId: String! @column(name: "article_id") @primaryKey
   title: String!
   category: String!
   summary: String
-  content: String! @column(type: "TEXT")
-  status: ArticleStatus!
-  isEligibleForAI: Boolean! @column(default: false)
-  authorId: ID! @column(name: "author_id")
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  author: Users! @relation(field: "authorId", references: "id")
+  content: String!
+  status: KnowledgeBaseArticleStatus! @column(name: "status") @default(value: "DRAFT")
+  isEligibleForAI: Boolean! @column(name: "is_eligible_for_ai") @default(value: "false")
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
 }
 
-# Singleton table for global AI settings
-type AISettings @table(name: "ai_settings") @auth(ops: []) {
-  id: ID! @column(primaryKey: true, default: "1")
-  mode: AIMode! @column(default: "ASSISTED")
-  manualFinalizationRequired: Boolean! @column(default: true)
-  # Other provider settings, etc.
+# --- Settings & Configuration Entities ---
+
+"""
+Singleton table for global AI settings.
+"""
+type AISettings @table(name: "ai_settings") {
+  settingId: String! @column(name: "setting_id") @primaryKey
+  mode: AISettingMode! @column(name: "mode") @default(value: "ASSISTED")
+  manualFinalizationRequired: Boolean! @column(name: "manual_finalization_required") @default(value: "true")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
 }
 
-# Keys to unlock specific features, like commercial automation
-type ActivationKeys @table(name: "activation_keys") @auth(ops: []) {
-  id: ID! @column(name: "key_id", primaryKey: true)
-  key: String! @column(unique: true)
-  status: ActivationKeyStatus!
-  type: ActivationKeyType!
-  createdAt: Timestamp!
-  expiresAt: Timestamp
+"""
+Stores commercial activation keys for AI features.
+"""
+type ActivationKeys @table(name: "activation_keys") {
+  keyId: String! @column(name: "key_id") @primaryKey
+  keyName: String! @column(name: "key_name") @unique # e.g., "COMMERCIAL_ACTIVATION"
+  isActive: Boolean! @column(name: "is_active") @default(value: "false")
+  expiresAt: Timestamp @column(name: "expires_at")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
 }
 
-# Represents a specific account on a channel (e.g., a specific WhatsApp number)
-type ChannelAccounts @table(name: "channel_accounts") @auth(ops: []) {
-  id: ID! @column(name: "account_id", primaryKey: true)
-  type: ChannelType!
-  accountIdentifier: String! # e.g., phone number, page ID
-  displayName: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  connections: [ChannelConnections!]! @relation(field: "id", references: "channelAccountId")
+"""
+Represents a specific channel account (e.g., a specific WhatsApp number).
+"""
+type ChannelAccounts @table(name: "channel_accounts") {
+  accountId: String! @column(name: "account_id") @primaryKey
+  channelType: ChannelType! @column(name: "channel_type")
+  identifier: String! # e.g., phone number, page ID
+  displayName: String @column(name: "display_name")
+  createdAt: Timestamp! @column(name: "created_at") @default(expression: "CURRENT_TIMESTAMP")
+  connections: [ChannelConnections!]! @foreignKey(from: "accountId", to: "accountId")
 }
 
-# Represents the connection status and configuration for a ChannelAccount
-type ChannelConnections @table(name: "channel_connections") @auth(ops: []) {
-  id: ID! @column(name: "connection_id", primaryKey: true)
-  channelAccountId: ID! @column(name: "channel_account_id")
-  status: ChannelStatus!
-  aiEnabled: Boolean! @column(default: true)
-  notes: String
-  lastChecked: Timestamp
-  lastError: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
-  account: ChannelAccounts! @relation(field: "channelAccountId", references: "id")
+"""
+Manages the connection status and configuration for each channel account.
+"""
+type ChannelConnections @table(name: "channel_connections") {
+  connectionId: String! @column(name: "connection_id") @primaryKey
+  accountId: String! @column(name: "account_id")
+  status: ChannelConnectionStatus! @column(name: "status") @default(value: "NOT_CONFIGURED")
+  provider: String # e.g., 'meta', 'gupshup'
+  aiEnabled: Boolean! @column(name: "ai_enabled") @default(value: "true")
+  lastError: String @column(name: "last_error")
+  updatedAt: Timestamp! @column(name: "updated_at") @default(expression: "CURRENT_TIMESTAMP")
+  account: ChannelAccounts! @foreignKey(from: "accountId", to: "accountId")
 }
