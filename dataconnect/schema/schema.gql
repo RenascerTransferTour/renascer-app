@@ -1,312 +1,208 @@
-# ------------------------------------------------------------------
-# ENUMS
-# Reusable enumerations for status fields across different types.
-# ------------------------------------------------------------------
-
-enum UserRole {
-  ADMIN
-  AGENT
-  VIEWER
-}
-
-enum LeadStatus {
-  NEW
-  QUALIFIED
-  CONTACTED
-  UNQUALIFIED
-}
-
-enum UrgencyLevel {
-  LOW
-  MEDIUM
-  HIGH
-}
-
-enum InterestLevel {
-  LOW
-  MEDIUM
-  HIGH
-}
-
-enum ConversationStatus {
-  OPEN
-  CLOSED
-  PENDING
-  AWAITING_HUMAN
-  IA_ASSISTIDA
-}
-
-enum ChannelType {
-  WHATSAPP
-  INSTAGRAM
-  FACEBOOK
-  WEBSITE
-}
-
-enum ChannelStatus {
-  CONNECTED
-  DISCONNECTED
-  PENDING
-  AWAITING_QR
-  FAILING
-}
-
-enum QuoteStatus {
-  DRAFT
-  REVIEW
-  SENT
-  UNCONFIRMED
-  APPROVED
-  LOST
-  CANCELED
-}
-
-enum ReservationStatus {
-  PENDING
-  UNCONFIRMED
-  CONFIRMED
-  RESCHEDULED
-  COMPLETED
-  CANCELED
-}
-
-enum DealPipelineStage {
-  NEW_LEAD
-  QUALIFIED
-  QUOTE_SENT
-  NEGOTIATION
-  UNCONFIRMED
-  CLOSED_WON
-  CLOSED_LOST
-  CANCELED
-}
-
-enum AIMode {
-  OFF
-  ASSISTED
-  PARTIAL_AUTONOMOUS
-  FULL_AUTONOMOUS
-}
-
-# ------------------------------------------------------------------
-# CORE TABLES
-# These tables represent the foundational data of the application.
-# ------------------------------------------------------------------
 
 """
-Represents system operators and their permissions.
+A user of the system, typically an operator or administrator.
 """
-type Users @table(key: "id") {
-  id: String!
-  fullName: String!
-  email: String! @unique
-  role: UserRole!
-  active: Boolean!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+type Users @table(name: "users") {
+  userId: String! @column(name: "user_id") @primaryKey
+  fullName: String @column(name: "full_name")
+  email: String! @column(name: "email")
+  roleId: String @column(name: "role_id")
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Defines the roles available in the system.
+Defines a role in the system, like 'admin' or 'agent'.
 """
-type Roles @table(key: "id") {
-  id: String!
-  name: String! @unique
-  description: String
+type Roles @table(name: "roles") {
+  roleId: String! @column(name: "role_id") @primaryKey
+  roleName: String! @column(name: "role_name")
 }
 
 """
-Junction table to link users with their roles (many-to-many).
+Joins table for Users and Roles.
 """
-type UserRoles @table(key: ["userId", "roleId"]) {
-  userId: String!
-  roleId: String!
-  user: Users @reference(key: "userId")
-  role: Roles @reference(key: "roleId")
+type UserRoles @table(name: "user_roles") {
+  userRoleId: String! @column(name: "user_role_id") @primaryKey
+  userId: String! @column(name: "user_id")
+  roleId: String! @column(name: "role_id")
 }
 
 """
-Stores information about customers and leads.
+Represents an external contact (customer, lead).
 """
-type Contacts @table(key: "id") {
-  id: String!
-  fullName: String!
+type Contacts @table(name: "contacts") {
+  contactId: String! @column(name: "contact_id") @primaryKey
+  fullName: String @column(name: "full_name")
   phone: String
   email: String
-  originChannel: String
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Tracks sales opportunities through the pipeline.
+A sales opportunity in the CRM pipeline.
 """
-type Deals @table(key: "id") {
-  id: String!
-  contactId: String!
-  contact: Contacts @reference(key: "contactId")
+type Deals @table(name: "deals") {
+  dealId: String! @column(name: "deal_id") @primaryKey
+  contactId: String! @column(name: "contact_id")
   title: String!
-  pipelineStage: DealPipelineStage!
-  estimatedValue: Float!
-  ownerId: String!
-  owner: Users @reference(key: "ownerId")
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  pipelineStage: String @column(name: "pipeline_stage")
+  estimatedValue: Float @column(name: "estimated_value")
+  ownerId: String @column(name: "owner_id")
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Represents a single conversation with a contact across any channel.
+A conversation thread with a contact.
 """
-type Conversations @table(key: "id") {
-  id: String!
-  contactId: String!
-  contact: Contacts @reference(key: "contactId")
-  channelId: String!
-  channel: ChannelConnections @reference(key: "channelId")
-  status: ConversationStatus!
-  priority: UrgencyLevel!
-  isAiActive: Boolean!
-  humanOwnerId: String
-  humanOwner: Users @reference(key: "humanOwnerId")
-  lastMessageSummary: String
-  lastMessageAt: Timestamp!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+type Conversations @table(name: "conversations") {
+  conversationId: String! @column(name: "conversation_id") @primaryKey
+  contactId: String! @column(name: "contact_id")
+  channelId: String! @column(name: "channel_id")
+  status: String
+  priority: String
+  lastMessage: String @column(name: "last_message")
+  lastMessageAt: Timestamp @column(name: "last_message_at")
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-A single message within a conversation.
+An individual message within a conversation.
 """
-type Messages @table(key: "id") {
-  id: String!
-  conversationId: String!
-  conversation: Conversations @reference(key: "conversationId")
-  senderType: String! # user, agent, ai, system
-  content: String!
-  createdAt: Timestamp!
+type Messages @table(name: "messages") {
+  messageId: String! @column(name: "message_id") @primaryKey
+  conversationId: String! @column(name: "conversation_id")
+  senderType: String @column(name: "sender_type")
+  content: String
+  contentType: String @column(name: "content_type")
+  createdAt: Timestamp @column(name: "created_at")
 }
 
 """
-Stores quotes or price estimates sent to clients.
+A price quote for a service.
 """
-type Quotes @table(key: "id") {
-  id: String!
-  dealId: String!
-  deal: Deals @reference(key: "dealId")
-  status: QuoteStatus!
-  summary: String!
-  priceRangeStart: Float!
-  priceRangeEnd: Float!
-  finalValue: Float
-  ownerId: String!
-  owner: Users @reference(key: "ownerId")
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+type Quotes @table(name: "quotes") {
+  quoteId: String! @column(name: "quote_id") @primaryKey
+  contactId: String! @column(name: "contact_id")
+  conversationId: String! @column(name: "conversation_id")
+  status: String
+  summary: String
+  priceMin: Float @column(name: "price_min")
+  priceMax: Float @column(name: "price_max")
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Confirmed service bookings.
+A confirmed booking for a service.
 """
-type Reservations @table(key: "id") {
-  id: String!
-  quoteId: String!
-  quote: Quotes @reference(key: "quoteId")
-  status: ReservationStatus!
-  serviceDetails: String!
-  scheduledDate: Timestamp!
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+type Reservations @table(name: "reservations") {
+  reservationId: String! @column(name: "reservation_id") @primaryKey
+  contactId: String! @column(name: "contact_id")
+  quoteId: String! @column(name: "quote_id")
+  status: String
+  service: String
+  details: String
+  scheduledDate: Timestamp @column(name: "scheduled_date")
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Events to be displayed on the operational calendar.
+An event on the operational calendar.
 """
-type CalendarEvents @table(key: "id") {
-  id: String!
-  reservationId: String
-  reservation: Reservations @reference(key: "reservationId")
+type CalendarEvents @table(name: "calendar_events") {
+  eventId: String! @column(name: "event_id") @primaryKey
+  reservationId: String @column(name: "reservation_id")
   title: String!
-  start: Timestamp!
-  end: Timestamp!
-  status: ReservationStatus!
-  assignedTeamMemberId: String
-  assignedTeamMember: Users @reference(key: "assignedTeamMemberId")
-  createdAt: Timestamp!
+  eventType: String! @column(name: "event_type")
+  startTime: Timestamp! @column(name: "start_time")
+  endTime: Timestamp! @column(name: "end_time")
+  status: String!
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Logs important actions taken by users or the system for auditing purposes.
+A log of significant actions in the system.
 """
-type AuditLogs @table(key: "id") {
-  id: String!
-  timestamp: Timestamp!
+type AuditLogs @table(name: "audit_logs") {
+  logId: String! @column(name: "log_id") @primaryKey
   actor: String!
-  actorType: String! # human, ai, system, customer
-  entityType: String!
-  entityId: String!
-  eventType: String!
+  actorType: String! @column(name: "actor_type")
+  entityType: String! @column(name: "entity_type")
+  entityId: String! @column(name: "entity_id")
+  eventType: String! @column(name: "event_type")
   notes: String
+  createdAt: Timestamp @column(name: "created_at")
 }
 
-# ------------------------------------------------------------------
-# SETTINGS & KNOWLEDGE BASE TABLES
-# Configuration tables for AI behavior and internal knowledge.
-# ------------------------------------------------------------------
-
 """
-Internal documentation for company policies, services, etc.
+An article in the internal knowledge base.
 """
-type KnowledgeBaseArticles @table(key: "id") {
-  id: String!
+type KnowledgeBaseArticles @table(name: "kb_articles") {
+  articleId: String! @column(name: "article_id") @primaryKey
   category: String!
   title: String!
+  summary: String
   content: String!
-  status: String! # draft, published, archived
-  createdAt: Timestamp!
-  updatedAt: Timestamp!
+  authorId: String! @column(name: "author_id")
+  status: String!
+  isEligibleForAI: Boolean @column(name: "is_eligible_for_ai")
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Global settings for the AI assistant.
+Global settings for the AI.
 """
-type AISettings @table(key: "id") {
-  id: Int!
-  globalAiEnabled: Boolean!
-  aiMode: AIMode!
-  activeProvider: String! # openai, gemini, automatic
-  isFallbackEnabled: Boolean!
+type AISettings @table(name: "ai_settings") {
+  settingsId: String! @column(name: "settings_id") @primaryKey
+  globalAiEnabled: Boolean @column(name: "global_ai_enabled")
+  aiMode: String @column(name: "ai_mode")
+  activeProvider: String @column(name: "active_provider")
+  isFallbackEnabled: Boolean @column(name: "is_fallback_enabled")
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Stores API keys or connection details for external services (e.g., AI providers).
+Represents a commercial license key for autonomous AI features.
 """
-type ActivationKeys @table(key: "id") {
-  id: String!
-  serviceName: String! @unique
-  keyType: String! # API_KEY, OAUTH_TOKEN
-  value: String! # This should be a reference to a secret manager
-  createdAt: Timestamp!
+type ActivationKeys @table(name: "activation_keys") {
+  keyId: String! @column(name: "key_id") @primaryKey
+  keyHash: String! @column(name: "key_hash")
+  status: String!
+  createdAt: Timestamp @column(name: "created_at")
+  expiresAt: Timestamp @column(name: "expires_at")
 }
 
 """
-Represents a specific account on a channel (e.g., a WhatsApp number, an Instagram handle).
+Represents a specific channel account (e.g., a WhatsApp number).
 """
-type ChannelAccounts @table(key: "id") {
-  id: String!
-  channelType: ChannelType!
-  accountIdentifier: String! # e.g., phone number, page ID
-  displayName: String
+type ChannelAccounts @table(name: "channel_accounts") {
+  accountId: String! @column(name: "account_id") @primaryKey
+  channelType: String! @column(name: "channel_type")
+  accountIdentifier: String! @column(name: "account_identifier") # e.g., phone number or IG handle
+  status: String!
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
 
 """
-Manages the connection status and configuration for each channel account.
+Manages the connection credentials and settings for channel accounts.
 """
-type ChannelConnections @table(key: "id") {
-  id: String!
-  accountId: String!
-  account: ChannelAccounts @reference(key: "accountId")
-  status: ChannelStatus!
-  aiEnabled: Boolean!
-  lastChecked: Timestamp
-  lastError: String
+type ChannelConnections @table(name: "channel_connections") {
+  connectionId: String! @column(name: "connection_id") @primaryKey
+  accountId: String! @column(name: "account_id")
+  provider: String! # e.g., 'meta', 'google'
+  credentials: JSON @column(name: "credentials")
+  status: String!
+  lastChecked: Timestamp @column(name: "last_checked")
+  lastError: String @column(name: "last_error")
+  createdAt: Timestamp @column(name: "created_at")
+  updatedAt: Timestamp @column(name: "updated_at")
 }
