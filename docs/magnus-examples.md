@@ -401,3 +401,72 @@ Padronizar:
   ]
 }
 ```
+
+---
+
+## Exemplo 7 — Cliente preenche o formulário
+
+### Request
+```json
+{
+  "conversation_id": "conv_107",
+  "customer_id": "cust_107",
+  "timestamp": "2026-03-08T15:30:00-03:00",
+  "channel": "whatsapp",
+  "has_text": true,
+  "has_media": false,
+  "media_types": [],
+  "last_customer_message": "Cliente: João Silva\nEmbarque: Galeão\nDestino: Copacabana\nData: 12/03/2026\nHorário: 15:00\nQtd de Pessoas: 2\nQtd de Malas: 2\nTamanho das Malas: M\nCriança: Não",
+  "message_language_hint": "pt",
+  "metadata": {
+    "is_saved_contact": false,
+    "internal": false,
+    "team": false,
+    "driver": false,
+    "partner": false,
+    "human_active": false
+  },
+  "state": {
+    "customer_name": "João Silva",
+    "form_sent": true,
+    "human_takeover": false,
+    "conversation_closed": false,
+    "service_type": "transfer"
+  }
+}
+```
+
+### Response
+```json
+{
+  "should_reply": true,
+  "silence_reason": null,
+  "language": "pt",
+  "customer_type": "external_customer",
+  "stage": "handoff",
+  "handoff_to_claudia": true,
+  "form_sent": true,
+  "close_conversation": true,
+  "service_type": "transfer",
+  "intent": "submit_form",
+  "collected_data": {
+    "customer_name": "João Silva",
+    "origin": "Galeão",
+    "destination": "Copacabana",
+    "date": "12/03/2026",
+    "time": "15:00",
+    "passengers": 2,
+    "bags": 2,
+    "bag_size": "M",
+    "child": false,
+    "region_interest": null,
+    "trip_destination_city": null
+  },
+  "messages": [
+    "Perfeito. Já encaminhei suas informações para a Administradora Claudia Rosani Vaz da Silva; em breve ela retornará para confirmação 😊",
+    "Se também tiver interesse em passeios, roteiros ou viagens personalizadas, fico à disposição.\nLinks oficiais:\nhttps://renascertransfertour.com/\nhttps://www.instagram.com/transfer_viagem_turismo?igsh=amk4bXozam03cnRr\nhttps://www.facebook.com/share/1BZrzeApSd/"
+  ]
+}
+```
+
+```
