@@ -27,7 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
-import { QrCode, CheckCircle2, AlertTriangle, Clock, XCircle, Share2, Server, KeyRound, Phone, Webhook, History, Link2, Info, Loader2, Save } from "lucide-react"
+import { QrCode, CheckCircle2, AlertTriangle, Clock, XCircle, Share2, Server, KeyRound, Phone, Webhook, History, Link2, Info, Loader2, Save, RefreshCw, Trash2, PowerOff, Check, ScanLine } from "lucide-react"
 import type { Channel } from "@/lib/db/data-model"
 import { useToast } from "@/hooks/use-toast"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -35,6 +35,7 @@ import { format, formatDistanceToNow, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { getStatusBadgeClasses } from "@/lib/utils"
+import QRCode from "react-qr-code";
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}><path d="M16.75 13.96c.25.13.43.2.5.28.08.08.14.18.18.3.04.1.06.2.04.3s-.04.2-.1.32c-.04.1-.1.18-.18.25a.87.87 0 01-.43.18c-.2.03-.43.02-.7-.02-.25-.04-.53-.1-.82-.18-.3-.08-.58-.18-.88-.32a9.44 9.44 0 01-1.4-.82 8.37 8.37 0 01-1.14-1.1c-.3-.4-.58-.8-.8-1.24-.24-.46-.4-1-.48-1.53a3.2 3.2 0 01-.04-.48c0-.18.02-.35.08-.5.05-.16.14-.3.26-.42.12-.12.25-.2.4-.26.15-.05.3-.07.46-.07.13 0 .26.02.38.05.12.03.24.08.34.15.1.07.2.16.28.28.08.1.13.23.14.35.02.12.02.26 0 .4-.02.16-.06.3-.12.44s-.13.25-.22.34c-.1.1-.2.18-.3.25-.1.08-.18.14-.24.2-.06.05-.1.1-.14.13-.03.03-.04.04-.02.07.02.03.1.1.2.18.1.07.2.14.32.23.1.1.2.17.3.25.3.23.6.43.9.6.34.18.66.3.96.36.1.02.2.04.3.05.1 0 .2.02.3.02.13 0 .25-.02.38-.05.12-.03.24-.08.34-.15.1-.07.18-.16.24-.25.06-.1.1-.2.12-.32.02-.1.02-.2 0-.32a.8.8 0 00-.06-.32.74.74 0 00-.16-.3c-.06-.08-.14-.15-.22-.2-.08-.05-.17-.1-.26-.12-.1-.02-.2-.02-.3-.02s-.2.02-.3.04-.18.06-.25.1c-.07.04-.13.1-.18.15-.05.06-.1.1-.13.16-.03.05-.06.1-.08.15-.02.05-.03.1-.02.13.01.03.02.06.04.08a.3.3 0 00.08.08.3.3 0 00.1.04.3.3 0 00.12 0 .3.3 0 00.1-.04.34.34 0 00.08-.08.3.3 0 00.04-.1.2.2 0 000-.12zM12 2a10 10 0 00-10 10 10 10 0 0010 10 10 10 0 0010-10A10 10 0 0012 2zm0 18a8 8 0 01-8-8 8 8 0 018-8 8 8 0 018 8 8 8 0 01-8 8z" /></svg>
@@ -61,8 +62,20 @@ const statusConfig: Record<string, { icon: React.ElementType, text: string, clas
     }
 };
 
+const pairingStatusConfig: Record<string, { icon: React.ElementType, text: string, className: string }> = {
+    'Aguardando leitura': { icon: ScanLine, text: 'Aguardando leitura', className: getStatusBadgeClasses('aguardando humano') },
+    'Pareamento simulado': { icon: Check, text: 'Pareamento simulado', className: getStatusBadgeClasses('confirmada') },
+    'Desvinculado': { icon: PowerOff, text: 'Desvinculado', className: getStatusBadgeClasses('disconnected') },
+  };
+
+const PairingStatusBadge = ({ status }: { status: keyof typeof pairingStatusConfig }) => {
+    const config = pairingStatusConfig[status];
+    if (!config) return null;
+    const { icon: Icon, text, className } = config;
+    return <Badge className={cn(className, "gap-1.5 capitalize")}><Icon className="h-3 w-3" />{text}</Badge>;
+};
+
 const StatusBadge = ({ status, isMock = false }: { status: Channel['status'], isMock?: boolean }) => {
-    // If the channel is mocked AND its base status is "connected", show "Modo Simulado" instead.
     if (isMock && status === 'connected') {
         const config = statusConfig.mock;
         const { icon: Icon, text, className, tooltip } = config;
@@ -76,7 +89,6 @@ const StatusBadge = ({ status, isMock = false }: { status: Channel['status'], is
         );
     }
 
-    // For all other statuses, show the real status.
     const config = statusConfig[status] || statusConfig.disconnected;
     const { icon: Icon, text, className } = config;
     return (
@@ -88,6 +100,11 @@ export default function ChannelsPage() {
     const [channels, setChannels] = useState<Channel[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    
+    // States for QR Code mock flow
+    const [qrValue, setQrValue] = useState('renascer-transfer-tour:whatsapp:mock-session');
+    const [pairingStatus, setPairingStatus] = useState<'Aguardando leitura' | 'Pareamento simulado' | 'Desvinculado'>('Aguardando leitura');
+    const [lastPairedAt, setLastPairedAt] = useState<Date | null>(null);
     const [deviceName, setDeviceName] = useState('');
     const [inputDeviceName, setInputDeviceName] = useState('');
     const { toast } = useToast();
@@ -141,13 +158,46 @@ export default function ChannelsPage() {
         }
     };
     
-    const handleSaveDeviceName = () => {
+    // QR Code Mock Flow Handlers
+    const handleGenerateNewQr = () => {
+        setQrValue('renascer-transfer-tour:whatsapp:mock-session:' + Date.now());
+        setPairingStatus('Aguardando leitura');
+        setLastPairedAt(null);
+        toast({ title: 'Novo QR Code gerado (mock)' });
+      };
+    
+      const handleSimulatePairing = () => {
+        if (pairingStatus === 'Pareamento simulado') {
+            toast({ variant: 'default', title: 'Dispositivo já pareado (simulado)' });
+            return;
+        }
+        setPairingStatus('Pareamento simulado');
+        setLastPairedAt(new Date());
+        toast({ title: 'Pareamento simulado com sucesso!', className: 'bg-green-100 dark:bg-green-900'});
+      };
+    
+      const handleSaveDeviceName = () => {
+        if (!inputDeviceName.trim()) {
+            toast({ variant: 'destructive', title: 'Nome inválido', description: 'O nome do dispositivo não pode estar vazio.' });
+            return;
+        }
         setDeviceName(inputDeviceName);
-        toast({
-            title: "Nome do dispositivo salvo",
-            description: "A identificação local foi atualizada (apenas para esta sessão).",
-        });
-    };
+        toast({ title: 'Nome do dispositivo salvo (localmente)' });
+      };
+    
+      const handleClearInput = () => {
+        setInputDeviceName('');
+      };
+    
+      const handleResetPairing = () => {
+        setQrValue('renascer-transfer-tour:whatsapp:mock-session');
+        setPairingStatus('Aguardando leitura');
+        setLastPairedAt(null);
+        setDeviceName('');
+        setInputDeviceName('');
+        toast({ title: 'Pareamento resetado para o estado inicial.' });
+      };
+
 
     const mockHistory = [
         { channel: 'WhatsApp', event: 'Webhook Received', date: '2024-07-30 14:32:10', status: 'Sucesso', details: 'Nova mensagem de +55 11 9....'},
@@ -250,60 +300,80 @@ export default function ChannelsPage() {
                                        Este modo usa a conexão do seu celular e pode ser instável, não sendo ideal para operações 24/7. Use a API Oficial para produção em nuvem.
                                     </AlertDescription>
                                 </Alert>
+                                
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium">Status da Sessão:</span>
-                                            {waChannel && <StatusBadge status={waChannel.status} />}
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="bg-white p-4 rounded-lg border w-80 h-80 flex items-center justify-center">
+                                            <QRCode
+                                                value={qrValue}
+                                                size={256}
+                                                viewBox={`0 0 256 256`}
+                                                bgColor="#FFFFFF"
+                                                fgColor="#000000"
+                                                level="L"
+                                            />
                                         </div>
-                                         <div className="flex items-center gap-2">
-                                            <span className="text-sm font-medium">Dispositivo:</span>
-                                            <span className="text-sm font-semibold">{deviceName || "Ainda não identificado"}</span>
+                                        <div className='text-center'>
+                                            <p className='font-semibold'>QR em modo simulado</p>
+                                            <p className='text-sm text-muted-foreground'>Exemplo visual de conexão. Não automatizado.</p>
                                         </div>
-                                        <p className="text-sm text-muted-foreground">Para conectar, gere um QR code e escaneie com seu celular no WhatsApp em <span className="font-semibold">Aparelhos Conectados &gt; Conectar um Aparelho</span>.</p>
                                         <div className="flex gap-2">
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <Button type="button">
-                                                        <QrCode className="mr-2 h-4 w-4"/>
-                                                        Gerar QR Code Simulado
-                                                    </Button>
-                                                </DialogTrigger>
-                                                <DialogContent className="sm:max-w-lg p-0">
-                                                    <DialogHeader className="p-6 pb-2">
-                                                      <DialogTitle>Conexão por QR Code (Simulado)</DialogTitle>
-                                                      <DialogDescription>
-                                                        Escaneie o código abaixo com o app do WhatsApp para simular a conexão.
-                                                      </DialogDescription>
-                                                    </DialogHeader>
-                                                    <div className="flex flex-col items-center justify-center p-6 bg-white rounded-b-lg">
-                                                        <div className="p-4 bg-white border rounded-lg">
-                                                            <QrCode className="w-72 h-72 text-black" />
-                                                        </div>
-                                                        <div className="mt-4 text-center">
-                                                            <p className="font-semibold">QR em modo simulado</p>
-                                                            <p className="text-sm text-muted-foreground">Esta é uma demonstração visual. Não estabelece uma conexão real.</p>
-                                                        </div>
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
-                                            <Button variant="destructive" disabled>Desconectar Sessão</Button>
+                                            <Button onClick={handleGenerateNewQr} variant="outline"><RefreshCw className="mr-2 h-4 w-4"/> Gerar Novo QR</Button>
+                                            <Button onClick={handleSimulatePairing}><Check className="mr-2 h-4 w-4"/>Simular Leitura</Button>
                                         </div>
                                     </div>
-                                    
-                                    <div className="space-y-2 rounded-lg border p-4">
-                                        <Label htmlFor="device-name" className="font-semibold">Nome do dispositivo</Label>
-                                        <p className="text-xs text-muted-foreground">Identificação local do dispositivo conectado para sua referência.</p>
-                                        <Input 
-                                            id="device-name" 
-                                            placeholder="Ex.: WhatsApp Comercial Recepção" 
-                                            value={inputDeviceName}
-                                            onChange={(e) => setInputDeviceName(e.target.value)}
-                                        />
-                                        <Button type="button" size="sm" onClick={handleSaveDeviceName}>
-                                            <Save className="mr-2 h-3 w-3" />
-                                            Salvar nome
-                                        </Button>
+
+                                    <div className='space-y-6'>
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle className="text-base">Identificação do Dispositivo</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-2">
+                                                <Label htmlFor="device-name">Nome do dispositivo</Label>
+                                                <p className="text-xs text-muted-foreground">Identificação local do dispositivo conectado para sua referência.</p>
+                                                <div className='flex gap-2'>
+                                                    <Input 
+                                                        id="device-name" 
+                                                        placeholder="Ex.: WhatsApp Comercial Recepção" 
+                                                        value={inputDeviceName}
+                                                        onChange={(e) => setInputDeviceName(e.target.value)}
+                                                    />
+                                                     <Button type="button" size="icon" variant="ghost" onClick={handleClearInput}><Trash2 className="h-4 w-4 text-muted-foreground"/></Button>
+                                                </div>
+                                            </CardContent>
+                                            <CardFooter>
+                                                 <Button type="button" size="sm" onClick={handleSaveDeviceName}>
+                                                    <Save className="mr-2 h-3 w-3" />
+                                                    Salvar nome
+                                                </Button>
+                                            </CardFooter>
+                                        </Card>
+
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle className="text-base">Status do Pareamento (Mock)</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-4">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium">Status:</span>
+                                                    <PairingStatusBadge status={pairingStatus} />
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium">Dispositivo:</span>
+                                                    <span className="text-sm font-semibold">{deviceName || "Nenhum nome salvo"}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-sm font-medium">Último pareamento:</span>
+                                                    <span className="text-sm font-semibold">
+                                                        {lastPairedAt ? format(lastPairedAt, "'Hoje às' HH:mm", { locale: ptBR }) : 'Nunca'}
+                                                    </span>
+                                                </div>
+                                            </CardContent>
+                                            <CardFooter>
+                                                <Button variant="destructive" size="sm" onClick={handleResetPairing}><PowerOff className="mr-2 h-4 w-4"/> Resetar Pareamento</Button>
+                                            </CardFooter>
+                                        </Card>
+
                                     </div>
                                 </div>
                             </TabsContent>
