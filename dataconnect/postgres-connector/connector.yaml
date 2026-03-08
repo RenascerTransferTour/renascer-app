@@ -3,4 +3,3 @@ connectorType: POSTGRES
 # The database name will be provisioned by Firebase.
 # The connection string will be provided by environment variable at runtime.
 database: ${db.name}
-connectionUri: postgresql://${db.user}:${db.password}@${db.host}:${db.port}/${db.name}?sslmode=require
