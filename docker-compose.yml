@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  renascer-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: renascer-nextjs-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    # Carrega as variáveis de ambiente de um arquivo .env.prod
+    # Certifique-se de criar este arquivo no seu servidor.
+    env_file:
+      - ./.env.prod
+    networks:
+      - renascer-net
+
+# Opcional: Se o seu n8n também roda via Docker Compose no mesmo servidor,
+# você pode adicioná-lo aqui e garantir que ambos usem a mesma rede `renascer-net`
+# para uma comunicação interna segura e eficiente.
+#
+#  n8n:
+#    image: n8nio/n8n
+#    container_name: n8n-workflow-engine
+#    restart: unless-stopped
+#    ports:
+#      - "5678:5678"
+#    environment:
+#      - N8N_HOST=seu-dominio-n8n.com
+#      - N8N_PROTOCOL=https
+#      - NODE_ENV=production
+#    volumes:
+#      - ~/.n8n:/home/node/.n8n
+#    networks:
+#      - renascer-net
+
+networks:
+  renascer-net:
+    driver: bridge
