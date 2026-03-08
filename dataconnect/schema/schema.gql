@@ -1,222 +1,185 @@
-# Base para autenticação e usuários do sistema
-type Users @table(key: "uid") {
-  uid: String!
-  email: String
-  displayName: String
-  photoURL: String
-  disabled: Boolean! @field(default: "false")
-  createdAt: Timestamp! @field(default: "now()")
-  updatedAt: Timestamp! @field(default: "now()")
-  # Relações
-  roles: [UserRoles]
-  assignedDeals: [Deals]
-  approvedQuotes: [Quotes]
-  approvedReservations: [Reservations]
+"""
+Data Connect schema for Renascer Transfer Tour backend.
+Version: 1.0.0
+Phase: 2 - Relational Model Foundation
+"""
+
+# ---------------------------------
+# Enums for Status and Types
+# ---------------------------------
+
+enum UserRole {
+  ADMIN
+  AGENT
+  VIEWER
 }
 
-type Roles @table(key: "roleId") {
-  roleId: ID!
-  name: String! # ex: admin, agent, viewer
-  permissions: JSON
-  users: [UserRoles]
-}
-
-type UserRoles @table(key: "userRoleId") {
-  userRoleId: ID!
-  user: Users! @foreignKey(references: "uid")
-  role: Roles! @foreignKey(references: "roleId")
-}
-
-# Entidade central para clientes
-type Contacts @table(key: "contactId") {
-  contactId: ID!
-  fullName: String!
-  phone: String
-  email: String
-  avatarUrl: String
-  originChannel: String # ex: whatsapp, instagram, web
-  notes: String
-  status: String # ex: active, archived
-  createdAt: Timestamp! @field(default: "now()")
-  updatedAt: Timestamp! @field(default: "now()")
-  # Relações
-  deals: [Deals]
-  conversations: [Conversations]
-}
-
-# Oportunidades de negócio / Vendas
 enum DealStage {
   NEW_LEAD
   QUALIFIED
   QUOTE_SENT
   NEGOTIATION
-  AWAITING_ACTION
+  UNCONFIRMED
   CLOSED_WON
   CLOSED_LOST
+  CANCELED
+  AGUARDANDO_FECHAMENTO
 }
 
-type Deals @table(key: "dealId") {
-  dealId: ID!
-  title: String!
-  contact: Contacts! @foreignKey(references: "contactId")
-  stage: DealStage! @field(default: "NEW_LEAD")
-  estimatedValue: Float
-  nextAction: String
-  assignedTo: Users @foreignKey(references: "uid")
-  createdAt: Timestamp! @field(default: "now()")
-  updatedAt: Timestamp! @field(default: "now()")
-  # Relações
-  quote: Quotes
-}
-
-# Conversas com clientes
-type Conversations @table(key: "conversationId") {
-  conversationId: ID!
-  contact: Contacts! @foreignKey(references: "contactId")
-  channelId: String! # Referência ao canal (ex: channel_wa)
-  status: String! @field(default: "open") # open, closed, pending
-  isAiActive: Boolean! @field(default: "true")
-  humanOwner: Users @foreignKey(references: "uid")
-  lastMessageAt: Timestamp
-  createdAt: Timestamp! @field(default: "now()")
-  # Relações
-  messages: [Messages]
-}
-
-type Messages @table(key: "messageId") {
-  messageId: ID!
-  conversation: Conversations! @foreignKey(references: "conversationId")
-  senderType: String! # user, agent, ai, system
-  authorName: String
-  content: String!
-  contentType: String! @field(default: "text") # text, image
-  createdAt: Timestamp! @field(default: "now()")
-}
-
-# Orçamentos gerados
 enum QuoteStatus {
   DRAFT
   REVIEW
   SENT
+  UNCONFIRMED
   APPROVED
-  REJECTED
+  LOST
   CANCELED
+  AWAITING_APPROVAL
 }
 
-type Quotes @table(key: "quoteId") {
-  quoteId: ID!
-  deal: Deals! @foreignKey(references: "dealId")
-  status: QuoteStatus! @field(default: "DRAFT")
-  summary: String
-  origin: String
-  destination: String
-  serviceDate: Timestamp
-  passengers: Int
-  aiSuggestedValue: Float
-  finalValue: Float
-  approvedBy: Users @foreignKey(references: "uid")
-  createdAt: Timestamp! @field(default: "now()")
-  updatedAt: Timestamp! @field(default: "now()")
-  # Relações
-  reservation: Reservations
-}
-
-# Reservas confirmadas
 enum ReservationStatus {
   PENDING
+  UNCONFIRMED
   CONFIRMED
+  RESCHEDULED
   COMPLETED
   CANCELED
-  RESCHEDULED
+  AWAITING_APPROVAL
 }
 
-type Reservations @table(key: "reservationId") {
-  reservationId: ID!
-  quote: Quotes! @foreignKey(references: "quoteId")
-  status: ReservationStatus! @field(default: "PENDING")
+enum ActorType {
+  HUMAN
+  AI
+  SYSTEM
+  CUSTOMER
+}
+
+# ---------------------------------
+# Core Entities
+# ---------------------------------
+
+"""
+Represents system operators. Linked to Firebase Auth via UID.
+"""
+type Users @table(name: "users") {
+  id: Int! @primaryKey
+  uid: String! @unique
+  email: String! @unique
+  displayName: String
+  photoURL: String
+  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  roles: [UserRoles] @relation(on: "userId")
+}
+
+type Roles @table(name: "roles") {
+  id: Int! @primaryKey
+  name: UserRole! @unique
+  users: [UserRoles] @relation(on: "roleId")
+}
+
+"""
+Join table for many-to-many relationship between Users and Roles.
+"""
+type UserRoles @table(name: "user_roles") {
+  userId: Int!
+  roleId: Int!
+  user: Users! @foreignKey(on: "userId")
+  role: Roles! @foreignKey(on: "roleId")
+  @@primaryKey(fields: ["userId", "roleId"])
+}
+
+"""
+Represents customers or leads.
+"""
+type Contacts @table(name: "contacts") {
+  id: Int! @primaryKey
+  fullName: String!
+  phone: String
+  email: String @unique
+  originChannel: String
+  notes: String
+  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  deals: [Deals] @relation(on: "contactId")
+}
+
+"""
+Represents a deal or opportunity in the sales pipeline.
+"""
+type Deals @table(name: "deals") {
+  id: Int! @primaryKey
+  title: String!
+  stage: DealStage! @default(value: "NEW_LEAD")
+  estimatedValue: Float
+  contactId: Int!
+  contact: Contacts @foreignKey(on: "contactId")
+  assignedToId: Int
+  assignedTo: Users @foreignKey(on: "assignedToId")
+  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  quote: Quotes @relation(on: "dealId")
+}
+
+"""
+Represents a price quotation for a service.
+"""
+type Quotes @table(name: "quotes") {
+  id: Int! @primaryKey
+  dealId: Int! @unique
+  deal: Deals @foreignKey(on: "dealId")
+  status: QuoteStatus! @default(value: "DRAFT")
+  summary: String!
+  finalApprovedValue: Float
+  approvedById: Int
+  approvedBy: Users @foreignKey(on: "approvedById")
+  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  reservation: Reservations @relation(on: "quoteId")
+}
+
+"""
+Represents a confirmed service booking.
+"""
+type Reservations @table(name: "reservations") {
+  id: Int! @primaryKey
+  quoteId: Int! @unique
+  quote: Quotes @foreignKey(on: "quoteId")
+  status: ReservationStatus! @default(value: "PENDING")
   serviceDate: Timestamp!
   details: String
-  confirmedBy: Users @foreignKey(references: "uid")
-  createdAt: Timestamp! @field(default: "now()")
-  updatedAt: Timestamp! @field(default: "now()")
-  # Relações
-  calendarEvent: CalendarEvents
+  confirmedById: Int
+  confirmedBy: Users @foreignKey(on: "confirmedById")
+  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
 }
 
-# Eventos no calendário
-type CalendarEvents @table(key: "eventId") {
-  eventId: ID!
-  reservation: Reservations @foreignKey(references: "reservationId")
-  title: String!
-  eventType: String! # Pickup, Transfer, Tour
-  start: Timestamp!
-  end: Timestamp!
-  assignedTo: Users @foreignKey(references: "uid")
-  status: String! @field(default: "CONFIRMED") # CONFIRMED, CANCELED
-  createdAt: Timestamp! @field(default: "now()")
-}
-
-# Tarefas e Follow-ups
-type Tasks @table(key: "taskId") {
-  taskId: ID!
-  title: String!
-  description: String
-  dueDate: Timestamp
-  isCompleted: Boolean! @field(default: "false")
-  assignedTo: Users @foreignKey(references: "uid")
-  relatedDeal: Deals @foreignKey(references: "dealId")
-  relatedContact: Contacts @foreignKey(references: "contactId")
-  createdAt: Timestamp! @field(default: "now()")
-}
-
-# Logs de auditoria para rastrear ações
-type AuditLogs @table(key: "logId") {
-  logId: ID!
-  actor: String! # Quem fez a ação (ex: User UID, "AI", "System")
-  actorType: String! # human, ai, system
-  eventType: String! # ex: deal_stage_changed, quote_created
-  entityType: String! # Deals, Quotes, etc.
+"""
+Logs important actions within the system for auditing purposes.
+"""
+type AuditLogs @table(name: "audit_logs") {
+  id: Int! @primaryKey
+  actor: String!
+  actorType: ActorType!
+  eventType: String!
+  entityType: String!
   entityId: String!
-  before: JSON
-  after: JSON
   notes: String
-  source: String # app, whatsapp, ai_flow
-  createdAt: Timestamp! @field(default: "now()")
+  source: String
+  timestamp: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
 }
 
-# Base de Conhecimento
-type KnowledgeBaseArticles @table(key: "articleId") {
-  articleId: ID!
-  title: String!
-  category: String! # Services, Destinations, Policies
-  summary: String
-  content: String!
-  status: String! @field(default: "DRAFT") # DRAFT, REVIEWED, PUBLISHED
-  isEligibleForAI: Boolean! @field(default: "false")
-  createdAt: Timestamp! @field(default: "now()")
-  updatedAt: Timestamp! @field(default: "now()")
-}
 
-# Configurações globais da IA
-type AISettings @table(key: "id") {
-  id: ID!
-  mode: String! @field(default: "ASSISTED") # OFF, ASSISTED, AUTONOMOUS
-  commercialActivationStatus: String! @field(default: "UNAUTHORIZED")
-  manualFinalizationRequired: Boolean! @field(default: "true")
-  activeProvider: String! @field(default: "AUTOMATIC") # AUTOMATIC, GEMINI, OPENAI
-  isFallbackEnabled: Boolean! @field(default: "true")
-  updatedAt: Timestamp! @field(default: "now()")
-}
+# The @auth directive secures the entire API.
+# Initially, allow any authenticated user. Granular rules will be added later.
+query: Query @auth(
+  rules: [
+    {allow: "private"}
+  ]
+)
 
-# Canais de comunicação (WhatsApp, Instagram, etc)
-type ChannelConnections @table(key: "channelId") {
-  channelId: ID!
-  type: String! # WHATSAPP, INSTAGRAM, FACEBOOK, WEBSITE
-  name: String!
-  status: String! @field(default: "NOT_CONFIGURED") # CONNECTED, DISCONNECTED, FAILING, MOCK
-  aiEnabled: Boolean! @field(default: "true")
-  provider: String! @field(default: "AUTOMATIC")
-  lastChecked: Timestamp
-  lastError: String
-  updatedAt: Timestamp! @field(default: "now()")
-}
+mutation: Mutation @auth(
+  rules: [
+    {allow: "private"}
+  ]
+)
