@@ -1,7 +1,8 @@
-schemaVersion: v1alpha1
-schema:
-  files:
-    - path: schema/schema.gql
-connectors:
-  - id: postgres-connector
-    path: postgres-connector
+# Este arquivo foi gerado pelo Firebase.
+# Para saber mais, acesse https://firebase.google.com/docs/data-connect
+specVersion: v1alpha1
+serviceId: renascer-tour-data
+location: us-central1
+schemaDir: schema
+connectorDirs:
+  - postgres-connector

@@ -1,6 +1,18 @@
-# Defines a simple query to ensure the schema is valid.
-# This will be expanded with your application's data models.
+# Para saber mais, acesse https://firebase.google.com/docs/data-connect/reference/graphql
+
+"""
+Um tipo de consulta inicial para garantir que o schema seja válido.
+"""
 type Query {
-  # A placeholder query to verify the service is running.
   hello: String
+}
+
+"""
+Define uma tabela de Usuários com uma chave primária 'id'.
+Esta é uma modelagem inicial para a entidade de usuários.
+"""
+type Users @table(key: "id") {
+  id: ID!
+  name: String
+  email: String!
 }
