@@ -1,245 +1,192 @@
-# Base User and Auth entities
-type Users @table(key: "uid") {
-  uid: String!
-  email: String
-  displayName: String
-  photoURL: String
-  disabled: Boolean! @default(value: false)
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-  roles: [UserRoles]
+# Defines the user authentication and authorization model.
+type Users @table {
+  id: String! @primaryKey
+  email: String @unique
+  fullName: String
+  avatarUrl: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
-type Roles @table(key: "id") {
-  id: String!
-  name: String! @unique
+type Roles @table {
+  id: String! @primaryKey
+  name: String! @unique # e.g., 'admin', 'agent'
   description: String
-  userRoles: [UserRoles]
 }
 
-type UserRoles @table(key: "id") {
-  id: String!
-  user: Users! @foreignKey(references: "uid")
+type UserRoles @table {
+  userId: String!
+  roleId: String!
+  user: Users! @foreignKey(references: "id")
   role: Roles! @foreignKey(references: "id")
 }
 
-# Core Operational Entities
-type Contacts @table(key: "id") {
-  id: String!
+# Core business entities
+type Contacts @table {
+  id: String! @primaryKey
   fullName: String!
+  email: String @unique
   phone: String
-  email: String
+  avatarUrl: String
   originChannel: String
   notes: String
-  status: String # e.g., 'active', 'archived', 'blocked'
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-  deals: [Deals]
-  conversations: [Conversations]
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
-enum DealStage {
-  NEW_LEAD
-  QUALIFIED
-  QUOTE_SENT
-  NEGOTIATION
-  AWAITING_ACTION
-  CLOSED_WON
-  CLOSED_LOST
-  CANCELED
-}
-
-type Deals @table(key: "id") {
-  id: String!
-  contact: Contacts! @foreignKey(references: "id")
+type Deals @table {
+  id: String! @primaryKey
   title: String!
-  stage: DealStage! @default(value: "NEW_LEAD")
-  estimatedValue: Float! @default(value: 0)
-  assignedTo: Users @foreignKey(references: "uid")
-  approvedBy: Users @foreignKey(references: "uid")
-  nextAction: String
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-  quote: Quotes
-}
-
-enum ConversationStatus {
-  OPEN
-  CLOSED
-  PENDING
-  AWAITING_HUMAN
-  IA_ASSISTED
-}
-
-type Conversations @table(key: "id") {
-  id: String!
+  contactId: String!
   contact: Contacts! @foreignKey(references: "id")
+  pipelineStage: DealStage!
+  estimatedValue: Float
+  ownerId: String # Can be a User ID or 'IA'
+  status: DealStatus!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
+
+type Conversations @table {
+  id: String! @primaryKey
+  contactId: String!
+  contact: Contacts! @foreignKey(references: "id")
+  channelId: String!
   channel: ChannelConnections! @foreignKey(references: "id")
-  status: ConversationStatus! @default(value: "OPEN")
-  assignedTo: Users @foreignKey(references: "uid")
-  lastMessageSummary: String
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-  messages: [Messages]
+  status: ConversationStatus!
+  priority: PriorityLevel
+  isAiActive: Boolean!
+  humanOwnerId: String # User ID
+  lastMessageSnippet: String
+  lastMessageAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
-enum SenderType {
-  USER
-  AGENT
-  AI
-  SYSTEM
-}
-
-type Messages @table(key: "id") {
-  id: String!
+type Messages @table {
+  id: String! @primaryKey
+  conversationId: String!
   conversation: Conversations! @foreignKey(references: "id")
   senderType: SenderType!
+  authorName: String
   content: String!
-  createdAt: Timestamp! @default(value: "now()")
+  contentType: ContentType!
+  createdAt: Timestamp!
 }
 
-enum QuoteStatus {
-  DRAFT
-  SENT
-  APPROVED
-  REJECTED
-  CANCELED
-}
-
-type Quotes @table(key: "id") {
-  id: String!
+type Quotes @table {
+  id: String! @primaryKey
+  dealId: String!
   deal: Deals! @foreignKey(references: "id")
-  origin: String
-  destination: String
-  serviceDate: Timestamp
-  serviceTime: String
-  passengers: Int
-  bags: Int
-  aiSuggestedValue: Float
-  finalApprovedValue: Float
-  status: QuoteStatus! @default(value: "DRAFT")
-  approvedBy: Users @foreignKey(references: "uid")
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-  reservation: Reservations
+  status: QuoteStatus!
+  summary: String!
+  priceRangeMin: Float
+  priceRangeMax: Float
+  finalValue: Float
+  approvedByHumanId: String # User ID
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
-enum ReservationStatus {
-  PENDING_CONFIRMATION
-  CONFIRMED
-  COMPLETED
-  CANCELED
-}
-
-type Reservations @table(key: "id") {
-  id: String!
+type Reservations @table {
+  id: String! @primaryKey
+  quoteId: String!
   quote: Quotes! @foreignKey(references: "id")
-  status: ReservationStatus! @default(value: "PENDING_CONFIRMATION")
-  serviceDate: Timestamp!
-  serviceTime: String!
-  confirmedBy: Users @foreignKey(references: "uid")
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-  calendarEvent: CalendarEvents
+  status: ReservationStatus!
+  serviceDetails: String
+  serviceDate: Timestamp
+  confirmedBy: String # User ID or 'IA'
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
-type CalendarEvents @table(key: "id") {
-  id: String!
-  reservation: Reservations! @foreignKey(references: "id")
+type CalendarEvents @table {
+  id: String! @primaryKey
+  reservationId: String
+  reservation: Reservations @foreignKey(references: "id")
   title: String!
+  eventType: CalendarEventType!
   start: Timestamp!
-  end: Timestamp!
-  status: String # e.g., 'confirmed', 'tentative'
-  assignedTo: Users @foreignKey(references: "uid")
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
+  "end": Timestamp! # Using quotes for reserved keyword
+  assignedToId: String # User ID
+  status: EventStatus!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
-# Settings and Logs
-enum ActorType {
-  HUMAN
-  AI
-  SYSTEM
-  CUSTOMER
-}
-
-type AuditLogs @table(key: "id") {
-  id: String!
-  actor: String! # Could be user uid or customer name
+type AuditLogs @table {
+  id: String! @primaryKey
+  timestamp: Timestamp!
+  actor: String!
   actorType: ActorType!
   eventType: String!
   entityType: String!
   entityId: String!
-  source: String
   notes: String
-  before: JSON
-  after: JSON
-  createdAt: Timestamp! @default(value: "now()")
+  source: String
 }
 
-type KnowledgeBaseArticles @table(key: "id") {
-  id: String!
+type KnowledgeBaseArticles @table {
+  id: String! @primaryKey
   title: String!
   category: String!
   summary: String
   content: String!
-  status: String! # e.g., 'draft', 'published', 'archived'
-  isEligibleForAI: Boolean! @default(value: false)
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
+  status: ArticleStatus!
+  isEligibleForAI: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
-enum AIMode {
-  OFF
-  ASSISTED
-  AUTONOMOUS
+# Settings and configuration entities
+type AISettings @table {
+  id: String! @primaryKey
+  globalAiEnabled: Boolean!
+  aiMode: AIMode!
+  requireHumanApproval: Boolean!
+  activeProvider: String!
+  isFallbackEnabled: Boolean!
 }
 
-type AISettings @table(key: "id") {
-  id: String! # Singleton
-  mode: AIMode! @default(value: "ASSISTED")
-  manualFinalizationRequired: Boolean! @default(value: true)
-  activationStatus: String # e.g., 'active', 'inactive'
-  providerStatus: String # e.g., 'ok', 'degraded'
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-}
-
-type ActivationKeys @table(key: "id") {
-  id: String!
-  keyHash: String! @unique
+type ActivationKeys @table {
+  id: String! @primaryKey
+  keyName: String! @unique # e.g., 'commercial_activation'
+  status: KeyStatus!
   description: String
-  isActive: Boolean! @default(value: false)
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
+  expiresAt: Timestamp
 }
 
-type ChannelAccounts @table(key: "id") {
-  id: String!
-  type: String! # e.g., 'whatsapp', 'instagram'
-  accountId: String! @unique # e.g., phone number, page ID
-  displayName: String
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-  connections: [ChannelConnections]
+type ChannelAccounts @table {
+  id: String! @primaryKey
+  type: ChannelType! # e.g., 'whatsapp', 'instagram'
+  accountName: String!
+  accountId: String @unique
 }
 
-enum ChannelStatus {
-  NOT_CONFIGURED
-  CONNECTED
-  DISCONNECTED
-  FAILING
-  MOCK
-}
-
-type ChannelConnections @table(key: "id") {
-  id: String!
-  account: ChannelAccounts! @foreignKey(references: "id")
-  status: ChannelStatus! @default(value: "NOT_CONFIGURED")
-  aiEnabled: Boolean! @default(value: false)
+type ChannelConnections @table {
+  id: String! @primaryKey
+  channelAccountId: String!
+  channelAccount: ChannelAccounts! @foreignKey(references: "id")
+  status: ConnectionStatus!
+  aiEnabled: Boolean!
   lastChecked: Timestamp
   lastError: String
-  createdAt: Timestamp! @default(value: "now()")
-  updatedAt: Timestamp! @default(value: "now()")
-  conversations: [Conversations]
 }
+
+# Enums for status fields
+enum DealStage { NEW_LEAD, QUALIFIED, QUOTE_SENT, NEGOTIATION, CLOSED_WON, CLOSED_LOST }
+enum DealStatus { OPEN, WON, LOST, CANCELED }
+enum ConversationStatus { OPEN, CLOSED, PENDING, AGUARDANDO_HUMANO }
+enum PriorityLevel { LOW, MEDIUM, HIGH }
+enum SenderType { USER, AGENT, AI, SYSTEM }
+enum ContentType { TEXT, IMAGE, FILE }
+enum QuoteStatus { DRAFT, SENT, APPROVED, REJECTED, CANCELED }
+enum ReservationStatus { PENDING, CONFIRMED, CANCELED, COMPLETED }
+enum CalendarEventType { PICKUP, TRANSFER, TOUR, MAINTENANCE }
+enum EventStatus { CONFIRMED, PENDING, CANCELED }
+enum ActorType { HUMAN, AI, SYSTEM, CUSTOMER }
+enum ArticleStatus { DRAFT, PUBLISHED, ARCHIVED }
+enum AIMode { OFF, ASSISTED, AUTONOMOUS }
+enum KeyStatus { ACTIVE, INACTIVE, EXPIRED }
+enum ChannelType { WHATSAPP, INSTAGRAM, FACEBOOK, WEBSITE }
+enum ConnectionStatus { CONNECTED, DISCONNECTED, PENDING, FAILING }
