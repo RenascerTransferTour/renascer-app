@@ -1,279 +1,197 @@
 
-"""
-Defines the user roles for access control.
-"""
-enum RoleName {
-  ADMIN
-  AGENT
-  VIEWER
-}
-
-"""
-Defines the current stage of a deal in the sales pipeline.
-"""
-enum DealStage {
-  NEW_LEAD
-  QUALIFIED
-  QUOTE_SENT
-  NEGOTIATION
-  VERBAL_AGREEMENT
-  CLOSED_WON
-  CLOSED_LOST
-  CANCELED
-}
-
-"""
-Defines the status of a quote.
-"""
-enum QuoteStatus {
-  DRAFT
-  SENT
-  APPROVED
-  REJECTED
-  EXPIRED
-}
-
-"""
-Defines the status of a reservation.
-"""
-enum ReservationStatus {
-  PENDING_CONFIRMATION
-  CONFIRMED
-  COMPLETED
-  CANCELED
-  RESCHEDULED
-}
-
-"""
-Defines the status of a calendar event.
-"""
-enum CalendarEventStatus {
-  SCHEDULED
-  IN_PROGRESS
-  COMPLETED
-  CANCELED
-}
-
-"""
-Defines the type of a channel connection.
-"""
-enum ChannelType {
-  WHATSAPP
-  INSTAGRAM
-  FACEBOOK
-  WEBSITE
-  MANUAL
-}
-
-"""
-Defines the connection status of a channel.
-"""
-enum ChannelStatus {
-  NOT_CONFIGURED
-  CONNECTED
-  DISCONNECTED
-  AWAITING_QR
-  ERROR
-  SIMULATED
-}
-
-"""
-Represents a user of the system, typically an employee.
-Linked to Firebase Authentication via the 'uid' field.
-"""
 type Users @table(name: "users") {
-  uid: String! @column(name: "uid", primaryKey: true)
-  email: String! @column(name: "email")
-  displayName: String @column(name: "display_name")
-  photoURL: String @column(name: "photo_url")
-  disabled: Boolean! @column(name: "disabled", default: false)
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
-  roles: [Roles]! @relationship(through: "UserRoles", from: "user", to: "role")
+  id: ID! @custom(type: "uuid")
+  externalId: String @unique
+  email: String @unique
+  fullName: String
+  avatarUrl: String
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
+  roles: [UserRoles!] @relationship(field: "user")
 }
 
-"""
-Represents a role that can be assigned to a user.
-"""
 type Roles @table(name: "roles") {
-  roleName: RoleName! @column(name: "role_name", primaryKey: true)
-  description: String @column(name: "description")
-  users: [Users]! @relationship(through: "UserRoles", from: "role", to: "user")
+  id: ID! @custom(type: "uuid")
+  name: String! @unique # e.g., 'admin', 'agent'
+  description: String
+  users: [UserRoles!] @relationship(field: "role")
 }
 
-"""
-Join table for the many-to-many relationship between Users and Roles.
-"""
 type UserRoles @table(name: "user_roles") {
-  user: Users! @relationship(name: "user")
-  role: Roles! @relationship(name: "role")
+  userId: ID! @custom(type: "uuid")
+  roleId: ID! @custom(type: "uuid")
+  user: Users! @foreignKey(field: "userId")
+  role: Roles! @foreignKey(field: "roleId")
 }
 
-"""
-Represents an external contact (customer or lead).
-"""
 type Contacts @table(name: "contacts") {
-  contactId: Int! @column(name: "contact_id", primaryKey: true, identity: true)
-  fullName: String! @column(name: "full_name")
-  phone: String @column(name: "phone")
-  email: String @column(name: "email")
-  avatarUrl: String @column(name: "avatar_url")
-  originChannel: String @column(name: "origin_channel")
-  notes: String @column(name: "notes")
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
-  deals: [Deals] @relationship(name: "dealsForContact", field: "contactId")
+  id: ID! @custom(type: "uuid")
+  fullName: String!
+  phone: String
+  email: String
+  avatarUrl: String
+  originChannel: String
+  notes: String
+  status: String # e.g., 'active', 'archived'
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
+  deals: [Deals!] @relationship(field: "contact")
+  conversations: [Conversations!] @relationship(field: "contact")
 }
 
-"""
-Represents a sales opportunity or lead.
-"""
 type Deals @table(name: "deals") {
-  dealId: Int! @column(name: "deal_id", primaryKey: true, identity: true)
-  contactId: Contacts! @relationship(name: "contactForDeal", field: "contactId")
-  title: String! @column(name: "title")
-  stage: DealStage! @column(name: "stage", default: "NEW_LEAD")
-  estimatedValue: Float @column(name: "estimated_value")
-  finalValue: Float @column(name: "final_value")
-  assignedTo: Users @relationship(name: "assignedUser", field: "assignedTo")
-  approvedBy: Users @relationship(name: "approvedByUser", field: "approvedBy")
-  nextActionAt: Timestamp @column(name: "next_action_at")
-  closedAt: Timestamp @column(name: "closed_at")
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
-  quote: Quotes @relationship(name: "quoteForDeal", field: "dealId")
+  id: ID! @custom(type: "uuid")
+  contactId: ID! @custom(type: "uuid")
+  contact: Contacts! @foreignKey(field: "contactId")
+  title: String!
+  stage: String! # e.g., 'new-lead', 'qualified', 'quote-sent'
+  estimatedValue: Float
+  status: String! # e.g., 'open', 'won', 'lost'
+  assignedToId: ID @custom(type: "uuid") # Can be a User or 'IA'
+  assignedTo: Users @foreignKey(field: "assignedToId")
+  approvedById: ID @custom(type: "uuid")
+  approvedBy: Users @foreignKey(field: "approvedById")
+  nextAction: String
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
 }
 
-"""
-Represents a quote for a service.
-"""
-type Quotes @table(name: "quotes") {
-  quoteId: Int! @column(name: "quote_id", primaryKey: true, identity: true)
-  dealId: Deals! @relationship(name: "dealForQuote", field: "dealId")
-  status: QuoteStatus! @column(name: "status", default: "DRAFT")
-  summary: String @column(name: "summary")
-  origin: String @column(name: "origin")
-  destination: String @column(name: "destination")
-  serviceDate: Timestamp @column(name: "service_date")
-  passengers: Int @column(name: "passengers")
-  luggageDetails: String @column(name: "luggage_details")
-  aiSuggestedValue: Float @column(name: "ai_suggested_value")
-  finalApprovedValue: Float @column(name: "final_approved_value")
-  approvedBy: Users @relationship(name: "quoteApprovedBy", field: "approvedBy")
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
-  reservation: Reservations @relationship(name: "reservationForQuote", field: "quoteId")
-}
-
-"""
-Represents a confirmed booking for a service.
-"""
-type Reservations @table(name: "reservations") {
-  reservationId: Int! @column(name: "reservation_id", primaryKey: true, identity: true)
-  quoteId: Quotes! @relationship(name: "quoteForReservation", field: "quoteId")
-  status: ReservationStatus! @column(name: "status", default: "PENDING_CONFIRMATION")
-  serviceDate: Timestamp! @column(name: "service_date")
-  confirmedBy: Users @relationship(name: "reservationConfirmedBy", field: "confirmedBy")
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
-  calendarEvent: CalendarEvents @relationship(name: "eventForReservation", field: "reservationId")
-}
-
-"""
-Represents an event in the operational calendar.
-"""
-type CalendarEvents @table(name: "calendar_events") {
-  eventId: Int! @column(name: "event_id", primaryKey: true, identity: true)
-  reservationId: Reservations @relationship(name: "reservationForEvent", field: "reservationId")
-  title: String! @column(name: "title")
-  startTime: Timestamp! @column(name: "start_time")
-  endTime: Timestamp! @column(name: "end_time")
-  status: CalendarEventStatus! @column(name: "status", default: "SCHEDULED")
-  assignedTo: Users @relationship(name: "eventAssignedTo", field: "assignedTo")
-  notes: String @column(name: "notes")
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
-}
-
-"""
-Represents a connection to an external communication channel.
-"""
-type ChannelConnections @table(name: "channel_connections") {
-  channelId: Int! @column(name: "channel_id", primaryKey: true, identity: true)
-  type: ChannelType! @column(name: "type")
-  displayName: String! @column(name: "display_name")
-  status: ChannelStatus! @column(name: "status", default: "NOT_CONFIGURED")
-  aiEnabled: Boolean! @column(name: "ai_enabled", default: true)
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
-}
-
-"""
-Represents a conversation with a contact through a channel.
-"""
 type Conversations @table(name: "conversations") {
-  conversationId: Int! @column(name: "conversation_id", primaryKey: true, identity: true)
-  contactId: Contacts! @relationship(name: "contactForConversation", field: "contactId")
-  channelId: ChannelConnections! @relationship(name: "channelForConversation", field: "channelId")
-  dealId: Deals @relationship(name: "dealForConversation", field: "dealId")
-  status: String! @column(name: "status", default: "OPEN")
-  assignedTo: Users @relationship(name: "conversationAssignedTo", field: "assignedTo")
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
+  id: ID! @custom(type: "uuid")
+  contactId: ID! @custom(type: "uuid")
+  contact: Contacts! @foreignKey(field: "contactId")
+  channelId: ID! @custom(type: "uuid")
+  channel: ChannelConnections! @foreignKey(field: "channelId")
+  status: String! # e.g., 'open', 'closed', 'pending'
+  assignedToId: ID @custom(type: "uuid")
+  assignedTo: Users @foreignKey(field: "assignedToId")
+  lastMessageSummary: String
+  startedAt: Timestamp!
+  closedAt: Timestamp
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
+  messages: [Messages!] @relationship(field: "conversation")
 }
 
-"""
-Represents a single message within a conversation.
-"""
 type Messages @table(name: "messages") {
-  messageId: Int! @column(name: "message_id", primaryKey: true, identity: true)
-  conversationId: Conversations! @relationship(name: "conversationForMessage", field: "conversationId")
-  senderType: String! @column(name: "sender_type") # e.g., 'user', 'agent', 'ai'
-  senderId: String! @column(name: "sender_id")
-  content: String! @column(name: "content")
-  sentAt: Timestamp! @column(name: "sent_at")
+  id: ID! @custom(type: "uuid")
+  conversationId: ID! @custom(type: "uuid")
+  conversation: Conversations! @foreignKey(field: "conversationId")
+  senderType: String! # e.g., 'user', 'agent', 'ai', 'system'
+  senderId: String # Can be contactId, userId, or 'system'
+  content: String!
+  contentType: String! # e.g., 'text', 'image'
+  sentAt: Timestamp! @default(value: "now()")
 }
 
-"""
-Logs important events in the system for auditing purposes.
-"""
+type Quotes @table(name: "quotes") {
+  id: ID! @custom(type: "uuid")
+  dealId: ID! @custom(type: "uuid")
+  deal: Deals! @foreignKey(field: "dealId")
+  origin: String
+  destination: String
+  serviceDate: Timestamp
+  serviceTime: String
+  passengers: Int
+  bags: Int
+  aiSuggestedValue: Float
+  finalApprovedValue: Float
+  status: String! # e.g., 'draft', 'sent', 'approved', 'rejected'
+  approvedById: ID @custom(type: "uuid")
+  approvedBy: Users @foreignKey(field: "approvedById")
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
+}
+
+type Reservations @table(name: "reservations") {
+  id: ID! @custom(type: "uuid")
+  quoteId: ID! @custom(type: "uuid")
+  quote: Quotes! @foreignKey(field: "quoteId")
+  status: String! # e.g., 'pending', 'confirmed', 'completed', 'canceled'
+  confirmedById: ID @custom(type: "uuid") # Can be User or 'IA'
+  confirmedBy: Users @foreignKey(field: "confirmedById")
+  serviceDate: Timestamp!
+  serviceTime: String!
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
+}
+
+type CalendarEvents @table(name: "calendar_events") {
+  id: ID! @custom(type: "uuid")
+  reservationId: ID @custom(type: "uuid")
+  reservation: Reservations @foreignKey(field: "reservationId")
+  title: String!
+  description: String
+  startTime: Timestamp!
+  endTime: Timestamp!
+  assignedToId: ID @custom(type: "uuid")
+  assignedTo: Users @foreignKey(field: "assignedToId")
+  status: String! # e.g., 'scheduled', 'completed', 'canceled'
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
+}
+
 type AuditLogs @table(name: "audit_logs") {
-  logId: Int! @column(name: "log_id", primaryKey: true, identity: true)
-  actorType: String! @column(name: "actor_type")
-  actorName: String! @column(name: "actor_name")
-  eventType: String! @column(name: "event_type")
-  entityType: String @column(name: "entity_type")
-  entityId: String @column(name: "entity_id")
-  notes: String @column(name: "notes")
-  source: String @column(name: "source")
-  beforeState: JSON @column(name: "before_state")
-  afterState: JSON @column(name: "after_state")
-  timestamp: Timestamp! @column(name: "timestamp")
+  id: ID! @custom(type: "uuid")
+  actor: String!
+  actorType: String! # e.g., 'human', 'ai', 'system'
+  eventType: String!
+  entityType: String!
+  entityId: String!
+  notes: String
+  source: String
+  before: JSON
+  after: JSON
+  createdAt: Timestamp! @default(value: "now()")
 }
 
-"""
-Stores articles for the internal knowledge base.
-"""
 type KnowledgeBaseArticles @table(name: "knowledge_base_articles") {
-  articleId: Int! @column(name: "article_id", primaryKey: true, identity: true)
-  title: String! @column(name: "title")
-  category: String! @column(name: "category")
-  summary: String @column(name: "summary")
-  content: String! @column(name: "content")
-  status: String! @column(name: "status", default: "DRAFT")
-  isEligibleForAI: Boolean! @column(name: "is_eligible_for_ai", default: false)
-  author: Users @relationship(name: "articleAuthor", field: "author")
-  createdAt: Timestamp! @column(name: "created_at")
-  updatedAt: Timestamp! @column(name: "updated_at")
+  id: ID! @custom(type: "uuid")
+  title: String!
+  category: String!
+  summary: String
+  content: String!
+  status: String! # e.g., 'draft', 'published', 'archived'
+  isEligibleForAI: Boolean! @default(value: "false")
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
 }
 
-"""
-Singleton table for global AI settings.
-"""
 type AISettings @table(name: "ai_settings") {
-  settingsId: Int! @column(name: "settings_id", primaryKey: true, default: 1)
-  aiMode: String! @column(name: "ai_mode", default: "ASSISTED")
-  manualFinalizationRequired: Boolean! @column(name: "manual_finalization_required", default: true)
-  commercialActivationStatus: String! @column(name: "commercial_activation_status", default: "UNAUTHORIZED")
-  updatedAt: Timestamp! @column(name: "updated_at")
+  id: ID! @custom(type: "uuid")
+  mode: String! # e.g., 'assisted', 'off'
+  provider: String # e.g., 'gemini', 'openai'
+  manualFinalizationRequired: Boolean! @default(value: "true")
+  activationStatus: String! # e.g., 'active', 'inactive'
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
+}
+
+type ActivationKeys @table(name: "activation_keys") {
+  id: ID! @custom(type: "uuid")
+  keyHash: String! @unique
+  description: String
+  status: String! # e.g., 'active', 'revoked'
+  expiresAt: Timestamp
+  createdAt: Timestamp! @default(value: "now()")
+}
+
+type ChannelAccounts @table(name: "channel_accounts") {
+  id: ID! @custom(type: "uuid")
+  type: String! # e.g., 'whatsapp', 'instagram'
+  accountIdentifier: String! # e.g., phone number, page ID
+  displayName: String
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
+}
+
+type ChannelConnections @table(name: "channel_connections") {
+  id: ID! @custom(type: "uuid")
+  channelAccountId: ID! @custom(type: "uuid")
+  channelAccount: ChannelAccounts! @foreignKey(field: "channelAccountId")
+  status: String! # e.g., 'connected', 'disconnected', 'failing'
+  lastChecked: Timestamp
+  lastError: String
+  createdAt: Timestamp! @default(value: "now()")
+  updatedAt: Timestamp! @default(value: "now()")
 }
