@@ -1,264 +1,308 @@
-# Defines the GraphQL schema for the Renascer Transfer Tour backend.
 
-# --- Enums for Statuses and Types ---
-enum UserRole {
+"""
+This is the initial Data Connect schema for the Renascer Transfer Tour system.
+It defines the core relational data model that will be provisioned on PostgreSQL.
+"""
+
+# -------------------------------------
+# ENUMS - For consistent status fields
+# -------------------------------------
+
+enum UserRoleEnum {
   ADMIN
   AGENT
   VIEWER
 }
 
-enum LeadStatus {
+enum ContactStatusEnum {
   NEW
-  QUALIFIED
   CONTACTED
+  QUALIFIED
   UNQUALIFIED
+  ARCHIVED
 }
 
-enum DealStage {
+enum DealStageEnum {
   NEW_LEAD
   QUALIFIED
-  QUOTE_SENT
+  PROPOSAL_SENT
   NEGOTIATION
-  UNCONFIRMED
+  VERBAL_AGREEMENT
   CLOSED_WON
   CLOSED_LOST
-  CANCELED
+  STALLED
 }
 
-enum ConversationStatus {
+enum ConversationStatusEnum {
   OPEN
+  PENDING_HUMAN
+  PENDING_AI
   CLOSED
-  PENDING
-  AWAITING_HUMAN
+  ARCHIVED
 }
 
-enum QuoteStatus {
+enum MessageSenderTypeEnum {
+  CUSTOMER
+  AGENT
+  AI
+  SYSTEM
+}
+
+enum QuoteStatusEnum {
   DRAFT
-  REVIEW
   SENT
   APPROVED
   REJECTED
   CANCELED
 }
 
-enum ReservationStatus {
-  PENDING
+enum ReservationStatusEnum {
+  PENDING_CONFIRMATION
   CONFIRMED
-  CANCELED
   COMPLETED
+  CANCELED
+  RESCHEDULED
 }
 
-enum ChannelType {
+enum CalendarEventTypeEnum {
+  PICKUP
+  TRANSFER
+  TOUR
+  TASK
+  MAINTENANCE
+}
+
+enum AuditActorTypeEnum {
+  HUMAN
+  AI
+  SYSTEM
+  CUSTOMER
+}
+
+enum KnowledgeBaseStatusEnum {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AIModeEnum {
+  OFF
+  ASSISTED
+  SEMI_AUTONOMOUS
+}
+
+enum ActivationKeyStatusEnum {
+  ACTIVE
+  INACTIVE
+  EXPIRED
+}
+
+enum ChannelTypeEnum {
   WHATSAPP
   INSTAGRAM
   FACEBOOK
   WEBSITE
+  MANUAL
 }
 
-enum ChannelConnectionStatus {
+enum ChannelConnectionStatusEnum {
+  NOT_CONFIGURED
+  PENDING_AUTH
   CONNECTED
-  DISCONNECTED
-  PENDING
-  AWAITING_QR
   FAILING
+  DISCONNECTED
+  MOCK
 }
 
-enum AIMode {
-  OFF
-  ASSISTED
-  AUTONOMOUS
-}
+# -------------------------------------
+# CORE TABLES
+# -------------------------------------
 
-# --- Core Tables (Entities) ---
-
-type Users @table(key: "userId") {
-  userId: String! @db(default: "uuid()")
+type Users @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
   fullName: String!
-  email: String! @db(unique: true)
-  hashedPassword: String
+  email: String! @column(unique: true)
   avatarUrl: String
-  createdAt: Timestamp! @db(default: "now()")
-  updatedAt: Timestamp! @db(default: "now()")
-  # Relations
-  roles: [UserRoles!] @db(foreignKey: "userId")
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type Roles @table(key: "roleId") {
-  roleId: String! @db(default: "uuid()")
-  roleName: UserRole! @db(unique: true)
-  # Relations
-  users: [UserRoles!] @db(foreignKey: "roleId")
+type Roles @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  name: UserRoleEnum! @column(unique: true)
+  description: String
 }
 
 type UserRoles @table(key: ["userId", "roleId"]) {
-  userId: String!
-  roleId: String!
-  # Relations
-  user: Users! @db(references: ["userId"])
-  role: Roles! @db(references: ["roleId"])
+  userId: String! @column(type: "uuid")
+  roleId: String! @column(type: "uuid")
+  user: Users @column(references: "id")
+  role: Roles @column(references: "id")
 }
 
-type Contacts @table(key: "contactId") {
-  contactId: String! @db(default: "uuid()")
+type Contacts @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
   fullName: String!
-  phone: String @db(unique: true)
-  email: String @db(unique: true)
+  phone: String @column(unique: true)
+  email: String @column(unique: true)
   avatarUrl: String
-  originChannel: String
+  origin: String
   notes: String
-  createdAt: Timestamp! @db(default: "now()")
-  updatedAt: Timestamp! @db(default: "now()")
-  # Relations
-  deals: [Deals!] @db(foreignKey: "contactId")
-  conversations: [Conversations!] @db(foreignKey: "contactId")
+  status: ContactStatusEnum! @column(default: "NEW")
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type Deals @table(key: "dealId") {
-  dealId: String! @db(default: "uuid()")
-  contactId: String!
+type Deals @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  contactId: String! @column(type: "uuid")
+  contact: Contacts! @column(references: "id")
   title: String!
-  stage: DealStage! @db(default: "NEW_LEAD")
-  estimatedValue: Float
-  nextAction: String
-  assignedToId: String # Refers to Users.userId
-  createdAt: Timestamp! @db(default: "now()")
-  updatedAt: Timestamp! @db(default: "now()")
-  # Relations
-  contact: Contacts! @db(references: ["contactId"])
-  assignedTo: Users @db(references: ["assignedToId"])
+  stage: DealStageEnum! @column(default: "NEW_LEAD")
+  estimatedValue: Float @column(default: 0)
+  closedValue: Float
+  assignedToId: String @column(type: "uuid")
+  assignedTo: Users @column(references: "id")
+  closedAt: Timestamp
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type Conversations @table(key: "conversationId") {
-  conversationId: String! @db(default: "uuid()")
-  contactId: String!
-  channelId: String!
-  status: ConversationStatus! @db(default: "OPEN")
-  assignedToId: String # Refers to Users.userId
+type Conversations @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  contactId: String! @column(type: "uuid")
+  contact: Contacts! @column(references: "id")
+  channelConnectionId: String! @column(type: "uuid")
+  channelConnection: ChannelConnections! @column(references: "id")
+  status: ConversationStatusEnum! @column(default: "OPEN")
+  assignedToId: String @column(type: "uuid")
+  assignedTo: Users @column(references: "id")
   lastMessageSnippet: String
   lastMessageAt: Timestamp
-  createdAt: Timestamp! @db(default: "now()")
-  updatedAt: Timestamp! @db(default: "now()")
-  # Relations
-  contact: Contacts! @db(references: ["contactId"])
-  channel: ChannelConnections! @db(references: ["channelId"])
-  assignedTo: Users @db(references: ["assignedToId"])
-  messages: [Messages!] @db(foreignKey: "conversationId")
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type Messages @table(key: "messageId") {
-  messageId: String! @db(default: "uuid()")
-  conversationId: String!
-  senderType: String! # "user", "agent", "ai", "system"
-  senderId: String # Can be Contact.contactId or Users.userId
+type Messages @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  conversationId: String! @column(type: "uuid")
+  conversation: Conversations! @column(references: "id")
+  senderType: MessageSenderTypeEnum!
+  senderId: String # Can be userId or contactId
   content: String!
-  createdAt: Timestamp! @db(default: "now()")
-  # Relations
-  conversation: Conversations! @db(references: ["conversationId"])
+  sentAt: Timestamp! @column(default: "now()")
 }
 
-type Quotes @table(key: "quoteId") {
-  quoteId: String! @db(default: "uuid()")
-  dealId: String!
-  status: QuoteStatus! @db(default: "DRAFT")
-  origin: String
-  destination: String
-  serviceDate: Timestamp
-  passengers: Int
+type Quotes @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  dealId: String! @column(type: "uuid")
+  deal: Deals! @column(references: "id")
+  status: QuoteStatusEnum! @column(default: "DRAFT")
+  summary: String
   aiSuggestedValue: Float
-  finalApprovedValue: Float
-  approvedById: String # Refers to Users.userId
-  createdAt: Timestamp! @db(default: "now()")
-  updatedAt: Timestamp! @db(default: "now()")
-  # Relations
-  deal: Deals! @db(references: ["dealId"])
-  approvedBy: Users @db(references: ["approvedById"])
+  finalValue: Float
+  approvedBy: String @column(type: "uuid")
+  approver: Users @column(references: "id")
+  approvedAt: Timestamp
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type Reservations @table(key: "reservationId") {
-  reservationId: String! @db(default: "uuid()")
-  quoteId: String!
-  status: ReservationStatus! @db(default: "PENDING")
+type Reservations @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  quoteId: String! @column(type: "uuid", unique: true)
+  quote: Quotes! @column(references: "id")
+  status: ReservationStatusEnum! @column(default: "PENDING_CONFIRMATION")
   serviceDate: Timestamp!
-  confirmedById: String # Refers to Users.userId
-  createdAt: Timestamp! @db(default: "now()")
-  updatedAt: Timestamp! @db(default: "now()")
-  # Relations
-  quote: Quotes! @db(references: ["quoteId"])
-  confirmedBy: Users @db(references: ["confirmedById"])
+  notes: String
+  confirmedBy: String @column(type: "uuid")
+  confirmer: Users @column(references: "id")
+  confirmedAt: Timestamp
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type CalendarEvents @table(key: "eventId") {
-  eventId: String! @db(default: "uuid()")
-  reservationId: String
+type CalendarEvents @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  reservationId: String @column(type: "uuid")
+  reservation: Reservations @column(references: "id")
+  assignedToId: String @column(type: "uuid")
+  assignedTo: Users @column(references: "id")
   title: String!
-  start: Timestamp!
-  end: Timestamp!
-  assignedToId: String # Refers to Users.userId
-  createdAt: Timestamp! @db(default: "now()")
-  # Relations
-  reservation: Reservations @db(references: ["reservationId"])
-  assignedTo: Users @db(references: ["assignedToId"])
+  description: String
+  startTime: Timestamp!
+  endTime: Timestamp!
+  type: CalendarEventTypeEnum!
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type AuditLogs @table(key: "logId") {
-  logId: String! @db(default: "uuid()")
+type AuditLogs @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
   actor: String!
-  actorType: String! # "human", "ai", "system"
+  actorType: AuditActorTypeEnum!
   eventType: String!
   entityType: String!
   entityId: String!
+  source: String
+  notes: String
   before: JSON
   after: JSON
-  notes: String
-  source: String
-  createdAt: Timestamp! @db(default: "now()")
+  timestamp: Timestamp! @column(default: "now()")
 }
 
-type KnowledgeBaseArticles @table(key: "articleId") {
-  articleId: String! @db(default: "uuid()")
+type KnowledgeBaseArticles @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
   title: String!
   category: String!
   summary: String
   content: String!
-  status: String! @db(default: "DRAFT") # DRAFT, PUBLISHED, ARCHIVED
-  isEligibleForAI: Boolean! @db(default: false)
-  createdAt: Timestamp! @db(default: "now()")
-  updatedAt: Timestamp! @db(default: "now()")
+  status: KnowledgeBaseStatusEnum! @column(default: "DRAFT")
+  isEligibleForAI: Boolean! @column(default: false)
+  authorId: String! @column(type: "uuid")
+  author: Users! @column(references: "id")
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-# --- Settings and Configuration Tables ---
+# -------------------------------------
+# SETTINGS & CONFIGURATION TABLES
+# -------------------------------------
 
 type AISettings @table(key: "id") {
-  id: Int! @db(default: 1)
-  mode: AIMode! @db(default: "ASSISTED")
-  manualFinalizationRequired: Boolean! @db(default: true)
-  # Other settings fields...
-  updatedAt: Timestamp! @db(default: "now()")
+  id: Int!
+  mode: AIModeEnum! @column(default: "OFF")
+  isManualFinalizationRequired: Boolean! @column(default: true)
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type ActivationKeys @table(key: "keyId") {
-  keyId: String! @db(default: "uuid()")
-  keyName: String! @db(unique: true) # e.g., "COMMERCIAL_ACTIVATION"
-  isActive: Boolean! @db(default: false)
-  updatedAt: Timestamp! @db(default: "now()")
+type ActivationKeys @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  keyHash: String! @column(unique: true)
+  description: String
+  status: ActivationKeyStatusEnum! @column(default: "INACTIVE")
+  createdAt: Timestamp! @column(default: "now()")
 }
 
-type ChannelAccounts @table(key: "accountId") {
-  accountId: String! @db(default: "uuid()")
-  type: ChannelType!
-  accountIdentifier: String! # e.g., Phone number for WA, Page ID for FB
-  # Relations
-  connections: [ChannelConnections!] @db(foreignKey: "accountId")
+type ChannelAccounts @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  name: String!
+  type: ChannelTypeEnum!
+  # External identifiers, e.g., WhatsApp Phone Number ID
+  externalId: String
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
 
-type ChannelConnections @table(key: "connectionId") {
-  connectionId: String! @db(default: "uuid()")
-  accountId: String!
-  status: ChannelConnectionStatus! @db(default: "DISCONNECTED")
-  isMock: Boolean! @db(default: true)
-  lastChecked: Timestamp
+type ChannelConnections @table(key: "id") {
+  id: String! @column(type: "uuid", default: "gen_random_uuid()")
+  channelAccountId: String! @column(type: "uuid")
+  channelAccount: ChannelAccounts! @column(references: "id")
+  status: ChannelConnectionStatusEnum! @column(default: "NOT_CONFIGURED")
+  aiEnabled: Boolean! @column(default: false)
   lastError: String
-  updatedAt: Timestamp! @db(default: "now()")
-  # Relations
-  account: ChannelAccounts! @db(references: ["accountId"])
+  lastCheckedAt: Timestamp
+  createdAt: Timestamp! @column(default: "now()")
+  updatedAt: Timestamp! @column(default: "now()")
 }
