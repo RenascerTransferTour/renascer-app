@@ -246,7 +246,7 @@ Padronizar:
 ```json
 {
   "should_reply": false,
-  "silence_reason": "media_without_text",
+  "silence_reason": "no_text_message",
   "language": "pt",
   "customer_type": "unknown",
   "stage": "silent",
