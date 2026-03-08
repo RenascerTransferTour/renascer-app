@@ -1,17 +1,52 @@
-"""
-Data Connect schema for Renascer Transfer Tour backend.
-Version: 1.0.0
-Phase: 2 - Relational Model Foundation
-"""
 
-# ---------------------------------
-# Enums for Status and Types
-# ---------------------------------
+"""
+Represents a user in the system, typically linked to Firebase Authentication.
+"""
+type Users @table(key: "userId") {
+  userId: ID!
+  uid: String! @unique # Firebase Auth UID
+  fullName: String!
+  email: String! @unique
+  avatarUrl: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  roles: [UserRoles] @join(on: "userId")
+}
 
-enum UserRole {
-  ADMIN
-  AGENT
-  VIEWER
+"""
+Defines the roles available in the system (e.g., admin, agent).
+"""
+type Roles @table(key: "roleId") {
+  roleId: ID!
+  roleName: String! @unique # e.g., 'admin', 'agent'
+  description: String
+}
+
+"""
+Junction table to link users with their roles (many-to-many).
+"""
+type UserRoles @table(key: ["userId", "roleId"]) {
+  userId: ID!
+  roleId: ID!
+  user: Users! @join(on: "userId")
+  role: Roles! @join(on: "roleId")
+}
+
+"""
+Represents an external contact or customer.
+"""
+type Contacts @table(key: "contactId") {
+  contactId: ID!
+  fullName: String!
+  phone: String
+  email: String
+  avatarUrl: String
+  originChannel: String
+  notes: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  deals: [Deals] @join(on: "contactId")
+  conversations: [Conversations] @join(on: "contactId")
 }
 
 enum DealStage {
@@ -19,32 +54,143 @@ enum DealStage {
   QUALIFIED
   QUOTE_SENT
   NEGOTIATION
-  UNCONFIRMED
+  AWAITING_CLOSURE
   CLOSED_WON
   CLOSED_LOST
-  CANCELED
-  AGUARDANDO_FECHAMENTO
+}
+
+"""
+Represents a sales lead or deal in the pipeline.
+"""
+type Deals @table(key: "dealId") {
+  dealId: ID!
+  contactId: ID!
+  contact: Contacts! @join(on: "contactId")
+  title: String!
+  stage: DealStage!
+  estimatedValue: Float
+  assignedToUserId: ID
+  assignedTo: Users @join(on: "assignedToUserId")
+  nextAction: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  quote: Quotes @join(on: "dealId")
+}
+
+enum ConversationStatus {
+  OPEN
+  CLOSED
+  PENDING_HUMAN
+  ASSISTED_BY_AI
+}
+
+"""
+A single conversation thread with a contact.
+"""
+type Conversations @table(key: "conversationId") {
+  conversationId: ID!
+  contactId: ID!
+  contact: Contacts! @join(on: "contactId")
+  channelId: String! # From channel_connections
+  status: ConversationStatus!
+  humanOwnerId: ID
+  owner: Users @join(on: "humanOwnerId")
+  lastMessageSnippet: String
+  lastMessageAt: Timestamp
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  messages: [Messages] @join(on: "conversationId")
+}
+
+enum MessageSenderType {
+  USER
+  AGENT
+  AI
+  SYSTEM
+}
+
+"""
+An individual message within a conversation.
+"""
+type Messages @table(key: "messageId") {
+  messageId: ID!
+  conversationId: ID!
+  conversation: Conversations! @join(on: "conversationId")
+  senderType: MessageSenderType!
+  senderName: String # e.g., 'Ana Silva' or 'Cláudia Vaz' or 'Assistente IA'
+  content: String!
+  createdAt: Timestamp!
 }
 
 enum QuoteStatus {
   DRAFT
-  REVIEW
   SENT
-  UNCONFIRMED
   APPROVED
-  LOST
-  CANCELED
-  AWAITING_APPROVAL
+  REJECTED
+  EXPIRED
+}
+
+"""
+A price quote for a service.
+"""
+type Quotes @table(key: "quoteId") {
+  quoteId: ID!
+  dealId: ID!
+  deal: Deals! @join(on: "dealId")
+  status: QuoteStatus!
+  origin: String
+  destination: String
+  serviceDate: Timestamp
+  passengers: Int
+  aiSuggestedValue: Float
+  finalApprovedValue: Float
+  approvedByUserId: ID
+  approvedBy: Users @join(on: "approvedByUserId")
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  reservation: Reservations @join(on: "quoteId")
 }
 
 enum ReservationStatus {
-  PENDING
-  UNCONFIRMED
+  PENDING_CONFIRMATION
   CONFIRMED
-  RESCHEDULED
   COMPLETED
   CANCELED
-  AWAITING_APPROVAL
+  RESCHEDULED
+}
+
+"""
+A confirmed or pending service reservation.
+"""
+type Reservations @table(key: "reservationId") {
+  reservationId: ID!
+  quoteId: ID!
+  quote: Quotes! @join(on: "quoteId")
+  status: ReservationStatus!
+  confirmedByUserId: ID
+  confirmedBy: Users @join(on: "confirmedByUserId")
+  serviceDate: Timestamp!
+  notes: String
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  calendarEvent: CalendarEvents @join(on: "reservationId")
+}
+
+"""
+An event to be displayed on the calendar.
+"""
+type CalendarEvents @table(key: "eventId") {
+  eventId: ID!
+  reservationId: ID
+  reservation: Reservations @join(on: "reservationId")
+  title: String!
+  start: Timestamp!
+  end: Timestamp!
+  assignedToUserId: ID
+  assignedTo: Users @join(on: "assignedToUserId")
+  isAllDay: Boolean
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
 
 enum ActorType {
@@ -54,132 +200,111 @@ enum ActorType {
   CUSTOMER
 }
 
-# ---------------------------------
-# Core Entities
-# ---------------------------------
-
 """
-Represents system operators. Linked to Firebase Auth via UID.
+Logs important actions taken in the system for auditing purposes.
 """
-type Users @table(name: "users") {
-  id: Int! @primaryKey
-  uid: String! @unique
-  email: String! @unique
-  displayName: String
-  photoURL: String
-  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  roles: [UserRoles] @relation(on: "userId")
-}
-
-type Roles @table(name: "roles") {
-  id: Int! @primaryKey
-  name: UserRole! @unique
-  users: [UserRoles] @relation(on: "roleId")
-}
-
-"""
-Join table for many-to-many relationship between Users and Roles.
-"""
-type UserRoles @table(name: "user_roles") {
-  userId: Int!
-  roleId: Int!
-  user: Users! @foreignKey(on: "userId")
-  role: Roles! @foreignKey(on: "roleId")
-  @@primaryKey(fields: ["userId", "roleId"])
-}
-
-"""
-Represents customers or leads.
-"""
-type Contacts @table(name: "contacts") {
-  id: Int! @primaryKey
-  fullName: String!
-  phone: String
-  email: String @unique
-  originChannel: String
-  notes: String
-  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  deals: [Deals] @relation(on: "contactId")
-}
-
-"""
-Represents a deal or opportunity in the sales pipeline.
-"""
-type Deals @table(name: "deals") {
-  id: Int! @primaryKey
-  title: String!
-  stage: DealStage! @default(value: "NEW_LEAD")
-  estimatedValue: Float
-  contactId: Int!
-  contact: Contacts @foreignKey(on: "contactId")
-  assignedToId: Int
-  assignedTo: Users @foreignKey(on: "assignedToId")
-  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  quote: Quotes @relation(on: "dealId")
-}
-
-"""
-Represents a price quotation for a service.
-"""
-type Quotes @table(name: "quotes") {
-  id: Int! @primaryKey
-  dealId: Int! @unique
-  deal: Deals @foreignKey(on: "dealId")
-  status: QuoteStatus! @default(value: "DRAFT")
-  summary: String!
-  finalApprovedValue: Float
-  approvedById: Int
-  approvedBy: Users @foreignKey(on: "approvedById")
-  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  reservation: Reservations @relation(on: "quoteId")
-}
-
-"""
-Represents a confirmed service booking.
-"""
-type Reservations @table(name: "reservations") {
-  id: Int! @primaryKey
-  quoteId: Int! @unique
-  quote: Quotes @foreignKey(on: "quoteId")
-  status: ReservationStatus! @default(value: "PENDING")
-  serviceDate: Timestamp!
-  details: String
-  confirmedById: Int
-  confirmedBy: Users @foreignKey(on: "confirmedById")
-  createdAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-  updatedAt: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
-}
-
-"""
-Logs important actions within the system for auditing purposes.
-"""
-type AuditLogs @table(name: "audit_logs") {
-  id: Int! @primaryKey
-  actor: String!
+type AuditLogs @table(key: "logId") {
+  logId: ID!
+  timestamp: Timestamp!
   actorType: ActorType!
+  actorName: String!
   eventType: String!
-  entityType: String!
-  entityId: String!
+  entityType: String
+  entityId: String
   notes: String
   source: String
-  timestamp: Timestamp! @default(expression: "CURRENT_TIMESTAMP")
+  beforeState: JSON
+  afterState: JSON
 }
 
+enum ArticleStatus {
+  DRAFT
+  REVIEWED
+  PUBLISHED
+  ARCHIVED
+}
 
-# The @auth directive secures the entire API.
-# Initially, allow any authenticated user. Granular rules will be added later.
-query: Query @auth(
-  rules: [
-    {allow: "private"}
-  ]
-)
+"""
+Articles for the internal knowledge base.
+"""
+type KnowledgeBaseArticles @table(key: "articleId") {
+  articleId: ID!
+  title: String!
+  category: String!
+  summary: String
+  content: String!
+  status: ArticleStatus!
+  isEligibleForAI: Boolean!
+  authorId: ID!
+  author: Users! @join(on: "authorId")
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
 
-mutation: Mutation @auth(
-  rules: [
-    {allow: "private"}
-  ]
-)
+enum AIMode {
+  OFF
+  ASSISTED
+  SEMI_AUTONOMOUS
+}
+
+enum ActivationStatus {
+  AUTHORIZED
+  UNAUTHORIZED
+}
+
+"""
+Global settings for AI behavior.
+"""
+type AISettings @table(key: "settingsId") {
+  settingsId: ID! # Should be a singleton row
+  mode: AIMode!
+  manualFinalizationRequired: Boolean!
+  primaryProvider: String # e.g., 'gemini', 'openai'
+  fallbackProvider: String
+  isFallbackEnabled: Boolean!
+}
+
+"""
+Keys to enable/disable major commercial features.
+"""
+type ActivationKeys @table(key: "keyId") {
+  keyId: ID!
+  featureName: String! @unique # e.g., 'COMMERCIAL_AUTOMATION'
+  status: ActivationStatus!
+  description: String
+  updatedAt: Timestamp!
+}
+
+"""
+Represents a specific account on a communication channel (e.g., a WhatsApp number).
+"""
+type ChannelAccounts @table(key: "accountId") {
+  accountId: ID!
+  channelType: String! # e.g., 'whatsapp', 'instagram'
+  accountIdentifier: String! # e.g., a phone number or page ID
+  displayName: String
+  createdAt: Timestamp!
+}
+
+enum ConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  AWAITING_AUTH
+  ERROR
+  MOCK
+}
+
+"""
+Represents the connection status and configuration for a channel account.
+"""
+type ChannelConnections @table(key: "connectionId") {
+  connectionId: ID!
+  accountId: ID!
+  account: ChannelAccounts! @join(on: "accountId")
+  status: ConnectionStatus!
+  lastCheckedAt: Timestamp
+  lastError: String
+  aiEnabled: Boolean!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+}
