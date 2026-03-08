@@ -271,3 +271,67 @@ Padronizar:
   "messages": []
 }
 ```
+
+---
+
+## Exemplo 5 — Humano assume o atendimento
+
+### Request
+```json
+{
+  "conversation_id": "conv_105",
+  "customer_id": "cust_105",
+  "timestamp": "2026-03-08T15:20:00-03:00",
+  "channel": "whatsapp",
+  "has_text": true,
+  "has_media": false,
+  "media_types": [],
+  "last_customer_message": "Aqui é a Claudia, vou seguir com esse atendimento",
+  "message_language_hint": "pt",
+  "metadata": {
+    "is_saved_contact": false,
+    "internal": true,
+    "team": true,
+    "driver": false,
+    "partner": false,
+    "human_active": true
+  },
+  "state": {
+    "customer_name": null,
+    "form_sent": false,
+    "human_takeover": true,
+    "conversation_closed": false,
+    "service_type": "unknown"
+  }
+}
+```
+
+### Response
+```json
+{
+  "should_reply": false,
+  "silence_reason": "human_takeover",
+  "language": "pt",
+  "customer_type": "internal_or_operational",
+  "stage": "silent",
+  "handoff_to_claudia": false,
+  "form_sent": false,
+  "close_conversation": true,
+  "service_type": "unknown",
+  "intent": "none",
+  "collected_data": {
+    "customer_name": null,
+    "origin": null,
+    "destination": null,
+    "date": null,
+    "time": null,
+    "passengers": null,
+    "bags": null,
+    "bag_size": null,
+    "child": null,
+    "region_interest": null,
+    "trip_destination_city": null
+  },
+  "messages": []
+}
+```
