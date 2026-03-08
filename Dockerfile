@@ -1,37 +1,49 @@
-# Dockerfile for Next.js production build
+# 1. Builder Stage: Instala dependências e constrói a aplicação Next.js.
+FROM node:18-alpine AS builder
 
-# 1. Dependency installation stage
-FROM node:20-alpine AS deps
+# Define o diretório de trabalho
 WORKDIR /app
-COPY package.json ./
-# If you have a package-lock.json, copy it as well.
-# COPY package-lock.json ./
+
+# Instala dependências com base nos arquivos de pacote
+COPY package*.json ./
 RUN npm install
 
-# 2. Builder stage
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+# Copia todos os outros arquivos de origem
 COPY . .
 
+# Desabilita a telemetria do Next.js
 ENV NEXT_TELEMETRY_DISABLED 1
+
+# Constrói a aplicação Next.js para produção
+# O modo de saída 'standalone' será usado conforme configurado em next.config.js.
 RUN npm run build
 
-# 3. Production runner stage
-FROM node:20-alpine AS runner
+# 2. Runner Stage: Uma imagem menor para executar a aplicação.
+FROM node:18-alpine AS runner
+
 WORKDIR /app
 
-ENV NODE_ENV=production
+# Define o ambiente para produção
+ENV NODE_ENV production
 ENV NEXT_TELEMETRY_DISABLED 1
 
-# Copy standalone output from builder
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Cria um usuário não-root para maior segurança
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
 
-# Expose the port the app runs on
+# Copia a saída standalone do Next.js do estágio de builder.
+# Isso inclui o arquivo server.js e a pasta .next/.
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+
+# Copia os ativos estáticos (CSS, imagens, fontes) do estágio de builder.
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Troca para o usuário não-root
+USER nextjs
+
+# Expõe a porta em que a aplicação será executada.
+# O padrão é 3000, mas pode ser alterado com a variável de ambiente PORT.
 EXPOSE 3000
 
-# Set the command to start the app
-# The standalone output creates a server.js file.
+# O comando para iniciar a aplicação.
 CMD ["node", "server.js"]
