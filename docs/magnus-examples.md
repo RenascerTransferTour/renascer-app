@@ -183,10 +183,10 @@ Padronizar:
   "silence_reason": null,
   "language": "pt",
   "customer_type": "external_customer",
-  "stage": "handoff",
-  "handoff_to_claudia": true,
+  "stage": "qualify",
+  "handoff_to_claudia": false,
   "form_sent": false,
-  "close_conversation": true,
+  "close_conversation": false,
   "service_type": "transfer",
   "intent": "price_request",
   "collected_data": {
