@@ -1,0 +1,7 @@
+schemaVersion: v1alpha1
+schema:
+  files:
+    - path: schema/schema.gql
+connectors:
+  - id: postgres-connector
+    path: postgres-connector
