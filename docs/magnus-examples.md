@@ -207,3 +207,67 @@ Padronizar:
   ]
 }
 ```
+
+---
+
+## Exemplo 4 — Cliente envia apenas mídia
+
+### Request
+```json
+{
+  "conversation_id": "conv_104",
+  "customer_id": "cust_104",
+  "timestamp": "2026-03-08T15:15:00-03:00",
+  "channel": "whatsapp",
+  "has_text": false,
+  "has_media": true,
+  "media_types": ["image"],
+  "last_customer_message": "",
+  "message_language_hint": "pt",
+  "metadata": {
+    "is_saved_contact": false,
+    "internal": false,
+    "team": false,
+    "driver": false,
+    "partner": false,
+    "human_active": false
+  },
+  "state": {
+    "customer_name": null,
+    "form_sent": false,
+    "human_takeover": false,
+    "conversation_closed": false,
+    "service_type": "unknown"
+  }
+}
+```
+
+### Response
+```json
+{
+  "should_reply": false,
+  "silence_reason": "media_without_text",
+  "language": "pt",
+  "customer_type": "unknown",
+  "stage": "silent",
+  "handoff_to_claudia": false,
+  "form_sent": false,
+  "close_conversation": false,
+  "service_type": "unknown",
+  "intent": "none",
+  "collected_data": {
+    "customer_name": null,
+    "origin": null,
+    "destination": null,
+    "date": null,
+    "time": null,
+    "passengers": null,
+    "bags": null,
+    "bag_size": null,
+    "child": null,
+    "region_interest": null,
+    "trip_destination_city": null
+  },
+  "messages": []
+}
+```
