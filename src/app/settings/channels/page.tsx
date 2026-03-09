@@ -301,6 +301,14 @@ export default function ChannelsPage() {
                                     </AlertDescription>
                                 </Alert>
                                 
+                                <Alert>
+                                    <Info className="h-4 w-4" />
+                                    <AlertTitle>Funcionalidade Simulada</AlertTitle>
+                                    <AlertDescription>
+                                        A conexão por QR Code é uma <span className="font-semibold">demonstração visual</span>. Nenhuma conexão real com o WhatsApp é estabelecida. O QR Code gerado é apenas um exemplo e não pode ser usado para pareamento.
+                                    </AlertDescription>
+                                </Alert>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
                                     <div className="flex flex-col items-center gap-4">
                                         <div className="bg-white p-4 rounded-lg border w-80 h-80 flex items-center justify-center">
