@@ -1,15 +1,16 @@
 
 import { NextRequest, NextResponse } from "next/server";
-import { MAGNUS_SYSTEM_PROMPT } from "@/ai/prompts/magnus";
+import { intelligentCustomerSupport, IntelligentCustomerSupportInput } from "@/ai/flows/intelligent-customer-support-flow";
 import { buildMagnusInput } from "@/ai/prompts/magnus-input-builder";
-import { parseMagnusOutput } from "@/ai/prompts/magnus-output-parser";
 import type { MagnusOutput } from "@/ai/prompts/magnus-types";
 
+// Tipagem para o corpo da requisição que chega do n8n ou outro serviço.
 type RequestBody = {
   conversationId: string;
   customerId: string;
   text?: string | null;
   mediaTypes?: string[];
+  conversationHistory?: { role: 'user' | 'model', content: string }[];
   metadata?: {
     is_saved_contact?: boolean;
     internal?: boolean;
@@ -27,88 +28,12 @@ type RequestBody = {
   };
 };
 
-function buildFallbackSilentOutput(): MagnusOutput {
-  return {
-    should_reply: false,
-    silence_reason: "no_text_message",
-    language: "pt",
-    customer_type: "unknown",
-    stage: "silent",
-    handoff_to_claudia: false,
-    form_sent: false,
-    close_conversation: false,
-    service_type: "unknown",
-    intent: "none",
-    collected_data: {
-      customer_name: null,
-      origin: null,
-      destination: null,
-      date: null,
-      time: null,
-      passengers: null,
-      bags: null,
-      bag_size: null,
-      child: null,
-      region_interest: null,
-      trip_destination_city: null,
-    },
-    messages: [],
-  };
-}
-
-async function callOpenAI(inputPayload: unknown): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  const model = process.env.MAGNUS_OPENAI_MODEL ?? "gpt-4o-mini";
-
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY não configurada no servidor.");
-  }
-
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: MAGNUS_SYSTEM_PROMPT,
-        },
-        {
-          role: "user",
-          content: JSON.stringify(inputPayload),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Falha ao chamar OpenAI: ${response.status} - ${errorText}`);
-  }
-
-  const data = (await response.json()) as {
-    choices?: Array<{
-      message?: {
-        content?: string | null;
-      };
-    }>;
-  };
-
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    throw new Error("A OpenAI não retornou conteúdo.");
-  }
-
-  return content;
-}
-
+/**
+ * Rota de API para o MAGNUS.
+ * Refatorada para usar o fluxo Genkit `intelligentCustomerSupportFlow`, que é mais robusto.
+ * Ele lida com a ausência de provedores de IA, gerencia a seleção de modelos (OpenAI/Gemini)
+ * e evita crashes diretos por variáveis de ambiente ausentes.
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as RequestBody;
@@ -119,8 +44,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    const inputPayload = buildMagnusInput({
+    
+    // O `buildMagnusInput` cria um objeto de entrada padronizado, mas o fluxo de IA
+    // espera um formato ligeiramente diferente. Mapeamos os campos aqui.
+    const magnusInput = buildMagnusInput({
       conversationId: body.conversationId,
       customerId: body.customerId,
       text: body.text ?? null,
@@ -130,56 +57,45 @@ export async function POST(request: NextRequest) {
       channel: "whatsapp",
     });
 
-    if (!inputPayload.has_text) {
-      return NextResponse.json(buildFallbackSilentOutput());
-    }
-
-    // Modo mock opcional: útil enquanto você ainda não ativou a IA real.
-    const mockMode = process.env.MAGNUS_MOCK_MODE === "true";
-
-    if (mockMode) {
-      const mockOutput: MagnusOutput = {
-        should_reply: true,
-        silence_reason: null,
-        language: inputPayload.message_language_hint ?? "pt",
-        customer_type: "external_customer",
-        stage: "welcome",
+    // Se não houver mensagem de texto, não precisamos chamar a IA.
+    // O prompt do MAGNUS já lida com isso, mas é uma otimização.
+    if (!magnusInput.has_text) {
+      const silentOutput: MagnusOutput = {
+        should_reply: false,
+        silence_reason: "no_text_message",
+        language: "pt",
+        customer_type: "unknown",
+        stage: "silent",
         handoff_to_claudia: false,
         form_sent: false,
         close_conversation: false,
         service_type: "unknown",
-        intent: "general_inquiry",
-        collected_data: {
-          customer_name: inputPayload.state.customer_name,
-          origin: null,
-          destination: null,
-          date: null,
-          time: null,
-          passengers: null,
-          bags: null,
-          bag_size: null,
-          child: null,
-          region_interest: null,
-          trip_destination_city: null,
-        },
-        messages: [
-          "Olá! Seja bem-vindo(a) à Renascer Transfer Tour 😊 Sou o Magnus — como posso ajudar hoje?",
-        ],
+        intent: "none",
+        collected_data: { customer_name: null, origin: null, destination: null, date: null, time: null, passengers: null, bags: null, bag_size: null, child: null, region_interest: null, trip_destination_city: null },
+        messages: [],
       };
-
-      return NextResponse.json(mockOutput);
+      return NextResponse.json(silentOutput);
     }
 
-    const rawOutput = await callOpenAI(inputPayload);
-    const parsedOutput = parseMagnusOutput(rawOutput);
+    // Prepara a entrada para o fluxo Genkit.
+    const flowInput: IntelligentCustomerSupportInput = {
+        customerMessage: magnusInput.last_customer_message,
+        conversationHistory: body.conversationHistory ?? [],
+    };
+    
+    // Chama o fluxo Genkit, que contém toda a lógica de seleção de modelo e fallback.
+    const result = await intelligentCustomerSupport(flowInput);
 
-    return NextResponse.json(parsedOutput);
+    // O fluxo já retorna o objeto no formato JSON esperado.
+    return NextResponse.json(result);
+
   } catch (error) {
     console.error("[MAGNUS_ROUTE_ERROR]", error);
 
+    // Retorno de erro genérico caso a própria rota falhe (ex: JSON inválido).
     return NextResponse.json(
       {
-        error: "Falha ao processar o atendimento do MAGNUS.",
+        error: "Falha ao processar a requisição na rota MAGNUS.",
         details: error instanceof Error ? error.message : "Erro desconhecido.",
       },
       { status: 500 }
