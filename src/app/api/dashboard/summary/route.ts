@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { dashboardService } from '@/lib/db/services';
 
+// Esta flag é essencial para desabilitar o cache de dados e garantir 
+// que o dashboard sempre busque as informações mais recentes.
 export const dynamic = 'force-dynamic';
 
 /**
