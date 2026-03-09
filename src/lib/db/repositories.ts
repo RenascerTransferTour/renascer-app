@@ -36,7 +36,8 @@ type Database = {
     auditLogs: AuditLog[];
 };
 
-const dbPath = path.resolve(process.cwd(), 'data', 'data.json');
+const dataDir = path.resolve(process.cwd(), 'data');
+const dbPath = path.join(dataDir, 'data.json');
 
 // A simple in-memory promise queue to serialize write operations.
 let writePromise: Promise<void> = Promise.resolve();
@@ -48,7 +49,14 @@ let writePromise: Promise<void> = Promise.resolve();
 const initializeData = async (): Promise<Database> => {
     console.log("Data file not found or empty, initializing with seed data.");
     const initialData = seed.getInitialData();
-    await writeData(initialData);
+    try {
+        await fs.mkdir(dataDir, { recursive: true });
+        await writeData(initialData);
+    } catch (error) {
+        console.error("Failed to initialize data directory or file:", error);
+        // If we can't write, we can't proceed.
+        process.exit(1);
+    }
     return initialData;
 };
 
@@ -79,6 +87,7 @@ const readData = async (): Promise<Database> => {
 const writeData = async (data: Database): Promise<void> => {
     const newWritePromise = writePromise.then(async () => {
         try {
+            await fs.mkdir(dataDir, { recursive: true });
             await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf-8');
         } catch (error) {
             console.error("Fatal: Failed to write to data.json:", error);
