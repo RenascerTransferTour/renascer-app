@@ -41,7 +41,7 @@ const readData = async (): Promise<Database> => {
     try {
         const data = await fs.readFile(dbPath, 'utf-8');
         return JSON.parse(data);
-    } catch (error) {
+    } catch (error: any) {
         // If the file doesn't exist, initialize it with seed data.
         if (error.code === 'ENOENT') {
             console.log("Data file not found, initializing with seed data.");
@@ -171,8 +171,8 @@ export const deals = {
 };
 
 export const aiSettings = {
-    get: async () => (await readData()).aiSettings,
-    update: async (settings: Partial<AiSettings>) => {
+    get: async (): Promise<AiSettings> => (await readData()).aiSettings,
+    update: async (settings: Partial<AiSettings>): Promise<AiSettings> => {
         const db = await readData();
         db.aiSettings = { ...db.aiSettings, ...settings, updatedAt: new Date().toISOString() };
         await writeData(db);
@@ -232,35 +232,15 @@ export const knowledgeBase = {
     list: () => list<KnowledgeBaseArticle>('knowledgeBaseArticles'),
 };
 
-const getInitialData = (): Database => ({
-    operators: JSON.parse(JSON.stringify(seed.originalOperators)),
-    contacts: JSON.parse(JSON.stringify(seed.originalContacts)),
-    channels: JSON.parse(JSON.stringify(seed.originalChannels)),
-    leads: JSON.parse(JSON.stringify(seed.originalLeads)),
-    messages: JSON.parse(JSON.stringify(seed.originalMessages)),
-    conversations: JSON.parse(JSON.stringify(seed.originalConversations)),
-    quotes: JSON.parse(JSON.stringify(seed.originalQuotes)),
-    reservations: JSON.parse(JSON.stringify(seed.originalReservations)),
-    calendarEvents: JSON.parse(JSON.stringify(seed.originalCalendarEvents)),
-    deals: JSON.parse(JSON.stringify(seed.originalDeals)),
-    knowledgeBaseArticles: JSON.parse(JSON.stringify(seed.originalKnowledgeBaseArticles)),
-    aiSettings: JSON.parse(JSON.stringify(seed.originalAiSettings)),
-    aiFlowPermissions: JSON.parse(JSON.stringify(seed.originalAiFlowPermissions)),
-    aiProviderConfigs: JSON.parse(JSON.stringify(seed.originalAiProviderConfigs)),
-    aiPrompts: JSON.parse(JSON.stringify(seed.originalAiPrompts)),
-    auditLogs: JSON.parse(JSON.stringify(seed.originalAuditLogs)),
-});
-
-
 export const system = {
-    initialize: async () => {
-        const initialData = getInitialData();
+    initialize: async (): Promise<Database> => {
+        const initialData = seed.getInitialData();
         await writeData(initialData);
         return initialData;
     },
     resetOperationalData: async () => {
         const db = await readData();
-        const freshData = getInitialData();
+        const freshData = seed.getInitialData();
         const newData: Database = {
             ...db, // Keep settings, prompts, etc.
             conversations: freshData.conversations,
@@ -277,10 +257,8 @@ export const system = {
         return { success: true, message: "Dados operacionais foram resetados." };
     },
     resetAllData: async () => {
-        const initialData = getInitialData();
+        const initialData = seed.getInitialData();
         await writeData(initialData);
         return { success: true, message: "Todos os dados e configurações foram restaurados para o padrão." };
     }
 };
-
-    

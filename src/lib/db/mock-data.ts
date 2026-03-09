@@ -376,3 +376,23 @@ export let originalAuditLogs: AuditLog[] = [
         contactId: 'contact-1',
     }
 ];
+
+// Helper to get a deep copy of the initial data for resets.
+export const getInitialData = () => ({
+    operators: JSON.parse(JSON.stringify(originalOperators)),
+    contacts: JSON.parse(JSON.stringify(originalContacts)),
+    channels: JSON.parse(JSON.stringify(originalChannels)),
+    leads: JSON.parse(JSON.stringify(originalLeads)),
+    messages: JSON.parse(JSON.stringify(originalMessages)),
+    conversations: JSON.parse(JSON.stringify(originalConversations)),
+    quotes: JSON.parse(JSON.stringify(originalQuotes)),
+    reservations: JSON.parse(JSON.stringify(originalReservations)),
+    calendarEvents: JSON.parse(JSON.stringify(originalCalendarEvents)),
+    deals: JSON.parse(JSON.stringify(originalDeals)),
+    knowledgeBaseArticles: JSON.parse(JSON.stringify(originalKnowledgeBaseArticles)),
+    aiSettings: JSON.parse(JSON.stringify(originalAiSettings)),
+    aiFlowPermissions: JSON.parse(JSON.stringify(originalAiFlowPermissions)),
+    aiProviderConfigs: JSON.parse(JSON.stringify(originalAiProviderConfigs)),
+    aiPrompts: JSON.parse(JSON.stringify(originalAiPrompts)),
+    auditLogs: JSON.parse(JSON.stringify(originalAuditLogs)),
+});

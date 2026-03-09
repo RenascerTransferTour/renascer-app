@@ -30,11 +30,12 @@ ENV NODE_ENV=production
 # A porta padrão do Next.js. Pode ser sobrescrita por .env.prod no docker-compose.
 ENV PORT=3000
 
-# Cria um usuário não-root para segurança e o diretório de dados
-RUN addgroup -g 1001 -S nodejs \
-    && adduser -S nextjs -u 1001 \
-    && mkdir -p data \
-    && chown -R nextjs:nodejs data
+# Cria um usuário não-root para segurança
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+# Cria o diretório de dados persistentes e define as permissões
+RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
 
 # Copia a pasta .next standalone do estágio de builder
 COPY --from=builder /app/.next/standalone ./
