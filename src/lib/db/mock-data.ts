@@ -1,8 +1,10 @@
 /**
  * @fileoverview Mock Database Seed Data
  * 
- * This file contains all the initial data for the application's mock database.
- * It acts as a seeder, providing the original state for the data persistence layer.
+ * This file contains all the initial, immutable data for the application's mock database.
+ * It acts as a seeder, providing the original state. The `getInitialData` function
+ * provides a deep copy of this state, which is used to initialize or reset
+ * the file-based database (`data.json`).
  */
 
 import { subDays, addDays, setHours, setMinutes, subMinutes } from 'date-fns';
@@ -377,22 +379,27 @@ export let originalAuditLogs: AuditLog[] = [
     }
 ];
 
-// Helper to get a deep copy of the initial data for resets.
-export const getInitialData = () => ({
-    operators: JSON.parse(JSON.stringify(originalOperators)),
-    contacts: JSON.parse(JSON.stringify(originalContacts)),
-    channels: JSON.parse(JSON.stringify(originalChannels)),
-    leads: JSON.parse(JSON.stringify(originalLeads)),
-    messages: JSON.parse(JSON.stringify(originalMessages)),
-    conversations: JSON.parse(JSON.stringify(originalConversations)),
-    quotes: JSON.parse(JSON.stringify(originalQuotes)),
-    reservations: JSON.parse(JSON.stringify(originalReservations)),
-    calendarEvents: JSON.parse(JSON.stringify(originalCalendarEvents)),
-    deals: JSON.parse(JSON.stringify(originalDeals)),
-    knowledgeBaseArticles: JSON.parse(JSON.stringify(originalKnowledgeBaseArticles)),
-    aiSettings: JSON.parse(JSON.stringify(originalAiSettings)),
-    aiFlowPermissions: JSON.parse(JSON.stringify(originalAiFlowPermissions)),
-    aiProviderConfigs: JSON.parse(JSON.stringify(originalAiProviderConfigs)),
-    aiPrompts: JSON.parse(JSON.stringify(originalAiPrompts)),
-    auditLogs: JSON.parse(JSON.stringify(originalAuditLogs)),
-});
+/**
+ * Helper to get a deep copy of the initial data for resets.
+ * This ensures that the original seed data is never mutated.
+ */
+export const getInitialData = () => {
+    return JSON.parse(JSON.stringify({
+        operators: originalOperators,
+        contacts: originalContacts,
+        channels: originalChannels,
+        leads: originalLeads,
+        messages: originalMessages,
+        conversations: originalConversations,
+        quotes: originalQuotes,
+        reservations: originalReservations,
+        calendarEvents: originalCalendarEvents,
+        deals: originalDeals,
+        knowledgeBaseArticles: originalKnowledgeBaseArticles,
+        aiSettings: originalAiSettings,
+        aiFlowPermissions: originalAiFlowPermissions,
+        aiProviderConfigs: originalAiProviderConfigs,
+        aiPrompts: originalAiPrompts,
+        auditLogs: originalAuditLogs,
+    }));
+};

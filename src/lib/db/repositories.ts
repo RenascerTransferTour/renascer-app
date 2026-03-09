@@ -77,7 +77,7 @@ const readData = async (): Promise<Database> => {
  * @param data The complete database object to write.
  */
 const writeData = async (data: Database): Promise<void> => {
-    writePromise = writePromise.then(async () => {
+    const newWritePromise = writePromise.then(async () => {
         try {
             await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf-8');
         } catch (error) {
@@ -87,7 +87,8 @@ const writeData = async (data: Database): Promise<void> => {
             throw error;
         }
     });
-    return writePromise;
+    writePromise = newWritePromise;
+    return newWritePromise;
 };
 
 
@@ -276,16 +277,11 @@ export const system = {
         const db = await readData();
         const freshData = seed.getInitialData();
         const newData: Database = {
-            ...db, // Keep settings, prompts, etc.
-            conversations: freshData.conversations,
-            messages: freshData.messages,
-            leads: freshData.leads,
-            quotes: freshData.quotes,
-            reservations: freshData.reservations,
-            deals: freshData.deals,
-            calendarEvents: freshData.calendarEvents,
-            auditLogs: freshData.auditLogs,
-            contacts: freshData.contacts,
+            ...freshData, // Reset operational data
+            aiSettings: db.aiSettings, // Keep existing settings
+            aiFlowPermissions: db.aiFlowPermissions,
+            aiPrompts: db.aiPrompts,
+            aiProviderConfigs: db.aiProviderConfigs,
         };
         await writeData(newData);
         return { success: true, message: "Dados operacionais foram resetados." };
