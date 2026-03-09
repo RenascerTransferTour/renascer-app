@@ -276,13 +276,31 @@ export const system = {
     resetOperationalData: async () => {
         const db = await readData();
         const freshData = seed.getInitialData();
+        
+        // This is the safe way: create a new object by picking properties.
+        // It prevents errors from trying to modify read-only imported module objects.
         const newData: Database = {
-            ...freshData, // Reset operational data
-            aiSettings: db.aiSettings, // Keep existing settings
+            // Take all operational data from the fresh seed
+            operators: freshData.operators,
+            contacts: freshData.contacts,
+            channels: freshData.channels,
+            leads: freshData.leads,
+            messages: freshData.messages,
+            conversations: freshData.conversations,
+            quotes: freshData.quotes,
+            reservations: freshData.reservations,
+            calendarEvents: freshData.calendarEvents,
+            deals: freshData.deals,
+            knowledgeBaseArticles: freshData.knowledgeBaseArticles,
+            auditLogs: freshData.auditLogs,
+            
+            // And preserve only the settings from the live database
+            aiSettings: db.aiSettings,
             aiFlowPermissions: db.aiFlowPermissions,
-            aiPrompts: db.aiPrompts,
             aiProviderConfigs: db.aiProviderConfigs,
+            aiPrompts: db.aiPrompts,
         };
+
         await writeData(newData);
         return { success: true, message: "Dados operacionais foram resetados." };
     },
