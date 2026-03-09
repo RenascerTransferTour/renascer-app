@@ -274,34 +274,35 @@ export const system = {
         return initialData;
     },
     resetOperationalData: async () => {
-        const db = await readData();
-        const freshData = seed.getInitialData();
+        const liveDb = await readData();
+        const seedData = seed.getInitialData();
         
-        // This is the safe way: create a new object by picking properties.
-        // It prevents errors from trying to modify read-only imported module objects.
-        const newData: Database = {
-            // Take all operational data from the fresh seed
-            operators: freshData.operators,
-            contacts: freshData.contacts,
-            channels: freshData.channels,
-            leads: freshData.leads,
-            messages: freshData.messages,
-            conversations: freshData.conversations,
-            quotes: freshData.quotes,
-            reservations: freshData.reservations,
-            calendarEvents: freshData.calendarEvents,
-            deals: freshData.deals,
-            knowledgeBaseArticles: freshData.knowledgeBaseArticles,
-            auditLogs: freshData.auditLogs,
+        // This is the definitive fix for the "read-only" error.
+        // It creates a new object and populates it with deep copies of the necessary data,
+        // ensuring no read-only module imports are ever mutated.
+        const newState: Database = {
+            // Fresh operational data from the seed
+            operators: seedData.operators,
+            contacts: seedData.contacts,
+            channels: seedData.channels,
+            leads: seedData.leads,
+            messages: seedData.messages,
+            conversations: seedData.conversations,
+            quotes: seedData.quotes,
+            reservations: seedData.reservations,
+            calendarEvents: seedData.calendarEvents,
+            deals: seedData.deals,
+            knowledgeBaseArticles: seedData.knowledgeBaseArticles,
+            auditLogs: seedData.auditLogs,
             
-            // And preserve only the settings from the live database
-            aiSettings: db.aiSettings,
-            aiFlowPermissions: db.aiFlowPermissions,
-            aiProviderConfigs: db.aiProviderConfigs,
-            aiPrompts: db.aiPrompts,
+            // Preserved settings from the live database, deep-copied for safety
+            aiSettings: JSON.parse(JSON.stringify(liveDb.aiSettings)),
+            aiFlowPermissions: JSON.parse(JSON.stringify(liveDb.aiFlowPermissions)),
+            aiProviderConfigs: JSON.parse(JSON.stringify(liveDb.aiProviderConfigs)),
+            aiPrompts: JSON.parse(JSON.stringify(liveDb.aiPrompts)),
         };
 
-        await writeData(newData);
+        await writeData(newState);
         return { success: true, message: "Dados operacionais foram resetados." };
     },
     resetAllData: async () => {

@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server';
 import { crmService } from '@/lib/db/services';
 
+// Força a rota a ser dinâmica, desabilitando o cache.
+// Essencial para que os dados sejam atualizados após um reset do sistema.
+export const dynamic = 'force-dynamic';
+
 /**
  * API route to list CRM deals.
  */
