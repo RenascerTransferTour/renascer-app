@@ -2,9 +2,11 @@
  * @fileoverview Filesystem-based Repository Layer
  * 
  * This file simulates a database repository layer by reading from and writing to
- * a local JSON file (`data/data.json`). This ensures data persistence across
- * server restarts and requests, which is crucial for a stateful application
- * running in a stateless environment like Docker or serverless functions.
+ * a local JSON file (`data/data.json`). This provides a simple persistence layer
+ * suitable for development and single-instance deployments without a real database.
+ * 
+ * It includes a simple write queue to prevent race conditions from multiple
+ * concurrent requests trying to write to the file simultaneously.
  */
 import fs from 'fs/promises';
 import path from 'path';
@@ -36,26 +38,58 @@ type Database = {
 
 const dbPath = path.resolve(process.cwd(), 'data', 'data.json');
 
-// Asynchronously reads the entire database from the JSON file.
+// A simple in-memory promise queue to serialize write operations.
+let writePromise: Promise<void> = Promise.resolve();
+
+/**
+ * Initializes the database file if it doesn't exist.
+ * @returns The initial database state.
+ */
+const initializeData = async (): Promise<Database> => {
+    console.log("Data file not found or empty, initializing with seed data.");
+    const initialData = seed.getInitialData();
+    await writeData(initialData);
+    return initialData;
+};
+
+/**
+ * Asynchronously reads the entire database from the JSON file.
+ * If the file doesn't exist, it initializes it.
+ * @returns The database state.
+ */
 const readData = async (): Promise<Database> => {
     try {
         const data = await fs.readFile(dbPath, 'utf-8');
+        if (data.trim() === '') return initializeData();
         return JSON.parse(data);
     } catch (error: any) {
-        // If the file doesn't exist, initialize it with seed data.
         if (error.code === 'ENOENT') {
-            console.log("Data file not found, initializing with seed data.");
-            return system.initialize();
+            return initializeData();
         }
+        console.error("Failed to read data.json:", error);
         throw error;
     }
 };
 
-// Asynchronously writes the entire database object to the JSON file.
+/**
+ * Asynchronously writes the entire database object to the JSON file,
+ * using a queue to prevent race conditions.
+ * @param data The complete database object to write.
+ */
 const writeData = async (data: Database): Promise<void> => {
-    await fs.mkdir(path.dirname(dbPath), { recursive: true });
-    await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf-8');
+    writePromise = writePromise.then(async () => {
+        try {
+            await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf-8');
+        } catch (error) {
+            console.error("Fatal: Failed to write to data.json:", error);
+            // In a real app, you'd have more robust error handling, possibly crashing the process
+            // if the database becomes unwritable.
+            throw error;
+        }
+    });
+    return writePromise;
 };
+
 
 // Generic repository functions that perform read-modify-write operations.
 const findById = async <T extends { id: string }>(table: keyof Database, id: string): Promise<T | undefined> => {

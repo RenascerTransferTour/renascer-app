@@ -34,8 +34,8 @@ ENV PORT=3000
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 
-# Cria o diretório de dados persistentes e define as permissões
-RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data
+# Cria o diretório de dados e define as permissões corretas
+RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
 # Copia a pasta .next standalone do estágio de builder
 COPY --from=builder /app/.next/standalone ./
