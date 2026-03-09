@@ -57,7 +57,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Message, Conversation, Contact, AiFlowPermission, AuditLog } from '@/lib/types';
+import type { Message, Conversation, Customer, AiFlowPermission, AuditLog } from '@/lib/types';
   
 const statusLabels: Record<string, string> = {
     open: 'Aberto',
@@ -104,12 +104,6 @@ const eventTypeLabels: Record<string, string> = {
 };
 
 
-type Customer = Contact & {
-    urgency: 'low' | 'medium' | 'high';
-    interestLevel: 'low' | 'medium' | 'high';
-};
-
-
 export default function ConversationPage() {
   const params = useParams();
   const { id } = params;
@@ -146,10 +140,16 @@ export default function ConversationPage() {
 
                 const convData = await convRes.json();
                 const permsData = await permsRes.json();
+                const contactData = convData.contact;
 
                 setConversation(convData);
                 setMessages(convData.messages);
-                setCustomer(convData.contact); // This needs to be improved with proper lead data
+                // Correctly handle the Customer type by providing default fallbacks
+                setCustomer({
+                  ...contactData,
+                  urgency: contactData.urgency || 'low',
+                  interestLevel: contactData.interestLevel || 'low',
+                });
                 setAuditLogs(convData.auditLogs);
                 setIsAiActive(convData.isAiActive);
                 setPermissions(permsData);
@@ -191,8 +191,7 @@ export default function ConversationPage() {
 
     setIsSending(true);
     const messageContent = newMessage;
-    setNewMessage(''); // Clear input immediately
-
+    
     try {
         const response = await fetch(`/api/conversations/${id}/messages`, {
             method: 'POST',
@@ -203,12 +202,11 @@ export default function ConversationPage() {
         const savedMessage = await response.json();
 
         if (!response.ok) {
-            // The 'error' property is what my new API route returns on failure
             throw new Error(savedMessage.error || 'A API retornou um erro inesperado.');
         }
 
-        // Add the new, saved message to the list
         setMessages(prevMessages => [...prevMessages, savedMessage]);
+        setNewMessage(''); // Clear input only on success
 
     } catch (error) {
         console.error("Failed to send message:", error);
@@ -217,8 +215,7 @@ export default function ConversationPage() {
             title: "Erro ao enviar mensagem",
             description: error instanceof Error ? error.message : "Sua mensagem não pôde ser enviada. Por favor, tente novamente.",
         });
-        // Put message back in input on failure
-        setNewMessage(messageContent);
+        // Do not clear message so user can retry
     } finally {
         setIsSending(false);
     }
