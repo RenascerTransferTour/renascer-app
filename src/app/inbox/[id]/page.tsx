@@ -42,7 +42,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { cn, getStatusBadgeClasses } from '@/lib/utils';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
@@ -122,10 +122,13 @@ export default function ConversationPage() {
   const [loading, setLoading] = useState(true);
 
   const [newMessage, setNewMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
   const [isAiActive, setIsAiActive] = useState(false);
   const [summary, setSummary] = useState('');
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { toast } = useToast();
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (id) {
@@ -164,6 +167,15 @@ export default function ConversationPage() {
         fetchConversation();
     }
   }, [id, toast]);
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({
+            top: scrollAreaRef.current.scrollHeight,
+            behavior: 'smooth'
+        });
+    }
+  }, [messages]);
 
   const aiPermissions = useMemo(() => {
     const getPerm = (flowName: AiFlowPermission['flowName']) => permissions.find(p => p.flowName === flowName)?.enabled ?? false;
@@ -219,22 +231,42 @@ export default function ConversationPage() {
     return <div className='text-center'>Conversa não encontrada ou falha ao carregar.</div>;
   }
   
-  const handleSendMessage = () => {
-    if (newMessage.trim() === '') return;
+    const handleSendMessage = async () => {
+    if (newMessage.trim() === '' || isSending) return;
 
-    const msg: Message = {
-      id: `msg-${Date.now()}`,
-      conversationId: conversation.id,
-      senderType: 'agent',
-      content: newMessage,
-      contentType: 'text',
-      authorName: conversation.humanOwnerId || 'Admin',
-      createdAt: new Date().toISOString(),
-      deliveryStatus: 'sent',
-    };
+    setIsSending(true);
+    const messageContent = newMessage;
+    setNewMessage(''); // Clear input immediately
 
-    setMessages([...messages, msg]);
-    setNewMessage('');
+    try {
+        const response = await fetch(`/api/conversations/${id}/messages`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: messageContent }),
+        });
+
+        const savedMessage = await response.json();
+
+        if (!response.ok) {
+            // The 'error' property is what my new API route returns on failure
+            throw new Error(savedMessage.error || 'A API retornou um erro inesperado.');
+        }
+
+        // Add the new, saved message to the list
+        setMessages(prevMessages => [...prevMessages, savedMessage]);
+
+    } catch (error) {
+        console.error("Failed to send message:", error);
+        toast({
+            variant: "destructive",
+            title: "Erro ao enviar mensagem",
+            description: error instanceof Error ? error.message : "Sua mensagem não pôde ser enviada. Por favor, tente novamente.",
+        });
+        // Put message back in input on failure
+        setNewMessage(messageContent);
+    } finally {
+        setIsSending(false);
+    }
   };
   
   const handleGenerateSummary = async () => {
@@ -351,7 +383,7 @@ export default function ConversationPage() {
                 )}
             </div>
             </CardHeader>
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
             <div className="space-y-6">
                 {messages.map((message) => (
                 <div
@@ -396,15 +428,15 @@ export default function ConversationPage() {
                 value={newMessage}
                 onChange={(e) => setNewMessage(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                disabled={isAiActive}
+                disabled={isAiActive || isSending}
                 />
                 <Button
                 size="icon"
                 className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                 onClick={handleSendMessage}
-                disabled={isAiActive}
+                disabled={isAiActive || isSending}
                 >
-                <Send className="h-4 w-4" />
+                {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 </Button>
             </div>
             </CardFooter>
@@ -542,3 +574,5 @@ export default function ConversationPage() {
     </TooltipProvider>
   );
 }
+
+    

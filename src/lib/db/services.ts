@@ -11,7 +11,7 @@
  */
 
 import * as repos from './repositories';
-import type { Conversation, Contact, Quote, Reservation, Deal, Channel, AiFlowPermission, AiSettings, AiPrompt, AuditLog } from './data-model';
+import type { Conversation, Contact, Quote, Reservation, Deal, Channel, AiFlowPermission, AiSettings, AiPrompt, AuditLog, Message } from './data-model';
 
 export const conversationService = {
   /**
@@ -19,8 +19,8 @@ export const conversationService = {
    * This is a common pattern for a service: combining data from multiple sources.
    */
   async listConversations(): Promise<(Conversation & { contact: Contact })[]> {
-    const conversations = repos.conversations.list();
-    const contacts = repos.contacts.list();
+    const conversations = await repos.conversations.list();
+    const contacts = await repos.contacts.list();
     
     // In a real database, this would be a JOIN query for performance.
     // Here, we simulate it with a map-reduce operation.
@@ -28,7 +28,20 @@ export const conversationService = {
       const contact = contacts.find(c => c.id === conv.contactId);
       if (!contact) {
         // In a real app, you'd want more robust error handling or logging.
-        throw new Error(`Contact not found for conversation ${conv.id}`);
+        console.warn(`Contact not found for conversation ${conv.id}`);
+        // Fallback to a placeholder contact
+        return { 
+          ...conv, 
+          contact: { 
+            id: 'unknown', 
+            fullName: 'Contato Desconhecido', 
+            avatar: '', 
+            language: 'pt-BR', 
+            isInternal: false,
+            createdAt: conv.createdAt,
+            updatedAt: conv.updatedAt,
+          }
+        };
       }
       return { ...conv, contact };
     });
@@ -38,14 +51,14 @@ export const conversationService = {
    * Finds a single conversation and its full message history.
    */
   async getConversationDetails(id: string) {
-    const conversation = repos.conversations.findById(id);
+    const conversation = await repos.conversations.findById(id);
     if (!conversation) return null;
 
-    const contact = repos.contacts.findById(conversation.contactId);
+    const contact = await repos.contacts.findById(conversation.contactId);
     if (!contact) return null;
     
-    const messages = repos.messages.findByConversationId(id);
-    const auditLogs = repos.auditLogs.findByContactId(conversation.contactId);
+    const messages = await repos.messages.findByConversationId(id);
+    const auditLogs = await repos.auditLogs.findByContactId(conversation.contactId);
 
     return {
       ...conversation,
@@ -54,13 +67,51 @@ export const conversationService = {
       auditLogs,
     };
   },
+
+  /**
+   * Adds a new message to a conversation and updates the conversation's state.
+   * @param conversationId The ID of the conversation.
+   * @param content The text content of the message.
+   * @param sender Details of the sender (agent or system).
+   * @returns The newly created message.
+   */
+  async addMessage(conversationId: string, content: string, sender: { type: 'agent' | 'system', id: string, name: string }): Promise<Message> {
+    const conversation = await repos.conversations.findById(conversationId);
+    if (!conversation) {
+      throw new Error('Conversation not found');
+    }
+
+    const newMessage: Omit<Message, 'createdAt' | 'updatedAt'> = {
+      id: `msg-${Date.now()}`,
+      conversationId,
+      senderType: sender.type,
+      authorName: sender.name,
+      content,
+      contentType: 'text',
+      deliveryStatus: 'sent',
+    };
+
+    // 1. Persist the new message
+    const createdMessage = await repos.messages.createOrUpdate(newMessage as Message);
+
+    // 2. Update the parent conversation's last message details
+    conversation.lastMessage = createdMessage.content;
+    conversation.lastMessageAt = createdMessage.createdAt;
+    if (sender.type === 'agent') {
+      conversation.isAiActive = false; // Human sent a message
+      conversation.humanOwnerId = sender.id;
+    }
+    await repos.conversations.createOrUpdate(conversation);
+
+    return createdMessage;
+  }
 };
 
 export const quoteService = {
   async listQuotes() {
-    const quotes = repos.quotes.list();
-    const contacts = repos.contacts.list();
-    const operators = repos.operators.list();
+    const quotes = await repos.quotes.list();
+    const contacts = await repos.contacts.list();
+    const operators = await repos.operators.list();
 
     return quotes.map(quote => {
         const contact = contacts.find(c => c.id === quote.contactId);
@@ -79,8 +130,8 @@ export const quoteService = {
 
 export const reservationService = {
     async listReservations() {
-        const reservations = repos.reservations.list();
-        const contacts = repos.contacts.list();
+        const reservations = await repos.reservations.list();
+        const contacts = await repos.contacts.list();
         return reservations.map(res => {
             const contact = contacts.find(c => c.id === res.contactId);
             return {
@@ -96,9 +147,9 @@ export const reservationService = {
 
 export const crmService = {
     async listDeals() {
-        const deals = repos.deals.list();
-        const contacts = repos.contacts.list();
-        const operators = repos.operators.list();
+        const deals = await repos.deals.list();
+        const contacts = await repos.contacts.list();
+        const operators = await repos.operators.list();
         return deals.map(deal => {
             const contact = contacts.find(c => c.id === deal.contactId);
             const owner = operators.find(o => o.id === deal.ownerId);
@@ -146,8 +197,8 @@ export const settingsService = {
 
 export const dashboardService = {
     async getOperationalSummary() {
-        const reservations = repos.reservations.list();
-        const conversations = repos.conversations.list();
+        const reservations = await repos.reservations.list();
+        const conversations = await repos.conversations.list();
 
         const confirmedToday = reservations.filter(r => r.status === 'confirmada' && new Date(r.createdAt).toDateString() === new Date().toDateString()).length;
         const unconfirmed = reservations.filter(r => r.status === 'não confirmado').length;
@@ -158,9 +209,9 @@ export const dashboardService = {
     },
 
     async getStats() {
-        const conversations = repos.conversations.list();
-        const reservations = repos.reservations.list();
-        const quotes = repos.quotes.list();
+        const conversations = await repos.conversations.list();
+        const reservations = await repos.reservations.list();
+        const quotes = await repos.quotes.list();
 
         const awaitingHuman = conversations.filter(c => c.status === 'aguardando humano').length;
         const concludedByAI = reservations.filter(q => q.reservedBy === 'ai' && q.status === 'concluída').length;
@@ -186,15 +237,15 @@ export const calendarService = {
 
 export const leadService = {
     async listLeads() {
-        const leads = repos.leads.list();
-        const contacts = repos.contacts.list();
+        const leads = await repos.leads.list();
+        const contacts = await repos.contacts.list();
 
         return leads.map(lead => ({
             ...lead,
             contact: contacts.find(c => c.id === lead.contactId)
         }));
     },
-    async createOrUpdateLead(lead: Lead) {
+    async createOrUpdateLead(lead: any) {
         return repos.leads.createOrUpdate(lead);
     }
 }
@@ -207,5 +258,7 @@ export const systemService = {
         return repos.system.resetAllData();
     }
 }
+
+    
 
     

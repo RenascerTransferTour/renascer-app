@@ -53,6 +53,7 @@ const readData = async (): Promise<Database> => {
 
 // Asynchronously writes the entire database object to the JSON file.
 const writeData = async (data: Database): Promise<void> => {
+    await fs.mkdir(path.dirname(dbPath), { recursive: true });
     await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf-8');
 };
 
@@ -72,30 +73,38 @@ const createOrUpdate = async <T extends { id: string }>(table: keyof Database, i
     const db = await readData();
     const tableData = db[table] as T[];
     const index = tableData.findIndex(i => i.id === item.id);
+    let savedItem;
     if (index !== -1) {
-        tableData[index] = { ...tableData[index], ...item, updatedAt: new Date().toISOString() };
+        savedItem = { ...tableData[index], ...item, updatedAt: new Date().toISOString() };
+        tableData[index] = savedItem;
     } else {
+        savedItem = { ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
         // @ts-ignore
-        tableData.push({ ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+        tableData.push(savedItem);
     }
     await writeData(db);
-    return item;
+    return savedItem as T;
 };
 
 const batchUpdate = async <T extends { id: string }>(table: keyof Database, items: T[]): Promise<T[]> => {
     const db = await readData();
     const tableData = db[table] as T[];
+    const updatedItems: T[] = [];
     items.forEach(item => {
         const index = tableData.findIndex(i => i.id === item.id);
         if (index !== -1) {
-            tableData[index] = { ...tableData[index], ...item, updatedAt: new Date().toISOString() };
+            const updatedItem = { ...tableData[index], ...item, updatedAt: new Date().toISOString() };
+            tableData[index] = updatedItem;
+            updatedItems.push(updatedItem);
         } else {
+            const newItem = { ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
              // @ts-ignore
-            tableData.push({ ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+            tableData.push(newItem);
+            updatedItems.push(newItem as T);
         }
     });
     await writeData(db);
-    return items;
+    return updatedItems;
 };
 
 // --- Repository Exports ---
@@ -126,6 +135,7 @@ export const leads = {
 export const conversations = {
     findById: (id: string) => findById<Conversation>('conversations', id),
     list: () => list<Conversation>('conversations'),
+    createOrUpdate: (item: Conversation) => createOrUpdate<Conversation>('conversations', item),
 };
 
 export const messages = {
@@ -134,7 +144,7 @@ export const messages = {
         return allMessages.filter(m => m.conversationId === conversationId);
     },
     list: () => list<Message>('messages'),
-    create: (item: Message) => createOrUpdate<Message>('messages', item),
+    createOrUpdate: (item: Message) => createOrUpdate<Message>('messages', item),
 };
 
 export const quotes = {
@@ -223,23 +233,24 @@ export const knowledgeBase = {
 };
 
 const getInitialData = (): Database => ({
-    operators: seed.originalOperators,
-    contacts: seed.originalContacts,
-    channels: seed.originalChannels,
-    leads: seed.originalLeads,
-    messages: seed.originalMessages,
-    conversations: seed.originalConversations,
-    quotes: seed.originalQuotes,
-    reservations: seed.originalReservations,
-    calendarEvents: seed.originalCalendarEvents,
-    deals: seed.originalDeals,
-    knowledgeBaseArticles: seed.originalKnowledgeBaseArticles,
-    aiSettings: seed.originalAiSettings,
-    aiFlowPermissions: seed.originalAiFlowPermissions,
-    aiProviderConfigs: seed.originalAiProviderConfigs,
-    aiPrompts: seed.originalAiPrompts,
-    auditLogs: seed.originalAuditLogs,
+    operators: JSON.parse(JSON.stringify(seed.originalOperators)),
+    contacts: JSON.parse(JSON.stringify(seed.originalContacts)),
+    channels: JSON.parse(JSON.stringify(seed.originalChannels)),
+    leads: JSON.parse(JSON.stringify(seed.originalLeads)),
+    messages: JSON.parse(JSON.stringify(seed.originalMessages)),
+    conversations: JSON.parse(JSON.stringify(seed.originalConversations)),
+    quotes: JSON.parse(JSON.stringify(seed.originalQuotes)),
+    reservations: JSON.parse(JSON.stringify(seed.originalReservations)),
+    calendarEvents: JSON.parse(JSON.stringify(seed.originalCalendarEvents)),
+    deals: JSON.parse(JSON.stringify(seed.originalDeals)),
+    knowledgeBaseArticles: JSON.parse(JSON.stringify(seed.originalKnowledgeBaseArticles)),
+    aiSettings: JSON.parse(JSON.stringify(seed.originalAiSettings)),
+    aiFlowPermissions: JSON.parse(JSON.stringify(seed.originalAiFlowPermissions)),
+    aiProviderConfigs: JSON.parse(JSON.stringify(seed.originalAiProviderConfigs)),
+    aiPrompts: JSON.parse(JSON.stringify(seed.originalAiPrompts)),
+    auditLogs: JSON.parse(JSON.stringify(seed.originalAuditLogs)),
 });
+
 
 export const system = {
     initialize: async () => {
@@ -249,17 +260,19 @@ export const system = {
     },
     resetOperationalData: async () => {
         const db = await readData();
-        const freshOperationalData = {
-            conversations: seed.originalConversations,
-            messages: seed.originalMessages,
-            leads: seed.originalLeads,
-            quotes: seed.originalQuotes,
-            reservations: seed.originalReservations,
-            deals: seed.originalDeals,
-            calendarEvents: seed.originalCalendarEvents,
-            auditLogs: [], // Clear operational logs
+        const freshData = getInitialData();
+        const newData: Database = {
+            ...db, // Keep settings, prompts, etc.
+            conversations: freshData.conversations,
+            messages: freshData.messages,
+            leads: freshData.leads,
+            quotes: freshData.quotes,
+            reservations: freshData.reservations,
+            deals: freshData.deals,
+            calendarEvents: freshData.calendarEvents,
+            auditLogs: freshData.auditLogs,
+            contacts: freshData.contacts,
         };
-        const newData = { ...db, ...freshOperationalData };
         await writeData(newData);
         return { success: true, message: "Dados operacionais foram resetados." };
     },
@@ -269,3 +282,5 @@ export const system = {
         return { success: true, message: "Todos os dados e configurações foram restaurados para o padrão." };
     }
 };
+
+    
