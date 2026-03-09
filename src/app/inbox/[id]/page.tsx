@@ -185,53 +185,8 @@ export default function ConversationPage() {
         canSummarize: getPerm('summarization'),
     }
   }, [permissions]);
-
-  if (loading) {
-      return (
-        <div className="grid h-[calc(100vh-8rem)] grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-             <div className="md:col-span-2 lg:col-span-3 flex flex-col h-full">
-                <Card className='flex flex-col h-full'>
-                    <CardHeader className="flex flex-row items-center justify-between border-b p-4">
-                         <div className='flex items-center gap-3'>
-                            <Skeleton className="h-10 w-10 rounded-full" />
-                            <div className='space-y-1'>
-                                <Skeleton className="h-5 w-32" />
-                                <Skeleton className="h-4 w-24" />
-                            </div>
-                         </div>
-                         <div className='flex items-center gap-2'>
-                             <Skeleton className="h-9 w-32" />
-                             <Skeleton className="h-9 w-36" />
-                         </div>
-                    </CardHeader>
-                    <CardContent className='flex-1 p-4'/>
-                    <CardFooter className='p-4 border-t'>
-                        <Skeleton className="h-10 w-full" />
-                    </CardFooter>
-                </Card>
-             </div>
-             <div className='hidden md:block h-full'>
-                <Card className='h-full'>
-                    <CardHeader>
-                        <Skeleton className="h-6 w-40" />
-                        <Skeleton className="h-4 w-48" />
-                    </CardHeader>
-                    <CardContent className='space-y-4'>
-                        <Skeleton className="h-24 w-full" />
-                        <Skeleton className="h-16 w-full" />
-                        <Skeleton className="h-24 w-full" />
-                    </CardContent>
-                </Card>
-             </div>
-        </div>
-      )
-  }
-
-  if (!conversation || !customer) {
-    return <div className='text-center'>Conversa não encontrada ou falha ao carregar.</div>;
-  }
   
-    const handleSendMessage = async () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim() === '' || isSending) return;
 
     setIsSending(true);
@@ -304,6 +259,51 @@ export default function ConversationPage() {
         setIsGeneratingSummary(false);
     }
   };
+
+  if (loading) {
+      return (
+        <div className="grid h-[calc(100vh-8rem)] grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+             <div className="md:col-span-2 lg:col-span-3 flex flex-col h-full">
+                <Card className='flex flex-col h-full'>
+                    <CardHeader className="flex flex-row items-center justify-between border-b p-4">
+                         <div className='flex items-center gap-3'>
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className='space-y-1'>
+                                <Skeleton className="h-5 w-32" />
+                                <Skeleton className="h-4 w-24" />
+                            </div>
+                         </div>
+                         <div className='flex items-center gap-2'>
+                             <Skeleton className="h-9 w-32" />
+                             <Skeleton className="h-9 w-36" />
+                         </div>
+                    </CardHeader>
+                    <CardContent className='flex-1 p-4'/>
+                    <CardFooter className='p-4 border-t'>
+                        <Skeleton className="h-10 w-full" />
+                    </CardFooter>
+                </Card>
+             </div>
+             <div className='hidden md:block h-full'>
+                <Card className='h-full'>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-40" />
+                        <Skeleton className="h-4 w-48" />
+                    </CardHeader>
+                    <CardContent className='space-y-4'>
+                        <Skeleton className="h-24 w-full" />
+                        <Skeleton className="h-16 w-full" />
+                        <Skeleton className="h-24 w-full" />
+                    </CardContent>
+                </Card>
+             </div>
+        </div>
+      )
+  }
+
+  if (!conversation || !customer) {
+    return <div className='text-center'>Conversa não encontrada ou falha ao carregar.</div>;
+  }
   
   const urgencyClasses = getStatusBadgeClasses(customer.urgency === 'high' ? 'cancelado' : (customer.urgency === 'medium' ? 'não confirmado' : 'concluída'));
   const interestClasses = getStatusBadgeClasses(customer.interestLevel === 'high' ? 'confirmada' : (customer.interestLevel === 'medium' ? 'pendente' : 'rascunho'));
@@ -574,5 +574,3 @@ export default function ConversationPage() {
     </TooltipProvider>
   );
 }
-
-    
