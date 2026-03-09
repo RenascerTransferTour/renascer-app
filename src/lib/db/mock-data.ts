@@ -15,6 +15,7 @@ import type {
 const now = new Date();
 
 // --- Seed Data (immutable originals) ---
+const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
 
 export const originalOperators: Operator[] = [
     { id: 'op-1', fullName: 'Cláudia Vaz', email: 'claudia@renascer.ai', role: 'admin', active: true, avatar: 'https://picsum.photos/seed/99/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
@@ -379,10 +380,7 @@ export let originalAuditLogs: AuditLog[] = [
     }
 ];
 
-
 // --- Mutable State (the "database") ---
-// Deep clone the original data to create a mutable state
-const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
 
 export let operators: Operator[] = deepClone(originalOperators);
 export let contacts: Contact[] = deepClone(originalContacts);
@@ -401,86 +399,42 @@ export let aiProviderConfigs: AiProviderConfig[] = deepClone(originalAiProviderC
 export let aiPrompts: AiPrompt[] = deepClone(originalAiPrompts);
 export let auditLogs: AuditLog[] = deepClone(originalAuditLogs);
 
-// --- System-wide Operations ---
-const deepCloneReset = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
+// --- System-wide Operations (FIXED) ---
 
 export const system = {
+    /**
+     * Resets only the operational data (conversations, leads, etc.) to their initial state,
+     * preserving all settings.
+     */
     resetOperationalData: () => {
-        db.conversations = deepCloneReset(db.originalConversations);
-        db.messages = deepCloneReset(db.originalMessages);
-        db.leads = deepCloneReset(db.originalLeads);
-        db.quotes = deepCloneReset(db.originalQuotes);
-        db.reservations = deepCloneReset(db.originalReservations);
-        db.deals = deepCloneReset(db.originalDeals);
-        db.calendarEvents = deepCloneReset(db.originalCalendarEvents);
-        db.auditLogs = [];
-        return { success: true, message: "Operational data has been reset." };
+        conversations = deepClone(originalConversations);
+        messages = deepClone(originalMessages);
+        leads = deepClone(originalLeads);
+        quotes = deepClone(originalQuotes);
+        reservations = deepClone(originalReservations);
+        deals = deepClone(originalDeals);
+        calendarEvents = deepClone(originalCalendarEvents);
+        auditLogs = []; // Operational logs are cleared.
+        return { success: true, message: "Dados operacionais foram resetados." };
     },
+    /**
+     * Resets the entire mock database to its default state, including all settings.
+     */
     resetAllData: () => {
-        // Resets operational data
+        // First, reset all operational data.
         system.resetOperationalData();
         
-        // Also resets settings data
-        db.aiSettings = deepCloneReset(db.originalAiSettings);
-        db.aiFlowPermissions = deepCloneReset(db.originalAiFlowPermissions);
-        db.aiPrompts = deepCloneReset(db.originalAiPrompts);
-        db.channels = deepCloneReset(db.originalChannels);
+        // Then, reset all foundational and settings data.
+        operators = deepClone(originalOperators);
+        contacts = deepClone(originalContacts);
+        channels = deepClone(originalChannels);
+        knowledgeBaseArticles = deepClone(originalKnowledgeBaseArticles);
+        aiSettings = deepClone(originalAiSettings);
+        aiFlowPermissions = deepClone(originalAiFlowPermissions);
+        aiProviderConfigs = deepClone(originalAiProviderConfigs);
+        aiPrompts = deepClone(originalAiPrompts);
+        auditLogs = deepClone(originalAuditLogs); // Restore original logs for a full reset
 
-        return { success: true, message: "All local mock data has been reset to defaults." };
+        return { success: true, message: "Todos os dados e configurações foram restaurados para o padrão." };
     }
 }
-
-const db = {
-    operators,
-    contacts,
-    channels,
-    leads,
-    messages,
-    conversations,
-    quotes,
-    reservations,
-    calendarEvents,
-    deals,
-    knowledgeBaseArticles,
-    aiSettings,
-    aiFlowPermissions,
-    aiProviderConfigs,
-    aiPrompts,
-    auditLogs,
-    originalOperators,
-    originalContacts,
-    originalChannels,
-    originalLeads,
-    originalMessages,
-    originalConversations,
-    originalQuotes,
-    originalReservations,
-    originalCalendarEvents,
-    originalDeals,
-    originalKnowledgeBaseArticles,
-    originalAiSettings,
-    originalAiFlowPermissions,
-    originalAiProviderConfigs,
-    originalAiPrompts,
-    originalAuditLogs,
-    system
-};
-
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

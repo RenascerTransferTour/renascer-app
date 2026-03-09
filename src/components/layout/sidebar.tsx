@@ -18,11 +18,11 @@ import {
   Settings,
   HelpCircle,
   GanttChartSquare,
-  Car,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { Logo } from '../icons';
 
 const navItems = [
   { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -53,7 +53,7 @@ export function AppSidebar() {
       <SidebarHeader className="h-16 items-center justify-center p-2 group-data-[collapsible=icon]:h-14 group-data-[collapsible=icon]:justify-center">
         <Link href="/" className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary">
-            <Car className="h-5 w-5 text-sidebar-primary-foreground" />
+            <Logo className="h-5 w-5 text-sidebar-primary-foreground" />
           </div>
           <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
             <span className="text-base font-semibold leading-none text-sidebar-foreground">

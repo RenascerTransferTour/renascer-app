@@ -43,16 +43,16 @@ const FileUpload = ({ label, description }: { label: string, description: string
     <div className="flex items-center justify-center w-full">
       <label
         htmlFor={label.replace(/\s+/g, '-').toLowerCase()}
-        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted"
+        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-not-allowed bg-muted/50 opacity-60"
       >
         <div className="flex flex-col items-center justify-center pt-5 pb-6">
           <ImageIcon className="w-8 h-8 mb-4 text-muted-foreground" />
           <p className="mb-2 text-sm text-muted-foreground">
-            <span className="font-semibold">Clique para enviar</span> ou arraste
+            <span className="font-semibold">Upload desativado</span>
           </p>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-xs text-muted-foreground text-center">{description}</p>
         </div>
-        <input id={label.replace(/\s+/g, '-').toLowerCase()} type="file" className="hidden" />
+        <input id={label.replace(/\s+/g, '-').toLowerCase()} type="file" className="hidden" disabled />
       </label>
     </div>
   </div>
@@ -83,12 +83,12 @@ export function AppearanceForm() {
                         <Info className="h-4 w-4" />
                         <AlertTitle>Modo Simulado</AlertTitle>
                         <AlertDescription>
-                            A identidade visual está em configuração. As alterações são aplicadas localmente para preview, mas o salvamento real para produção não está ativado.
+                            O logotipo atual é definido no código-fonte (`icons.tsx`). A função de upload é apenas uma representação visual e está desativada. As demais alterações são aplicadas localmente para preview, mas o salvamento real não está ativado.
                         </AlertDescription>
                     </Alert>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FileUpload label="Logo Principal" description="PNG, JPG, SVG (max. 800x400px)" />
-                        <FileUpload label="Logo Compacto / Favicon" description="PNG, ICO, SVG (max. 50x50px)" />
+                        <FileUpload label="Logo Principal (Preview)" description="O logo é definido em /src/components/icons.tsx" />
+                        <FileUpload label="Logo Compacto / Favicon (Preview)" description="O Favicon é definido no sistema de arquivos" />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="companyName">Nome da Empresa</Label>
