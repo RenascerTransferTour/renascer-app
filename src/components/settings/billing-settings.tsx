@@ -11,6 +11,7 @@ import {
 import { mockPlans } from "@/lib/mock-data";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Badge } from "../ui/badge";
 
 export function BillingSettings() {
     return (

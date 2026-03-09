@@ -1,5 +1,5 @@
 import { subDays, addDays, subHours, addHours } from 'date-fns';
-import { User, Message, Conversation, Lead, Quote, Booking, CalendarEvent, KnowledgeBaseArticle } from './types';
+import { User, Message, Conversation, Lead, Quote, Booking, CalendarEvent, KnowledgeBaseArticle, Company, Plan, TeamMember } from './types';
 
 const now = new Date();
 
@@ -142,13 +142,13 @@ export const mockMessages: Message[] = [
     ]
   };
   
-  export const mockCompanies = [
+  export const mockCompanies: Company[] = [
     { id: 'renascer', name: 'Renascer Transfer Tour' },
     { id: 'alpha', name: 'Alpha Transportes' },
     { id: 'beta', name: 'Beta Turismo Executivo' },
   ];
   
-  export const mockPlans = [
+  export const mockPlans: Plan[] = [
     {
       name: 'Básico',
       price: 'R$ 199',
@@ -170,7 +170,7 @@ export const mockMessages: Message[] = [
     },
   ];
   
-  export const mockTeamMembers = [
+  export const mockTeamMembers: TeamMember[] = [
     { id: 'user-1', name: 'Ana Silva', email: 'ana@example.com', role: 'Gerente', status: 'active' },
     { id: 'user-2', name: 'Carlos Santos', email: 'carlos@example.com', role: 'Atendente', status: 'active' },
     { id: 'user-3', name: 'Beatriz Costa', email: 'beatriz@example.com', role: 'Motorista', status: 'inactive' },
