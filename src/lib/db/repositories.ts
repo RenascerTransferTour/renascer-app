@@ -293,7 +293,6 @@ export const system = {
             // Fresh operational data from the seed
             operators: seedData.operators,
             contacts: seedData.contacts,
-            channels: seedData.channels,
             leads: seedData.leads,
             messages: seedData.messages,
             conversations: seedData.conversations,
@@ -301,10 +300,11 @@ export const system = {
             reservations: seedData.reservations,
             calendarEvents: seedData.calendarEvents,
             deals: seedData.deals,
-            knowledgeBaseArticles: seedData.knowledgeBaseArticles,
             auditLogs: seedData.auditLogs,
             
             // Preserved settings from the live database, deep-copied for safety
+            channels: JSON.parse(JSON.stringify(liveDb.channels)),
+            knowledgeBaseArticles: JSON.parse(JSON.stringify(liveDb.knowledgeBaseArticles)),
             aiSettings: JSON.parse(JSON.stringify(liveDb.aiSettings)),
             aiFlowPermissions: JSON.parse(JSON.stringify(liveDb.aiFlowPermissions)),
             aiProviderConfigs: JSON.parse(JSON.stringify(liveDb.aiProviderConfigs)),
