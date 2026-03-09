@@ -183,37 +183,38 @@ export default function ConversationPage() {
   
   const handleSendMessage = async () => {
     if (newMessage.trim() === '' || isSending) return;
-
+  
     setIsSending(true);
     const messageContent = newMessage;
-    const tempMessageId = `temp-${Date.now()}`;
-    
+  
     try {
-        const response = await fetch(`/api/conversations/${id}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content: messageContent }),
-        });
-
-        const savedMessage = await response.json();
-
-        if (!response.ok) {
-            throw new Error(savedMessage.error || 'A API retornou um erro inesperado.');
-        }
-        
-        setMessages(prevMessages => [...prevMessages, savedMessage]);
-        setNewMessage('');
-
+      const response = await fetch(`/api/conversations/${id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: messageContent }),
+      });
+  
+      const savedMessage = await response.json();
+  
+      if (!response.ok) {
+        throw new Error(savedMessage.error || 'A API retornou um erro inesperado.');
+      }
+  
+      // Update state only after successful API response
+      setMessages(prevMessages => [...prevMessages, savedMessage]);
+      setNewMessage('');
+  
     } catch (error) {
-        console.error("Failed to send message:", error);
-        toast({
-            variant: "destructive",
-            title: "Erro ao enviar mensagem",
-            description: error instanceof Error ? error.message : "Sua mensagem não pôde ser enviada. Por favor, tente novamente.",
-        });
-        // Do not clear message so user can retry
+      console.error("Failed to send message:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao enviar mensagem",
+        description: error instanceof Error ? error.message : "Sua mensagem não pôde ser enviada. Por favor, tente novamente.",
+      });
+      // Do not clear message so user can retry by keeping messageContent in the input
+      // The state `newMessage` was not cleared on failure.
     } finally {
-        setIsSending(false);
+      setIsSending(false);
     }
   };
   
@@ -298,8 +299,11 @@ export default function ConversationPage() {
     return <div className='text-center'>Conversa não encontrada ou falha ao carregar.</div>;
   }
   
-  const urgencyClasses = getStatusBadgeClasses(customer.urgency === 'high' ? 'cancelado' : customer.urgency === 'medium' ? 'não confirmado' : 'rascunho');
-  const interestClasses = getStatusBadgeClasses(customer.interestLevel === 'high' ? 'confirmada' : customer.interestLevel === 'medium' ? 'pendente' : 'rascunho');
+  const urgencyBadgeStatus = customer.urgency === 'high' ? 'cancelado' : customer.urgency === 'medium' ? 'não confirmado' : 'rascunho';
+  const interestBadgeStatus = customer.interestLevel === 'high' ? 'confirmada' : customer.interestLevel === 'medium' ? 'pendente' : 'rascunho';
+
+  const urgencyClasses = getStatusBadgeClasses(urgencyBadgeStatus);
+  const interestClasses = getStatusBadgeClasses(interestBadgeStatus);
 
   return (
     <TooltipProvider>
