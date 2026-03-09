@@ -15,9 +15,9 @@ export type Conversation = CoreConversation & {
 // A UI-ready message type.
 export type Message = CoreMessage;
 
-// The Customer type is an alias for the core Contact model.
-// This ensures that the UI components are aligned with the actual data structure
-// where properties like 'urgency' can be optional.
+// The Customer type is now an alias for the core Contact model.
+// This ensures that the UI components correctly handle optional properties
+// like 'urgency' and 'interestLevel' that exist on the Contact model.
 export type Customer = Contact;
 
 // AI Flow Permission type

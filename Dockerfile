@@ -1,54 +1,41 @@
-# Estágio 1: Builder - Constrói a aplicação Next.js
-FROM node:20-alpine AS builder
-
-# Define o diretório de trabalho dentro do container
+# 1. Instalação de dependências
+FROM node:20-slim AS deps
 WORKDIR /app
+COPY package.json ./
+RUN npm install
 
-# Copia os arquivos de gerenciamento de dependências
-COPY package*.json ./
-
-# Instala as dependências de produção
-RUN npm ci --only=production
-
-# Copia o restante dos arquivos do projeto
+# 2. Build da aplicação
+FROM node:20-slim AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Define o ambiente como produção e constrói a aplicação
-ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED 1
 RUN npm run build
 
-# ---
-
-# Estágio 2: Runner - Executa a aplicação otimizada
-FROM node:20-alpine AS runner
-
-# Define o diretório de trabalho
+# 3. Imagem final de produção
+FROM node:20-slim AS runner
 WORKDIR /app
 
-# Define o ambiente como produção
 ENV NODE_ENV=production
-# A porta padrão do Next.js. Pode ser sobrescrita por .env.prod no docker-compose.
-ENV PORT=3000
+ENV NEXT_TELEMETRY_DISABLED 1
 
-# Cria um usuário não-root para segurança
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+# Adiciona um usuário não-root para segurança
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-# Cria o diretório de dados e define as permissões corretas ANTES de trocar de usuário
+# Cria o diretório para os dados e atribui permissão ao usuário não-root
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
 
-# Copia a pasta .next standalone do estágio de builder
-COPY --from=builder /app/.next/standalone ./
-
-# Copia os ativos estáticos (CSS, imagens, fontes) do estágio de builder.
+# Copia os arquivos da build standalone
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Troca para o usuário não-root
 USER nextjs
 
-# Expõe a porta em que a aplicação será executada.
-# O padrão é 3000, mas pode ser alterado com a variável de ambiente PORT.
 EXPOSE 3000
 
-# O comando para iniciar a aplicação.
+ENV PORT 3000
+
+# Inicia o servidor Next.js
 CMD ["node", "server.js"]

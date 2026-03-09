@@ -186,6 +186,7 @@ export default function ConversationPage() {
   
     setIsSending(true);
     const messageContent = newMessage;
+    setNewMessage(''); // Clear input immediately for better UX
   
     try {
       const response = await fetch(`/api/conversations/${id}/messages`, {
@@ -202,7 +203,6 @@ export default function ConversationPage() {
   
       // Update state only after successful API response
       setMessages(prevMessages => [...prevMessages, savedMessage]);
-      setNewMessage('');
   
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -211,8 +211,8 @@ export default function ConversationPage() {
         title: "Erro ao enviar mensagem",
         description: error instanceof Error ? error.message : "Sua mensagem não pôde ser enviada. Por favor, tente novamente.",
       });
-      // Do not clear message so user can retry by keeping messageContent in the input
-      // The state `newMessage` was not cleared on failure.
+      // Restore message so user can retry
+      setNewMessage(messageContent);
     } finally {
       setIsSending(false);
     }
@@ -299,8 +299,8 @@ export default function ConversationPage() {
     return <div className='text-center'>Conversa não encontrada ou falha ao carregar.</div>;
   }
   
-  const urgencyBadgeStatus = customer.urgency === 'high' ? 'cancelado' : customer.urgency === 'medium' ? 'não confirmado' : 'rascunho';
-  const interestBadgeStatus = customer.interestLevel === 'high' ? 'confirmada' : customer.interestLevel === 'medium' ? 'pendente' : 'rascunho';
+  const urgencyBadgeStatus = customer.urgency ? (customer.urgency === 'high' ? 'cancelado' : customer.urgency === 'medium' ? 'não confirmado' : 'rascunho') : 'rascunho';
+  const interestBadgeStatus = customer.interestLevel ? (customer.interestLevel === 'high' ? 'confirmada' : customer.interestLevel === 'medium' ? 'pendente' : 'rascunho') : 'rascunho';
 
   const urgencyClasses = getStatusBadgeClasses(urgencyBadgeStatus);
   const interestClasses = getStatusBadgeClasses(interestBadgeStatus);

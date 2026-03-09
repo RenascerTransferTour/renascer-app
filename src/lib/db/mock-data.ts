@@ -33,6 +33,8 @@ export const originalContacts: Contact[] = [
     isInternal: false,
     createdAt: subDays(now, 2).toISOString(),
     updatedAt: subDays(now, 2).toISOString(),
+    interestLevel: 'high',
+    urgency: 'medium',
   },
   {
     id: 'contact-2',
@@ -44,6 +46,8 @@ export const originalContacts: Contact[] = [
     isInternal: false,
     createdAt: subDays(now, 5).toISOString(),
     updatedAt: subDays(now, 5).toISOString(),
+    interestLevel: 'medium',
+    urgency: 'low',
   },
   {
     id: 'contact-3',
@@ -55,6 +59,8 @@ export const originalContacts: Contact[] = [
     isInternal: false,
     createdAt: subDays(now, 1).toISOString(),
     updatedAt: subDays(now, 1).toISOString(),
+    interestLevel: 'high',
+    urgency: 'high',
   },
   {
     id: 'contact-4',
