@@ -62,19 +62,6 @@ const statusConfig: Record<string, { icon: React.ElementType, text: string, clas
     }
 };
 
-const pairingStatusConfig: Record<string, { icon: React.ElementType, text: string, className: string }> = {
-    'Aguardando leitura': { icon: ScanLine, text: 'Aguardando leitura', className: getStatusBadgeClasses('aguardando humano') },
-    'Pareamento simulado': { icon: Check, text: 'Pareamento simulado', className: getStatusBadgeClasses('confirmada') },
-    'Desvinculado': { icon: PowerOff, text: 'Desvinculado', className: getStatusBadgeClasses('disconnected') },
-  };
-
-const PairingStatusBadge = ({ status }: { status: keyof typeof pairingStatusConfig }) => {
-    const config = pairingStatusConfig[status];
-    if (!config) return null;
-    const { icon: Icon, text, className } = config;
-    return <Badge className={cn(className, "gap-1.5 capitalize")}><Icon className="h-3 w-3" />{text}</Badge>;
-};
-
 const StatusBadge = ({ status, isMock = false }: { status: Channel['status'], isMock?: boolean }) => {
     if (isMock && status === 'connected') {
         const config = statusConfig.mock;
@@ -101,12 +88,6 @@ export default function ChannelsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     
-    // States for QR Code mock flow
-    const [qrValue, setQrValue] = useState('renascer-transfer-tour:whatsapp:mock-session');
-    const [pairingStatus, setPairingStatus] = useState<'Aguardando leitura' | 'Pareamento simulado' | 'Desvinculado'>('Aguardando leitura');
-    const [lastPairedAt, setLastPairedAt] = useState<Date | null>(null);
-    const [deviceName, setDeviceName] = useState('');
-    const [inputDeviceName, setInputDeviceName] = useState('');
     const { toast } = useToast();
 
     useEffect(() => {
@@ -158,47 +139,6 @@ export default function ChannelsPage() {
         }
     };
     
-    // QR Code Mock Flow Handlers
-    const handleGenerateNewQr = () => {
-        setQrValue('renascer-transfer-tour:whatsapp:mock-session:' + Date.now());
-        setPairingStatus('Aguardando leitura');
-        setLastPairedAt(null);
-        toast({ title: 'Novo QR Code gerado (mock)' });
-      };
-    
-      const handleSimulatePairing = () => {
-        if (pairingStatus === 'Pareamento simulado') {
-            toast({ variant: 'default', title: 'Dispositivo já pareado (simulado)' });
-            return;
-        }
-        setPairingStatus('Pareamento simulado');
-        setLastPairedAt(new Date());
-        toast({ title: 'Pareamento simulado com sucesso!', className: 'bg-green-100 dark:bg-green-900'});
-      };
-    
-      const handleSaveDeviceName = () => {
-        if (!inputDeviceName.trim()) {
-            toast({ variant: 'destructive', title: 'Nome inválido', description: 'O nome do dispositivo não pode estar vazio.' });
-            return;
-        }
-        setDeviceName(inputDeviceName);
-        toast({ title: 'Nome do dispositivo salvo (localmente)' });
-      };
-    
-      const handleClearInput = () => {
-        setInputDeviceName('');
-      };
-    
-      const handleResetPairing = () => {
-        setQrValue('renascer-transfer-tour:whatsapp:mock-session');
-        setPairingStatus('Aguardando leitura');
-        setLastPairedAt(null);
-        setDeviceName('');
-        setInputDeviceName('');
-        toast({ title: 'Pareamento resetado para o estado inicial.' });
-      };
-
-
     const mockHistory = [
         { channel: 'WhatsApp', event: 'Webhook Received', date: '2024-07-30 14:32:10', status: 'Sucesso', details: 'Nova mensagem de +55 11 9....'},
         { channel: 'Instagram', event: 'API Connection', date: '2024-07-30 13:05:00', status: 'Falhou', details: 'Token de acesso inválido'},
@@ -247,7 +187,7 @@ export default function ChannelsPage() {
                                 {waChannel && <StatusBadge status={waChannel.status} />}
                             </div>
                         </CardHeader>
-                        <Tabs defaultValue="qrcode" className="w-full">
+                        <Tabs defaultValue="api" className="w-full">
                             <CardContent>
                                 <TabsList className="grid w-full grid-cols-2">
                                     <TabsTrigger value="api">API Oficial da Meta</TabsTrigger>
@@ -257,9 +197,9 @@ export default function ChannelsPage() {
                             <TabsContent value="api" className="px-6 pb-6 space-y-4">
                                 <Alert>
                                     <Info className="h-4 w-4" />
-                                    <AlertTitle>Modo Recomendado para Nuvem</AlertTitle>
+                                    <AlertTitle>Modo Recomendado (Simulado)</AlertTitle>
                                     <AlertDescription>
-                                        A API Oficial oferece mais estabilidade, segurança e recursos para automação em um ambiente de produção 24/7. Esta conexão é simulada.
+                                        A API Oficial oferece mais estabilidade e segurança. Esta tela é uma representação visual. Nenhuma conexão real está ativa.
                                     </AlertDescription>
                                 </Alert>
                                 <div className="grid md:grid-cols-2 gap-4">
@@ -288,101 +228,22 @@ export default function ChannelsPage() {
                                     </AlertDescription>
                                 </Alert>
                                 <div className="flex gap-2">
-                                    <Button variant="outline">Testar Conexão</Button>
+                                    <Button variant="outline" disabled>Testar Conexão</Button>
                                     <Button variant="destructive" disabled>Desconectar</Button>
                                 </div>
                             </TabsContent>
                             <TabsContent value="qrcode" className="px-6 pb-6 space-y-6">
-                                <Alert variant="default">
+                                <Alert variant="destructive">
                                     <AlertTriangle className="h-4 w-4" />
-                                    <AlertTitle>Modo Alternativo (Não recomendado para produção)</AlertTitle>
+                                    <AlertTitle>Integração Não Implementada</AlertTitle>
                                     <AlertDescription>
-                                       Este modo usa a conexão do seu celular e pode ser instável, não sendo ideal para operações 24/7. Use a API Oficial para produção em nuvem.
+                                       Esta funcionalidade de conexão via QR Code é uma **demonstração visual** e não está conectada a um serviço real do WhatsApp. O pareamento não funcionará. Para uma integração real, seria necessário instalar e configurar um serviço de backend, como a biblioteca Baileys.
                                     </AlertDescription>
                                 </Alert>
-                                
-                                <Alert>
-                                    <Info className="h-4 w-4" />
-                                    <AlertTitle>Funcionalidade Simulada</AlertTitle>
-                                    <AlertDescription>
-                                        A conexão por QR Code é uma <span className="font-semibold">demonstração visual</span>. Nenhuma conexão real com o WhatsApp é estabelecida. O QR Code gerado é apenas um exemplo e não pode ser usado para pareamento.
-                                    </AlertDescription>
-                                </Alert>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-                                    <div className="flex flex-col items-center gap-4">
-                                        <div className="bg-white p-4 rounded-lg border w-80 h-80 flex items-center justify-center">
-                                            <QRCode
-                                                value={qrValue}
-                                                size={256}
-                                                viewBox={`0 0 256 256`}
-                                                bgColor="#FFFFFF"
-                                                fgColor="#000000"
-                                                level="L"
-                                            />
-                                        </div>
-                                        <div className='text-center'>
-                                            <p className='font-semibold'>QR em modo simulado</p>
-                                            <p className='text-sm text-muted-foreground'>Exemplo visual de conexão. Não automatizado.</p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button onClick={handleGenerateNewQr} variant="outline"><RefreshCw className="mr-2 h-4 w-4"/> Gerar Novo QR</Button>
-                                            <Button onClick={handleSimulatePairing}><Check className="mr-2 h-4 w-4"/>Simular Leitura</Button>
-                                        </div>
-                                    </div>
-
-                                    <div className='space-y-6'>
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle className="text-base">Identificação do Dispositivo</CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="space-y-2">
-                                                <Label htmlFor="device-name">Nome do dispositivo</Label>
-                                                <p className="text-xs text-muted-foreground">Identificação local do dispositivo conectado para sua referência.</p>
-                                                <div className='flex gap-2'>
-                                                    <Input 
-                                                        id="device-name" 
-                                                        placeholder="Ex.: WhatsApp Comercial Recepção" 
-                                                        value={inputDeviceName}
-                                                        onChange={(e) => setInputDeviceName(e.target.value)}
-                                                    />
-                                                     <Button type="button" size="icon" variant="ghost" onClick={handleClearInput}><Trash2 className="h-4 w-4 text-muted-foreground"/></Button>
-                                                </div>
-                                            </CardContent>
-                                            <CardFooter>
-                                                 <Button type="button" size="sm" onClick={handleSaveDeviceName}>
-                                                    <Save className="mr-2 h-3 w-3" />
-                                                    Salvar nome
-                                                </Button>
-                                            </CardFooter>
-                                        </Card>
-
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle className="text-base">Status do Pareamento (Mock)</CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="space-y-4">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium">Status:</span>
-                                                    <PairingStatusBadge status={pairingStatus} />
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium">Dispositivo:</span>
-                                                    <span className="text-sm font-semibold">{deviceName || "Nenhum nome salvo"}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium">Último pareamento:</span>
-                                                    <span className="text-sm font-semibold">
-                                                        {lastPairedAt ? format(lastPairedAt, "'Hoje às' HH:mm", { locale: ptBR }) : 'Nunca'}
-                                                    </span>
-                                                </div>
-                                            </CardContent>
-                                            <CardFooter>
-                                                <Button variant="destructive" size="sm" onClick={handleResetPairing}><PowerOff className="mr-2 h-4 w-4"/> Resetar Pareamento</Button>
-                                            </CardFooter>
-                                        </Card>
-
-                                    </div>
+                                <div className="flex flex-col items-center justify-center p-8 border-2 border-dashed rounded-lg bg-muted/50 text-center">
+                                    <QrCode className="h-16 w-16 text-muted-foreground mb-4"/>
+                                    <h3 className="text-lg font-semibold">Função de Pareamento Desativada</h3>
+                                    <p className="text-sm text-muted-foreground">A UI para geração e leitura de QR Code foi removida para evitar confusão.</p>
                                 </div>
                             </TabsContent>
                         </Tabs>
@@ -410,7 +271,11 @@ export default function ChannelsPage() {
                                     </AlertDescription>
                                 </Alert>
                             )}
-                            <p className="text-sm text-muted-foreground">Conecte sua conta do Instagram para receber e responder mensagens diretamente da plataforma.</p>
+                            <Alert>
+                                <Info className="h-4 w-4" />
+                                <AlertTitle>Conexão Não Implementada</AlertTitle>
+                                <AlertDescription>Esta funcionalidade é uma simulação visual. As chaves e a conexão não estão ativas.</AlertDescription>
+                            </Alert>
                              <div className="space-y-2">
                                 <Label>App ID</Label>
                                 <Input disabled placeholder="Não configurado"/>
@@ -421,7 +286,7 @@ export default function ChannelsPage() {
                             </div>
                         </CardContent>
                         <CardFooter className="gap-2">
-                            <Button>Conectar com Instagram</Button>
+                            <Button disabled>Conectar com Instagram</Button>
                             <Button variant="outline" disabled>Testar Conexão</Button>
                         </CardFooter>
                     </Card>
@@ -438,7 +303,11 @@ export default function ChannelsPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <p className="text-sm text-muted-foreground">Conecte sua página do Facebook para centralizar o atendimento.</p>
+                             <Alert>
+                                <Info className="h-4 w-4" />
+                                <AlertTitle>Conexão Não Implementada</AlertTitle>
+                                <AlertDescription>Esta funcionalidade é uma simulação visual. As chaves e a conexão não estão ativas.</AlertDescription>
+                            </Alert>
                              <div className="space-y-2">
                                 <Label>Page ID</Label>
                                 <Input disabled value="123456789098765"/>
@@ -449,8 +318,8 @@ export default function ChannelsPage() {
                             </div>
                         </CardContent>
                         <CardFooter className="gap-2">
-                            <Button variant="outline">Testar Conexão</Button>
-                             <Button variant="destructive">Desconectar</Button>
+                            <Button variant="outline" disabled>Testar Conexão</Button>
+                             <Button variant="destructive" disabled>Desconectar</Button>
                         </CardFooter>
                     </Card>
                 </TabsContent>

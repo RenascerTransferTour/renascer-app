@@ -1,5 +1,3 @@
-
-
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
@@ -432,7 +430,15 @@ export function AiSettingsForm() {
                 <CardDescription>Controle a capacidade da IA de gerar e enviar áudio, vídeo, imagens ou documentos.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                <Alert>
+                    <Info className="h-4 w-4" />
+                    <AlertTitle>Funcionalidade Não Implementada</AlertTitle>
+                    <AlertDescription>
+                        Estas opções são para demonstração futura. Atualmente, a IA não possui a capacidade de gerar ou enviar mídias. As configurações salvas não terão efeito prático.
+                    </AlertDescription>
+                </Alert>
+
+                <div className="flex flex-row items-center justify-between rounded-lg border p-4 bg-muted/50">
                     <div className="space-y-0.5">
                         <Label className="text-base flex items-center gap-2">
                             <Badge className={cn(getStatusBadgeClasses('disconnected'))}>
@@ -468,7 +474,7 @@ export function AiSettingsForm() {
                         {mediaPermissions.map(perm => {
                             const Icon = perm.icon;
                             return (
-                                <div key={perm.id} className="flex flex-row items-center justify-between rounded-lg border p-4">
+                                <div key={perm.id} className="flex flex-row items-center justify-between rounded-lg border p-4 opacity-70">
                                      <div className="flex items-center gap-4">
                                         <Icon className="size-5 text-muted-foreground"/>
                                         <div className="space-y-0.5">
@@ -480,7 +486,7 @@ export function AiSettingsForm() {
                                         id={perm.id}
                                         checked={settings[perm.id as keyof AiSettings] as boolean}
                                         onCheckedChange={(checked) => setSettings((s) => s ? ({ ...s, [perm.id]: checked }) : null)}
-                                        disabled={settings.mediaActivationKey !== 'authorized'}
+                                        disabled={true}
                                     />
                                 </div>
                             )
@@ -488,15 +494,6 @@ export function AiSettingsForm() {
                     </div>
                 </div>
             </CardContent>
-            <CardFooter>
-                <Alert variant="default">
-                    <Info className="h-4 w-4"/>
-                    <AlertTitle>Não Automatizado: Envio Manual Obrigatório</AlertTitle>
-                    <AlertDescription>
-                        Com a chave de mídia desativada, a IA só pode gerar <span className="font-semibold">sugestões de mídia</span> para aprovação. O envio final é sempre feito por um humano.
-                    </AlertDescription>
-                </Alert>
-            </CardFooter>
         </Card>
 
         <Card>
@@ -659,7 +656,3 @@ export function AiSettingsForm() {
     </TooltipProvider>
   )
 }
-
-    
-
-    

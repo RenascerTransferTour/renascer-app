@@ -1,5 +1,11 @@
 import type { SVGProps } from 'react';
 
+/**
+ * @fileoverview Este arquivo contém o logotipo principal da aplicação.
+ * Para alterar o logotipo, edite diretamente o código SVG abaixo.
+ * A funcionalidade de upload de logo na UI é apenas uma representação visual.
+ */
+
 export function Logo(props: SVGProps<SVGSVGElement>) {
   return (
     <svg

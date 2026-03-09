@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { dashboardService } from '@/lib/db/services';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * API route for dashboard stats cards.
  */

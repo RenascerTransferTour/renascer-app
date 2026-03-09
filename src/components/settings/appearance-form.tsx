@@ -13,12 +13,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import {
-  ImageIcon,
   Info,
   Palette,
   Type,
   Component,
-  AlertTriangle,
+  Code,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '../ui/badge'
@@ -37,27 +36,6 @@ const ColorSwatch = ({ label, color, varName }: { label: string, color: string, 
     </div>
   )
 
-const FileUpload = ({ label, description }: { label: string, description: string }) => (
-  <div className="space-y-2">
-    <Label>{label}</Label>
-    <div className="flex items-center justify-center w-full">
-      <label
-        htmlFor={label.replace(/\s+/g, '-').toLowerCase()}
-        className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-not-allowed bg-muted/50 opacity-60"
-      >
-        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-          <ImageIcon className="w-8 h-8 mb-4 text-muted-foreground" />
-          <p className="mb-2 text-sm text-muted-foreground">
-            <span className="font-semibold">Upload desativado</span>
-          </p>
-          <p className="text-xs text-muted-foreground text-center">{description}</p>
-        </div>
-        <input id={label.replace(/\s+/g, '-').toLowerCase()} type="file" className="hidden" disabled />
-      </label>
-    </div>
-  </div>
-)
-
 export function AppearanceForm() {
     const { toast } = useToast()
     
@@ -75,21 +53,17 @@ export function AppearanceForm() {
                 <CardHeader>
                     <CardTitle>Identidade da Marca</CardTitle>
                     <CardDescription>
-                        Posicionamento visual da marca: profissional, confiável, premium e claro.
+                        Aparência visual da marca: profissional, confiável e premium.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Alert>
                         <Info className="h-4 w-4" />
-                        <AlertTitle>Modo Simulado</AlertTitle>
+                        <AlertTitle>O Logotipo é Gerenciado por Código</AlertTitle>
                         <AlertDescription>
-                            O logotipo atual é definido no código-fonte (`src/components/icons.tsx`). A função de upload é apenas uma representação visual e está desativada. As demais alterações são aplicadas localmente para preview, mas o salvamento real não está ativado.
+                          A funcionalidade de upload não está implementada. Para alterar o logotipo, você deve editar diretamente o componente SVG no arquivo: <code className='font-mono bg-muted px-1 py-0.5 rounded-sm text-xs'>src/components/icons.tsx</code>.
                         </AlertDescription>
                     </Alert>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FileUpload label="Logo Principal (Preview)" description="O logo é definido em /src/components/icons.tsx" />
-                        <FileUpload label="Logo Compacto / Favicon (Preview)" description="O Favicon é definido no sistema de arquivos" />
-                    </div>
                      <div className="space-y-2">
                         <Label htmlFor="companyName">Nome da Empresa</Label>
                         <Input id="companyName" defaultValue="Renascer Transfer Tour" />
