@@ -9,21 +9,21 @@ import {
   CardDescription
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { contacts } from '@/lib/db/mock-data';
+import { originalContacts } from '@/lib/db/mock-data';
 
 const activities = [
   {
-    contact: contacts[0],
+    contact: originalContacts[0],
     action: 'pediu um orçamento de transfer para GRU.',
     time: '5 minutos atrás',
   },
   {
-    contact: contacts[2],
+    contact: originalContacts[2],
     action: 'aprovou o orçamento para evento corporativo.',
     time: '1 hora atrás',
   },
   {
-    contact: contacts[1],
+    contact: originalContacts[1],
     action: 'foi transferido para um atendente humano.',
     time: '3 horas atrás',
   },
@@ -36,7 +36,7 @@ const activities = [
     time: '5 horas atrás',
   },
   {
-    contact: contacts[3],
+    contact: originalContacts[3],
     action: 'teve o atendimento sobre turismo encerrado.',
     time: '1 dia atrás',
   },

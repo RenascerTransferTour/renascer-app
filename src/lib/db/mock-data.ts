@@ -2,8 +2,7 @@
  * @fileoverview Mock Database Seed Data
  * 
  * This file contains all the initial data for the application's mock database.
- * It acts as a seeder, populating the in-memory data structures that the
- * repository layer will interact with.
+ * It acts as a seeder, providing the original state for the data persistence layer.
  */
 
 import { subDays, addDays, setHours, setMinutes, subMinutes } from 'date-fns';
@@ -15,8 +14,6 @@ import type {
 const now = new Date();
 
 // --- Seed Data (immutable originals) ---
-const deepClone = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
-
 export const originalOperators: Operator[] = [
     { id: 'op-1', fullName: 'Cláudia Vaz', email: 'claudia@renascer.ai', role: 'admin', active: true, avatar: 'https://picsum.photos/seed/99/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
     { id: 'op-2', fullName: 'Carlos', email: 'carlos@renascer.ai', role: 'agent', active: true, avatar: 'https://picsum.photos/seed/98/100/100', createdAt: subDays(now, 30).toISOString(), updatedAt: now.toISOString() },
@@ -379,63 +376,3 @@ export let originalAuditLogs: AuditLog[] = [
         contactId: 'contact-1',
     }
 ];
-
-// --- Mutable State (the "database") ---
-
-export let operators: Operator[] = deepClone(originalOperators);
-export let contacts: Contact[] = deepClone(originalContacts);
-export let channels: Channel[] = deepClone(originalChannels);
-export let leads: Lead[] = deepClone(originalLeads);
-export let messages: Message[] = deepClone(originalMessages);
-export let conversations: Conversation[] = deepClone(originalConversations);
-export let quotes: Quote[] = deepClone(originalQuotes);
-export let reservations: Reservation[] = deepClone(originalReservations);
-export let calendarEvents: CalendarEvent[] = deepClone(originalCalendarEvents);
-export let deals: Deal[] = deepClone(originalDeals);
-export let knowledgeBaseArticles: KnowledgeBaseArticle[] = deepClone(originalKnowledgeBaseArticles);
-export let aiSettings: AiSettings = deepClone(originalAiSettings);
-export let aiFlowPermissions: AiFlowPermission[] = deepClone(originalAiFlowPermissions);
-export let aiProviderConfigs: AiProviderConfig[] = deepClone(originalAiProviderConfigs);
-export let aiPrompts: AiPrompt[] = deepClone(originalAiPrompts);
-export let auditLogs: AuditLog[] = deepClone(originalAuditLogs);
-
-// --- System-wide Operations (FIXED) ---
-
-export const system = {
-    /**
-     * Resets only the operational data (conversations, leads, etc.) to their initial state,
-     * preserving all settings.
-     */
-    resetOperationalData: () => {
-        // Re-assign the module-level variables to reset the state
-        conversations = deepClone(originalConversations);
-        messages = deepClone(originalMessages);
-        leads = deepClone(originalLeads);
-        quotes = deepClone(originalQuotes);
-        reservations = deepClone(originalReservations);
-        deals = deepClone(originalDeals);
-        calendarEvents = deepClone(originalCalendarEvents);
-        auditLogs = []; // Operational logs are cleared.
-        return { success: true, message: "Dados operacionais foram resetados." };
-    },
-    /**
-     * Resets the entire mock database to its default state, including all settings.
-     */
-    resetAllData: () => {
-        // First, reset all foundational and settings data.
-        operators = deepClone(originalOperators);
-        contacts = deepClone(originalContacts);
-        channels = deepClone(originalChannels);
-        knowledgeBaseArticles = deepClone(originalKnowledgeBaseArticles);
-        aiSettings = deepClone(originalAiSettings);
-        aiFlowPermissions = deepClone(originalAiFlowPermissions);
-        aiProviderConfigs = deepClone(originalAiProviderConfigs);
-        aiPrompts = deepClone(originalAiPrompts);
-        
-        // Then, reset all operational data and restore original logs.
-        system.resetOperationalData();
-        auditLogs = deepClone(originalAuditLogs);
-
-        return { success: true, message: "Todos os dados e configurações foram restaurados para o padrão." };
-    }
-}

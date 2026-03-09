@@ -1,39 +1,43 @@
-# 1. Builder Stage: Instala dependências e constrói a aplicação Next.js.
-FROM node:18-alpine AS builder
+# Estágio 1: Builder - Constrói a aplicação Next.js
+FROM node:20-alpine AS builder
+
+# Define o diretório de trabalho dentro do container
+WORKDIR /app
+
+# Copia os arquivos de gerenciamento de dependências
+COPY package*.json ./
+
+# Instala as dependências de produção
+RUN npm ci --only=production
+
+# Copia o restante dos arquivos do projeto
+COPY . .
+
+# Define o ambiente como produção e constrói a aplicação
+ENV NODE_ENV=production
+RUN npm run build
+
+# ---
+
+# Estágio 2: Runner - Executa a aplicação otimizada
+FROM node:20-alpine AS runner
 
 # Define o diretório de trabalho
 WORKDIR /app
 
-# Instala dependências com base nos arquivos de pacote
-COPY package*.json ./
-RUN npm install
+# Define o ambiente como produção
+ENV NODE_ENV=production
+# A porta padrão do Next.js. Pode ser sobrescrita por .env.prod no docker-compose.
+ENV PORT=3000
 
-# Copia todos os outros arquivos de origem
-COPY . .
+# Cria um usuário não-root para segurança e o diretório de dados
+RUN addgroup -g 1001 -S nodejs \
+    && adduser -S nextjs -u 1001 \
+    && mkdir -p data \
+    && chown -R nextjs:nodejs data
 
-# Desabilita a telemetria do Next.js
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Constrói a aplicação Next.js para produção
-# O modo de saída 'standalone' será usado conforme configurado em next.config.js.
-RUN npm run build
-
-# 2. Runner Stage: Uma imagem menor para executar a aplicação.
-FROM node:18-alpine AS runner
-
-WORKDIR /app
-
-# Define o ambiente para produção
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# Cria um usuário não-root para maior segurança
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
-# Copia a saída standalone do Next.js do estágio de builder.
-# Isso inclui o arquivo server.js e a pasta .next/.
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+# Copia a pasta .next standalone do estágio de builder
+COPY --from=builder /app/.next/standalone ./
 
 # Copia os ativos estáticos (CSS, imagens, fontes) do estágio de builder.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static

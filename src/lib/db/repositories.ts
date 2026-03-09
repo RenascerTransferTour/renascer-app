@@ -1,139 +1,191 @@
 /**
- * @fileoverview Mock Repository Layer
+ * @fileoverview Filesystem-based Repository Layer
  * 
- * This file simulates a database repository layer. In a real application,
- * this is where you would place your database query logic (e.g., using an ORM like
- * Firebase Data Connect, Prisma, or Drizzle).
- * 
- * For now, it provides functions to perform CRUD operations on in-memory
- * data, which is seeded from `mock-data.ts`.
+ * This file simulates a database repository layer by reading from and writing to
+ * a local JSON file (`data/data.json`). This ensures data persistence across
+ * server restarts and requests, which is crucial for a stateful application
+ * running in a stateless environment like Docker or serverless functions.
  */
-
-import * as db from './mock-data';
+import fs from 'fs/promises';
+import path from 'path';
+import * as seed from './mock-data';
 import type { 
     Operator, Contact, Channel, Lead, Conversation, Message, Quote, Reservation, CalendarEvent, Deal, 
     AiSettings, AiFlowPermission, AiProviderConfig, AiPrompt, KnowledgeBaseArticle, AuditLog 
 } from './data-model';
 
-// A generic function to find an item by ID from any mock table
-const findById = <T extends { id: string }>(table: T[], id: string): T | undefined => {
-    return table.find(item => item.id === id);
+// Defines the structure of the entire database stored in the JSON file.
+type Database = {
+    operators: Operator[];
+    contacts: Contact[];
+    channels: Channel[];
+    leads: Lead[];
+    messages: Message[];
+    conversations: Conversation[];
+    quotes: Quote[];
+    reservations: Reservation[];
+    calendarEvents: CalendarEvent[];
+    deals: Deal[];
+    knowledgeBaseArticles: KnowledgeBaseArticle[];
+    aiSettings: AiSettings;
+    aiFlowPermissions: AiFlowPermission[];
+    aiProviderConfigs: AiProviderConfig[];
+    aiPrompts: AiPrompt[];
+    auditLogs: AuditLog[];
 };
 
-// A generic function to list all items from any mock table
-const list = <T>(table: T[]): T[] => {
-    return table;
-};
+const dbPath = path.resolve(process.cwd(), 'data', 'data.json');
 
-// A generic function to create or update an item in any mock table
-const createOrUpdate = <T extends { id: string }>(table: T[], item: T): T => {
-    const index = table.findIndex(i => i.id === item.id);
-    if (index !== -1) {
-        table[index] = { ...table[index], ...item };
-        return table[index];
-    } else {
-        table.push(item);
-        return item;
+// Asynchronously reads the entire database from the JSON file.
+const readData = async (): Promise<Database> => {
+    try {
+        const data = await fs.readFile(dbPath, 'utf-8');
+        return JSON.parse(data);
+    } catch (error) {
+        // If the file doesn't exist, initialize it with seed data.
+        if (error.code === 'ENOENT') {
+            console.log("Data file not found, initializing with seed data.");
+            return system.initialize();
+        }
+        throw error;
     }
 };
 
-// A generic function to batch update items
-const batchUpdate = <T extends { id: string }>(table: T[], items: T[]): T[] => {
+// Asynchronously writes the entire database object to the JSON file.
+const writeData = async (data: Database): Promise<void> => {
+    await fs.writeFile(dbPath, JSON.stringify(data, null, 2), 'utf-8');
+};
+
+// Generic repository functions that perform read-modify-write operations.
+const findById = async <T extends { id: string }>(table: keyof Database, id: string): Promise<T | undefined> => {
+    const db = await readData();
+    // @ts-ignore
+    return (db[table] as T[]).find(item => item.id === id);
+};
+
+const list = async <T>(table: keyof Database): Promise<T[]> => {
+    const db = await readData();
+    return db[table] as T[];
+};
+
+const createOrUpdate = async <T extends { id: string }>(table: keyof Database, item: T): Promise<T> => {
+    const db = await readData();
+    const tableData = db[table] as T[];
+    const index = tableData.findIndex(i => i.id === item.id);
+    if (index !== -1) {
+        tableData[index] = { ...tableData[index], ...item, updatedAt: new Date().toISOString() };
+    } else {
+        // @ts-ignore
+        tableData.push({ ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+    }
+    await writeData(db);
+    return item;
+};
+
+const batchUpdate = async <T extends { id: string }>(table: keyof Database, items: T[]): Promise<T[]> => {
+    const db = await readData();
+    const tableData = db[table] as T[];
     items.forEach(item => {
-        const index = table.findIndex(i => i.id === item.id);
+        const index = tableData.findIndex(i => i.id === item.id);
         if (index !== -1) {
-            table[index] = { ...table[index], ...item };
+            tableData[index] = { ...tableData[index], ...item, updatedAt: new Date().toISOString() };
         } else {
-            // Optionally create if it doesn't exist, though batch update usually implies existence.
-            table.push(item);
+             // @ts-ignore
+            tableData.push({ ...item, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
         }
     });
+    await writeData(db);
     return items;
 };
 
 // --- Repository Exports ---
 
 export const operators = {
-    findById: (id: string) => findById(db.operators, id),
-    list: () => list(db.operators),
-    findByEmail: (email: string) => db.operators.find(o => o.email === email),
+    findById: (id: string) => findById<Operator>('operators', id),
+    list: () => list<Operator>('operators'),
+    findByEmail: async (email: string) => (await list<Operator>('operators')).find(o => o.email === email),
 };
 
 export const contacts = {
-    findById: (id: string) => findById(db.contacts, id),
-    list: () => list(db.contacts),
+    findById: (id: string) => findById<Contact>('contacts', id),
+    list: () => list<Contact>('contacts'),
 };
 
 export const channels = {
-    findById: (id: string) => findById(db.channels, id),
-    list: () => list(db.channels),
-    batchUpdate: (items: Channel[]) => batchUpdate(db.channels, items),
+    findById: (id: string) => findById<Channel>('channels', id),
+    list: () => list<Channel>('channels'),
+    batchUpdate: (items: Channel[]) => batchUpdate<Channel>('channels', items),
 };
 
 export const leads = {
-    findById: (id: string) => findById(db.leads, id),
-    list: () => list(db.leads),
-    createOrUpdate: (item: Lead) => createOrUpdate(db.leads, item),
+    findById: (id: string) => findById<Lead>('leads', id),
+    list: () => list<Lead>('leads'),
+    createOrUpdate: (item: Lead) => createOrUpdate<Lead>('leads', item),
 };
 
 export const conversations = {
-    findById: (id: string) => findById(db.conversations, id),
-    list: () => list(db.conversations),
+    findById: (id: string) => findById<Conversation>('conversations', id),
+    list: () => list<Conversation>('conversations'),
 };
 
 export const messages = {
-    findByConversationId: (conversationId: string) => db.messages.filter(m => m.conversationId === conversationId),
-    list: () => list(db.messages),
-    create: (item: Message) => createOrUpdate(db.messages, item),
+    findByConversationId: async (conversationId: string) => {
+        const allMessages = await list<Message>('messages');
+        return allMessages.filter(m => m.conversationId === conversationId);
+    },
+    list: () => list<Message>('messages'),
+    create: (item: Message) => createOrUpdate<Message>('messages', item),
 };
 
 export const quotes = {
-    findById: (id: string) => findById(db.quotes, id),
-    list: () => list(db.quotes),
-    createOrUpdate: (item: Quote) => createOrUpdate(db.quotes, item),
+    findById: (id: string) => findById<Quote>('quotes', id),
+    list: () => list<Quote>('quotes'),
+    createOrUpdate: (item: Quote) => createOrUpdate<Quote>('quotes', item),
 };
 
 export const reservations = {
-    findById: (id: string) => findById(db.reservations, id),
-    list: () => list(db.reservations),
-    createOrUpdate: (item: Reservation) => createOrUpdate(db.reservations, item),
+    findById: (id: string) => findById<Reservation>('reservations', id),
+    list: () => list<Reservation>('reservations'),
+    createOrUpdate: (item: Reservation) => createOrUpdate<Reservation>('reservations', item),
 };
 
 export const calendarEvents = {
-    findById: (id: string) => findById(db.calendarEvents, id),
-    list: () => list(db.calendarEvents),
+    findById: (id: string) => findById<CalendarEvent>('calendarEvents', id),
+    list: () => list<CalendarEvent>('calendarEvents'),
 };
 
 export const deals = {
-    findById: (id: string) => findById(db.deals, id),
-    list: () => list(db.deals),
-    createOrUpdate: (item: Deal) => createOrUpdate(db.deals, item),
+    findById: (id: string) => findById<Deal>('deals', id),
+    list: () => list<Deal>('deals'),
+    createOrUpdate: (item: Deal) => createOrUpdate<Deal>('deals', item),
 };
 
 export const aiSettings = {
-    get: () => db.aiSettings,
-    update: (settings: Partial<AiSettings>) => {
-        db.aiSettings = { ...db.aiSettings, ...settings };
+    get: async () => (await readData()).aiSettings,
+    update: async (settings: Partial<AiSettings>) => {
+        const db = await readData();
+        db.aiSettings = { ...db.aiSettings, ...settings, updatedAt: new Date().toISOString() };
+        await writeData(db);
         return db.aiSettings;
     }
 };
 
 export const aiFlowPermissions = {
-    list: () => list(db.aiFlowPermissions),
-    batchUpdate: (items: AiFlowPermission[]) => batchUpdate(db.aiFlowPermissions, items),
+    list: () => list<AiFlowPermission>('aiFlowPermissions'),
+    batchUpdate: (items: AiFlowPermission[]) => batchUpdate('aiFlowPermissions', items),
 };
 
 export const aiPrompts = {
-    list: () => list(db.aiPrompts),
-    findPublished: () => db.aiPrompts.find(p => p.status === 'published'),
-    findDraft: () => db.aiPrompts.find(p => p.status === 'draft'),
-    update: (prompt: AiPrompt) => createOrUpdate(db.aiPrompts, prompt),
-    publishDraft: () => {
+    list: () => list<AiPrompt>('aiPrompts'),
+    findPublished: async () => (await list<AiPrompt>('aiPrompts')).find(p => p.status === 'published'),
+    findDraft: async () => (await list<AiPrompt>('aiPrompts')).find(p => p.status === 'draft'),
+    update: (prompt: AiPrompt) => createOrUpdate<AiPrompt>('aiPrompts', prompt),
+    publishDraft: async () => {
+        const db = await readData();
         const draftIndex = db.aiPrompts.findIndex(p => p.status === 'draft');
-        if (draftIndex === -1) return null; // No draft to publish
+        if (draftIndex === -1) return null;
 
         const draft = db.aiPrompts[draftIndex];
-
         const publishedIndex = db.aiPrompts.findIndex(p => p.status === 'published');
         if (publishedIndex !== -1) {
             db.aiPrompts[publishedIndex].status = 'archived';
@@ -142,7 +194,6 @@ export const aiPrompts = {
         db.aiPrompts[draftIndex].status = 'published';
         db.aiPrompts[draftIndex].versionName = `v${Date.now()} - Published`;
         
-        // Create a new draft based on the just-published one
         const newDraft: AiPrompt = {
             ...draft,
             id: `prompt-draft-${Date.now()}`,
@@ -153,21 +204,68 @@ export const aiPrompts = {
         };
         db.aiPrompts.push(newDraft);
 
-        return { published: db.aiPrompts[draftIndex], newDraft: newDraft };
+        await writeData(db);
+        return { published: db.aiPrompts[draftIndex], newDraft };
     }
 };
 
 export const auditLogs = {
-    list: () => list(db.auditLogs),
-    findByContactId: (contactId: string) => db.auditLogs
-        .filter(log => log.contactId === contactId)
-        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()),
+    list: () => list<AuditLog>('auditLogs'),
+    findByContactId: async (contactId: string) => {
+        const logs = await list<AuditLog>('auditLogs');
+        return logs.filter(log => log.contactId === contactId)
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    },
 };
 
 export const knowledgeBase = {
-    list: () => list(db.knowledgeBaseArticles),
+    list: () => list<KnowledgeBaseArticle>('knowledgeBaseArticles'),
 };
 
-// --- System-wide Operations ---
-// Correctly expose the system operations from the mock data module.
-export const system = db.system;
+const getInitialData = (): Database => ({
+    operators: seed.originalOperators,
+    contacts: seed.originalContacts,
+    channels: seed.originalChannels,
+    leads: seed.originalLeads,
+    messages: seed.originalMessages,
+    conversations: seed.originalConversations,
+    quotes: seed.originalQuotes,
+    reservations: seed.originalReservations,
+    calendarEvents: seed.originalCalendarEvents,
+    deals: seed.originalDeals,
+    knowledgeBaseArticles: seed.originalKnowledgeBaseArticles,
+    aiSettings: seed.originalAiSettings,
+    aiFlowPermissions: seed.originalAiFlowPermissions,
+    aiProviderConfigs: seed.originalAiProviderConfigs,
+    aiPrompts: seed.originalAiPrompts,
+    auditLogs: seed.originalAuditLogs,
+});
+
+export const system = {
+    initialize: async () => {
+        const initialData = getInitialData();
+        await writeData(initialData);
+        return initialData;
+    },
+    resetOperationalData: async () => {
+        const db = await readData();
+        const freshOperationalData = {
+            conversations: seed.originalConversations,
+            messages: seed.originalMessages,
+            leads: seed.originalLeads,
+            quotes: seed.originalQuotes,
+            reservations: seed.originalReservations,
+            deals: seed.originalDeals,
+            calendarEvents: seed.originalCalendarEvents,
+            auditLogs: [], // Clear operational logs
+        };
+        const newData = { ...db, ...freshOperationalData };
+        await writeData(newData);
+        return { success: true, message: "Dados operacionais foram resetados." };
+    },
+    resetAllData: async () => {
+        const initialData = getInitialData();
+        await writeData(initialData);
+        return { success: true, message: "Todos os dados e configurações foram restaurados para o padrão." };
+    }
+};
