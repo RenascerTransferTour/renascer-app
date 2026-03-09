@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 
-export default function SettingsPage() {
-    redirect('/settings/ai');
+export default function SettingsRootPage() {
+  // Redireciona para a primeira página de configurações por padrão
+  redirect('/settings/profile');
 }

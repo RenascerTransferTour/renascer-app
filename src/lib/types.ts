@@ -1,28 +1,109 @@
-/**
- * @fileoverview This file contains UI-specific types, often denormalized
- * or combined from the core data model for easier consumption by components.
- */
+import { LucideIcon } from "lucide-react";
 
-import type { Conversation as CoreConversation, Message as CoreMessage, Contact, AiFlowPermission as CoreAiFlowPermission, AuditLog as CoreAuditLog } from './db/data-model';
-
-// The main Conversation type used in the Inbox list.
-// It combines Conversation with Contact details.
-export type Conversation = CoreConversation & {
-  contact: Contact;
-  auditLogs: CoreAuditLog[];
+export type User = {
+    id: string;
+    name: string;
+    email?: string;
+    avatar?: string;
+    role: 'Gerente' | 'Atendente' | 'Motorista' | 'IA' | 'System' | 'Cliente';
 };
 
-// A UI-ready message type.
-export type Message = CoreMessage;
+export type Message = {
+    id: string;
+    conversationId: string;
+    sender: User;
+    content: string;
+    timestamp: string;
+    type: 'text' | 'image' | 'audio' | 'file' | 'suggestion';
+};
 
-// The Customer type is now an alias for the core Contact model.
-// This ensures that the UI components correctly handle optional properties
-// like 'urgency' and 'interestLevel' that exist on the Contact model.
-export type Customer = Contact;
+export type Conversation = {
+    id: string;
+    customerName: string;
+    customerAvatar?: string;
+    lastMessage: string;
+    lastMessageTimestamp: string;
+    channel: 'whatsapp' | 'instagram' | 'facebook' | 'website';
+    status: 'open' | 'closed' | 'pending';
+    agent: User;
+};
 
-// AI Flow Permission type
-export type AiFlowPermission = CoreAiFlowPermission;
+export type Lead = {
+    id: string;
+    name: string;
+    stage: 'new' | 'contacted' | 'qualified' | 'proposal' | 'won' | 'lost';
+    value: number;
+    agent: User;
+    source: 'whatsapp' | 'instagram' | 'facebook' | 'website' | 'email' | 'manual';
+    priority: 'low' | 'medium' | 'high';
+    lastUpdate: string;
+    avatar?: string;
+};
 
-export type AuditLog = CoreAuditLog;
+export type Booking = {
+    id: string;
+    customerName: string;
+    service: string;
+    date: string;
+    driver: string;
+    vehicle: string;
+    status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
+    value: number;
+};
 
-export type PipelineDeal = import('./db/data-model').Deal;
+export type Quote = {
+    id: string;
+    customerName: string;
+    title: string;
+    date: string;
+    status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'expired';
+    total: number;
+};
+
+export type CalendarEvent = {
+    id: string;
+    title: string;
+    start: string;
+    end: string;
+    color: string;
+    type: 'booking' | 'task' | 'reminder';
+    bookingId?: string;
+};
+
+export type KnowledgeBaseArticle = {
+    id: string;
+    title: string;
+    category: string;
+    lastUpdated: string;
+    author: string;
+    summary: string;
+};
+
+export type NavItem = {
+    href: string;
+    label: string;
+    icon: LucideIcon;
+    badge?: number;
+};
+
+export type Company = {
+    id: string;
+    name: string;
+    logo?: string;
+};
+
+export type Plan = {
+    name: string;
+    price: string;
+    features: string[];
+    cta: string;
+    popular?: boolean;
+};
+
+export type TeamMember = {
+    id: string;
+    name?: string;
+    email: string;
+    role: 'Gerente' | 'Atendente' | 'Motorista';
+    status: 'active' | 'inactive' | 'pending';
+};

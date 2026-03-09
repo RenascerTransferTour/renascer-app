@@ -1,13 +1,15 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import './globals.css';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AppSidebar } from '@/components/layout/sidebar';
 import { AppHeader } from '@/components/layout/header';
-import { Toaster } from '@/components/ui/toaster';
+import { Toaster } from "@/components/ui/toaster"
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Renascer Transfer Tour - Central de Atendimento',
-  description: 'Plataforma de gestão de atendimentos, orçamentos e reservas para serviços de transfer e turismo.',
+  title: 'Renascer Tour - Central de Atendimento V2',
+  description: 'Sistema de gestão de atendimentos, CRM e reservas.',
 };
 
 export default function RootLayout({
@@ -17,25 +19,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="font-body antialiased">
-        <SidebarProvider>
+      <body className={inter.className}>
+        <div className="flex min-h-screen w-full flex-col bg-muted/40">
           <AppSidebar />
-          <SidebarInset>
+          <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
             <AppHeader />
-            <main className="min-h-[calc(100vh-4rem)] p-4 sm:p-6 lg:p-8">
+            <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
               {children}
             </main>
-          </SidebarInset>
-          <Toaster />
-        </SidebarProvider>
+          </div>
+        </div>
+        <Toaster />
       </body>
     </html>
   );

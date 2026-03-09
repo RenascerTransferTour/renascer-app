@@ -1,16 +1,5 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { AiSettingsForm } from "@/components/ai-settings-form"
+import { AiSettings } from "@/components/settings/ai-settings";
 
-export default function AiSettingsPage() {
-  return (
-    <div className="space-y-6">
-        <AiSettingsForm />
-    </div>
-  )
+export default function AiPage() {
+    return <AiSettings />;
 }
