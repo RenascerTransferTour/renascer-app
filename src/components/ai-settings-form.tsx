@@ -470,11 +470,11 @@ export function AiSettingsForm() {
                     <p className="text-sm text-muted-foreground mb-4">
                         Defina quais tipos de mídia a IA pode gerar. Desativado até que a chave principal seja autorizada.
                     </p>
-                    <div className="space-y-4">
+                    <div className="space-y-4 opacity-70">
                         {mediaPermissions.map(perm => {
                             const Icon = perm.icon;
                             return (
-                                <div key={perm.id} className="flex flex-row items-center justify-between rounded-lg border p-4 opacity-70">
+                                <div key={perm.id} className="flex flex-row items-center justify-between rounded-lg border p-4">
                                      <div className="flex items-center gap-4">
                                         <Icon className="size-5 text-muted-foreground"/>
                                         <div className="space-y-0.5">

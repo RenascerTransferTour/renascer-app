@@ -17,7 +17,7 @@ import {
   Palette,
   Type,
   Component,
-  Code,
+  AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '../ui/badge'
