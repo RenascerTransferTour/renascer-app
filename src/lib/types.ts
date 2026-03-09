@@ -17,11 +17,7 @@ export type Message = CoreMessage;
 
 // The Customer type used in various UI parts, derived from Contact.
 // It extends the core Contact with UI-specific properties that might not be in the DB.
-export type Customer = Contact & {
-    urgency: 'low' | 'medium' | 'high';
-    interestLevel: 'low' | 'medium' | 'high';
-    originChannel?: string;
-};
+export type Customer = Contact;
 
 // AI Flow Permission type
 export type AiFlowPermission = CoreAiFlowPermission;

@@ -144,12 +144,7 @@ export default function ConversationPage() {
 
                 setConversation(convData);
                 setMessages(convData.messages);
-                // Correctly handle the Customer type by providing default fallbacks
-                setCustomer({
-                  ...contactData,
-                  urgency: contactData.urgency || 'low',
-                  interestLevel: contactData.interestLevel || 'low',
-                });
+                setCustomer(contactData);
                 setAuditLogs(convData.auditLogs);
                 setIsAiActive(convData.isAiActive);
                 setPermissions(permsData);
@@ -191,6 +186,7 @@ export default function ConversationPage() {
 
     setIsSending(true);
     const messageContent = newMessage;
+    const tempMessageId = `temp-${Date.now()}`;
     
     try {
         const response = await fetch(`/api/conversations/${id}/messages`, {
@@ -204,9 +200,9 @@ export default function ConversationPage() {
         if (!response.ok) {
             throw new Error(savedMessage.error || 'A API retornou um erro inesperado.');
         }
-
+        
         setMessages(prevMessages => [...prevMessages, savedMessage]);
-        setNewMessage(''); // Clear input only on success
+        setNewMessage('');
 
     } catch (error) {
         console.error("Failed to send message:", error);
@@ -302,8 +298,8 @@ export default function ConversationPage() {
     return <div className='text-center'>Conversa não encontrada ou falha ao carregar.</div>;
   }
   
-  const urgencyClasses = getStatusBadgeClasses(customer.urgency === 'high' ? 'cancelado' : (customer.urgency === 'medium' ? 'não confirmado' : 'concluída'));
-  const interestClasses = getStatusBadgeClasses(customer.interestLevel === 'high' ? 'confirmada' : (customer.interestLevel === 'medium' ? 'pendente' : 'rascunho'));
+  const urgencyClasses = getStatusBadgeClasses(customer.urgency === 'high' ? 'cancelado' : customer.urgency === 'medium' ? 'não confirmado' : 'rascunho');
+  const interestClasses = getStatusBadgeClasses(customer.interestLevel === 'high' ? 'confirmada' : customer.interestLevel === 'medium' ? 'pendente' : 'rascunho');
 
   return (
     <TooltipProvider>
@@ -479,14 +475,14 @@ export default function ConversationPage() {
                             <Star className="h-4 w-4 text-muted-foreground" />
                             <span className='text-muted-foreground'>Nível de Interesse:</span>
                         </div>
-                        <Badge className={cn(interestClasses, 'capitalize')}>{customer.interestLevel}</Badge>
+                        <Badge className={cn(interestClasses, 'capitalize')}>{customer.interestLevel ?? 'N/D'}</Badge>
                     </div>
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Zap className="h-4 w-4 text-muted-foreground" />
                             <span className='text-muted-foreground'>Urgência:</span>
                         </div>
-                        <Badge className={cn(urgencyClasses, 'capitalize')}>{customer.urgency}</Badge>
+                        <Badge className={cn(urgencyClasses, 'capitalize')}>{customer.urgency ?? 'N/D'}</Badge>
                     </div>
                 </div>
                 <Separator />
