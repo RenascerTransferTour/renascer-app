@@ -407,6 +407,7 @@ export const system = {
      * preserving all settings.
      */
     resetOperationalData: () => {
+        // Re-assign the module-level variables to reset the state
         conversations = deepClone(originalConversations);
         messages = deepClone(originalMessages);
         leads = deepClone(originalLeads);
@@ -421,10 +422,7 @@ export const system = {
      * Resets the entire mock database to its default state, including all settings.
      */
     resetAllData: () => {
-        // First, reset all operational data.
-        system.resetOperationalData();
-        
-        // Then, reset all foundational and settings data.
+        // First, reset all foundational and settings data.
         operators = deepClone(originalOperators);
         contacts = deepClone(originalContacts);
         channels = deepClone(originalChannels);
@@ -433,7 +431,10 @@ export const system = {
         aiFlowPermissions = deepClone(originalAiFlowPermissions);
         aiProviderConfigs = deepClone(originalAiProviderConfigs);
         aiPrompts = deepClone(originalAiPrompts);
-        auditLogs = deepClone(originalAuditLogs); // Restore original logs for a full reset
+        
+        // Then, reset all operational data and restore original logs.
+        system.resetOperationalData();
+        auditLogs = deepClone(originalAuditLogs);
 
         return { success: true, message: "Todos os dados e configurações foram restaurados para o padrão." };
     }

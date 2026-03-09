@@ -83,7 +83,7 @@ export function AppearanceForm() {
                         <Info className="h-4 w-4" />
                         <AlertTitle>Modo Simulado</AlertTitle>
                         <AlertDescription>
-                            O logotipo atual é definido no código-fonte (`icons.tsx`). A função de upload é apenas uma representação visual e está desativada. As demais alterações são aplicadas localmente para preview, mas o salvamento real não está ativado.
+                            O logotipo atual é definido no código-fonte (`src/components/icons.tsx`). A função de upload é apenas uma representação visual e está desativada. As demais alterações são aplicadas localmente para preview, mas o salvamento real não está ativado.
                         </AlertDescription>
                     </Alert>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
