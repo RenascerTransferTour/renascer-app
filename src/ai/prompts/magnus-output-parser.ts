@@ -1,4 +1,5 @@
 
+
 /**
  * @fileoverview This file provides a robust parser and validator for the structured
  * JSON output from the MAGNUS system prompt. It ensures that any response from the AI
@@ -31,6 +32,7 @@ const ALLOWED_STAGES: MagnusStage[] = [
   "handoff",
   "closed",
   "info_only",
+  "error", // Added to support error stage
 ];
 const ALLOWED_SERVICE_TYPES: MagnusServiceType[] = [
   "unknown",
@@ -46,6 +48,7 @@ const ALLOWED_INTENTS: MagnusIntent[] = [
   "assistant_identity",
   "talk_to_claudia",
   "submit_form",
+  "error", // Added to support error intent
 ];
 const ALLOWED_SILENCE_REASONS: MagnusSilenceReason[] = [
   "no_text_message",
@@ -57,6 +60,7 @@ const ALLOWED_SILENCE_REASONS: MagnusSilenceReason[] = [
   "human_active_flag",
   "saved_internal_contact",
   "duplicate_or_redundant_reply",
+  "ai_provider_error", // Added to support provider errors
 ];
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -130,7 +134,7 @@ export function parseMagnusOutput(raw: string): MagnusOutput {
     (typeof silence_reason !== "string" ||
       !ALLOWED_SILENCE_REASONS.includes(silence_reason as MagnusSilenceReason))
   ) {
-    throw new Error("Campo silence_reason inválido.");
+    throw new Error(`Campo silence_reason inválido. Valor recebido: ${silence_reason}`);
   }
 
   if (typeof language !== "string" || !ALLOWED_LANGUAGES.includes(language as MagnusLanguage)) {

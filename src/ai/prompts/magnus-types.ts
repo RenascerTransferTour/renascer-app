@@ -18,7 +18,8 @@ export type MagnusStage =
   | "collecting"
   | "handoff"
   | "closed"
-  | "info_only";
+  | "info_only"
+  | "error";
 
 export type MagnusServiceType = "unknown" | "transfer" | "tour" | "trip";
 
@@ -29,7 +30,8 @@ export type MagnusIntent =
   | "price_request"
   | "assistant_identity"
   | "talk_to_claudia"
-  | "submit_form";
+  | "submit_form"
+  | "error";
 
 export type MagnusSilenceReason =
   | "no_text_message"
@@ -40,7 +42,8 @@ export type MagnusSilenceReason =
   | "conversation_already_closed"
   | "human_active_flag"
   | "saved_internal_contact"
-  | "duplicate_or_redundant_reply";
+  | "duplicate_or_redundant_reply"
+  | "ai_provider_error";
 
 export interface MagnusCollectedData {
   customer_name: string | null;
